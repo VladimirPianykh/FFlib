@@ -23,15 +23,16 @@ public class Data implements Serializable{
 		}
 		public String name;
 		public ArrayList<ActionRecord>records=new ArrayList<ActionRecord>();
-		public Editable(){
-			records.add(new ActionRecord("Created.",User.getActiveUser()));
+		public Editable(String name){
+			this.name=name;
+			records.add(new ActionRecord(":CREATED",User.getActiveUser()));
 		}
 	}
 	public ArrayList<Editable>editables=new ArrayList<Editable>();
 	private Data(){}
 	public static Data getInstance(){
 		if(instance==null)try{
-			FileInputStream fIS=new FileInputStream("C:/Users/user/AppData/Local/C1_factory/Data.ser");
+			FileInputStream fIS=new FileInputStream(Root.folder+"Data.ser");
 			ObjectInputStream oIS=new ObjectInputStream(fIS);
 			instance=(Data)oIS.readObject();
 			oIS.close();fIS.close();
@@ -42,7 +43,7 @@ public class Data implements Serializable{
 	}
 	static void save(){
 		try{
-			FileOutputStream fOS=new FileOutputStream("C:/Users/user/AppData/Local/C1_factory/Data.ser");
+			FileOutputStream fOS=new FileOutputStream(Root.folder+"Data.ser");
 			ObjectOutputStream oOS=new ObjectOutputStream(fOS);
 			oOS.writeObject(instance);
 			oOS.close();fOS.close();

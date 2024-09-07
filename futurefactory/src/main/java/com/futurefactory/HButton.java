@@ -12,8 +12,8 @@ import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
 public class HButton extends JButton{
-	int scale,maxScale,reaction;
-	boolean pressed;
+	public int scale,maxScale,reaction;
+	public boolean pressed;
 	private final ReentrantLock lock=new ReentrantLock(true);
 	private final MouseListener m=new MouseAdapter(){
 		public void mousePressed(MouseEvent e){if(SwingUtilities.isLeftMouseButton(e)){pressed=true;repaint();}}

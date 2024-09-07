@@ -1,12 +1,12 @@
 package com.futurefactory;
 
+import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JWindow;
@@ -15,9 +15,6 @@ public class Message extends JWindow{
 	public Message(String text){
 		Dimension d=Root.SCREEN_SIZE;
 		setBounds(d.width/3,d.height/10,d.width/3,d.width/9);
-		addFocusListener(new FocusAdapter(){
-			public void focusLost(FocusEvent e){dispose();}
-		});
 		setContentPane(new JPanel(){
 			public void paintComponent(Graphics g){
 				g.setColor(Color.DARK_GRAY);
@@ -31,6 +28,11 @@ public class Message extends JWindow{
 		l.setForeground(Color.LIGHT_GRAY);
 		add(l);
 		setVisible(true);
-		requestFocus();
+		Wrapper<AWTEventListener>s=new Wrapper<AWTEventListener>(null);
+		s.var=e->{
+			dispose();
+			Toolkit.getDefaultToolkit().removeAWTEventListener(s.var);
+		};
+		Toolkit.getDefaultToolkit().addAWTEventListener(s.var,AWTEvent.MOUSE_EVENT_MASK);
 	}
 }
