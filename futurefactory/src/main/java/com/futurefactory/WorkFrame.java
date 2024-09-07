@@ -5,6 +5,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -12,7 +13,6 @@ import java.awt.GridLayout;
 import java.awt.LinearGradientPaint;
 import java.awt.Polygon;
 import java.awt.RadialGradientPaint;
-import java.awt.Toolkit;
 import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -32,10 +32,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
+import com.futurefactory.Data.Editable;
 import com.futurefactory.User.Feature;
+import com.futurefactory.User.Permission;
 import com.futurefactory.User.Role;
 
-class WorkFrame extends JFrame{
+public class WorkFrame extends JFrame{
 	public static class WorkTabButton extends HButton{
 		Feature feature;
 		BufferedImage image;
@@ -147,7 +149,7 @@ class WorkFrame extends JFrame{
 							content.revalidate();
 							return;
 						}
-						JPanel p=createTable(d.editables.size()+(User.getActiveUser().role==Role.ENGINEER?1:0),1,tab);
+						JPanel p=createTable(d.editables.size()+(User.getActiveUser().hasPermission(Permission.CREATE)?1:0),1,tab);
 						int s=content.getHeight()/7;
 						BufferedImage editImage=new BufferedImage(content.getHeight()/7,content.getHeight()/7,6),
 						addImage=new BufferedImage(content.getHeight()/7,content.getHeight()/7,6);
@@ -159,7 +161,7 @@ class WorkFrame extends JFrame{
 						g2.drawRect(s/3,s/10,s/3,s*4/5);
 						g2.drawRect(s/10,s/3,s*4/5,s/3);
 						Color c1=new Color(42,46,30),c2=new Color(32,36,21);
-						Model.modelMap.values().forEach(r->{
+						for(Editable r:Data.getInstance().editables){
 							HButton b=new HButton(){
 								public void paintComponent(Graphics g){
 									Graphics2D g2=(Graphics2D)g;
@@ -172,7 +174,7 @@ class WorkFrame extends JFrame{
 									g2.drawImage(editImage,getWidth()-editImage.getWidth(),0,this);
 									g2.setColor(new Color(0,0,0,scale*10));
 									g2.fillRect(0,0,getWidth(),getHeight());
-									if(r.getStage()==User.getActiveUser().role){
+									if(true){//FILLIN
 										g2.setPaint(new LinearGradientPaint(getWidth()-getHeight()/2,getHeight()/4,getWidth(),getHeight()*3/4,new float[]{0,0.5f},new Color[]{new Color(89+scale*5,87,63),new Color(122+scale*5,119,80)},CycleMethod.REFLECT));
 										g2.fillOval(getWidth()-getHeight()*9/8,getHeight()/8+1,getHeight()*3/4-1,getHeight()*3/4-1);
 										g2.setPaint(new LinearGradientPaint(getWidth()-getHeight()/2,getHeight()/4,getWidth(),getHeight()*3/4,new float[]{0,0.5f},new Color[]{new Color(135+scale*5,52,14),new Color(194+scale*5,47,17)},CycleMethod.REFLECT));
@@ -180,29 +182,18 @@ class WorkFrame extends JFrame{
 										g2.setPaint(new LinearGradientPaint(getWidth()-getHeight()/2,getHeight()/4,getWidth(),getHeight()*3/4,new float[]{0,0.5f},new Color[]{new Color(54,51,36),new Color(77,74,56)},CycleMethod.REFLECT));
 										g2.drawOval(getWidth()-getHeight(),getHeight()/4,getHeight()/2,getHeight()/2);
 										g2.drawOval(getWidth()-getHeight()*9/8,getHeight()/8+1,getHeight()*3/4-1,getHeight()*3/4-1);
-									}else if(r.status==Status.PHASED_OUT){
-										g2.setColor(new Color(0,0,0,100));
-										g2.setStroke(new BasicStroke(getHeight()/30));
-										g2.drawLine(0,getHeight()/2,getWidth(),getHeight()/2);
 									}
 								}
 							};
 							b.setAction(new AbstractAction(){
 								public void actionPerformed(ActionEvent e){
-									new ModelEditingDialog(r);
-								}
-							});
-							if(User.getActiveUser().role==Role.PRODUCTION_MANAGER)b.addMouseListener(new MouseAdapter(){
-								public void mouseClicked(MouseEvent e){
-									if(SwingUtilities.isRightMouseButton(e)&&r.status==Status.PRODUCED){
-										r.status=Status.PHASED_OUT;
-										Saver.saveModels();
-									}
+									if(ProgramStarter.editor==null)throw new RuntimeException("Editor ha not been set.");
+									ProgramStarter.editor.constructEditor(r);
 								}
 							});
 							p.add(b);
-						});
-						if(User.getActiveUser().role==Role.ENGINEER){
+						};
+						if(User.getActiveUser().hasPermission(Permission.CREATE)){
 							HButton add=new HButton(){
 							public void paintComponent(Graphics g){
 								g.setColor(Color.GRAY);
@@ -213,9 +204,10 @@ class WorkFrame extends JFrame{
 							}};
 							add.setAction(new AbstractAction(){
 								public void actionPerformed(ActionEvent e){
-									new ModelEditingDialog(null);
+									if(ProgramStarter.editor==null)throw new RuntimeException("Editor ha not been set.");
+									ProgramStarter.editor.constructEditor(null);
 									SwingUtilities.getWindowAncestor(content).dispose();
-									Main.frame=new WorkFrame(User.getActiveUser());
+									ProgramStarter.frame=new WorkFrame(User.getActiveUser());
 								}
 							});
 							p.add(add);
@@ -295,14 +287,14 @@ class WorkFrame extends JFrame{
 	public static HashMap<Role,Feature[]>ftrMap=new HashMap<Role,Feature[]>();
 	static{
 		ftrMap.put(Role.ADMIN,Feature.values());
-		ftrMap.put(Role.ENGINEER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
-		ftrMap.put(Role.PD_MANAGER,new Feature[]{Feature.HISTORY});
-		ftrMap.put(Role.PROCUREMENT_MANAGER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
-		ftrMap.put(Role.PRODUCTION_MANAGER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
-		ftrMap.put(Role.SALES_MANAGER,new Feature[]{Feature.HISTORY});
-		ftrMap.put(Role.SD_MANAGER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
-		ftrMap.put(Role.STOREKEEPER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
-		ftrMap.put(Role.TESTER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
+		// ftrMap.put(Role.ENGINEER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
+		// ftrMap.put(Role.PD_MANAGER,new Feature[]{Feature.HISTORY});
+		// ftrMap.put(Role.PROCUREMENT_MANAGER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
+		// ftrMap.put(Role.PRODUCTION_MANAGER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
+		// ftrMap.put(Role.SALES_MANAGER,new Feature[]{Feature.HISTORY});
+		// ftrMap.put(Role.SD_MANAGER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
+		// ftrMap.put(Role.STOREKEEPER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
+		// ftrMap.put(Role.TESTER,new Feature[]{Feature.HISTORY,Feature.MODEL_EDITING});
 	}
 	public WorkFrame(User user){
 		setSize(Root.SCREEN_SIZE);

@@ -7,7 +7,7 @@ import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.MultipleGradientPaint.CycleMethod;
 
-abstract class Painter{
+public abstract class Painter{
 	public static void lightInterBorder(Graphics2D g2,int w,int h,Color f,int s){
 		Color e=new Color(f.getRed(),f.getGreen(),f.getBlue(),0);
 		//corners

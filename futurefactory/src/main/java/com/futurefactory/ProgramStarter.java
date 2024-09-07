@@ -19,8 +19,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.ToolTipManager;
 
-class Main{
+public class ProgramStarter{
 	public static WorkFrame frame;
+	public static IEditor editor;
 	public static void main(String[]args){
 		new File(Root.folder).mkdirs();
 		ToolTipManager.sharedInstance().setInitialDelay(0);
@@ -84,8 +85,8 @@ class Main{
 						}
 					}else{
 						if(User.hasUser(log.getText())){
-							User u=User.getUser(log.getText());
-							
+							if(User.getUser(log.getText()).login(pass.getText()))new Message("Successfully logged in.");
+							else new Message("Incorrect password.");
 						}else new Message("User is undefined.");
 					}
 				}

@@ -11,7 +11,7 @@ import java.awt.event.ActionListener;
 import java.awt.geom.RoundRectangle2D;
 import java.util.concurrent.locks.ReentrantLock;
 
-class Switcher extends HButton{
+public class Switcher extends HButton{
 	private Color c1=new Color(41,59,17),c2=new Color(54,82,17),c3=new Color(59,33,17),c4=new Color(82,38,17);
 	private static final Color[]c5={Color.DARK_GRAY,new Color(40,40,40)};
 	private static final float[]f={0,1};

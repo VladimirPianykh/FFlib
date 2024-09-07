@@ -6,17 +6,26 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
-class Data implements Serializable{
+public class Data implements Serializable{
 	private static Data instance;
-	public static class Editable{
-        //FILLIN
+	public static abstract class Editable{
+		public static class ActionRecord{
+			public String text;
+			public User source;
+			public LocalDateTime time;
+			public ActionRecord(String text,User source){
+				this.text=text;this.source=source;
+				time=LocalDateTime.now();
+			}
+		}
+		public String name;
+		public ArrayList<ActionRecord>records=new ArrayList<ActionRecord>();
 	}
-    public ArrayList<Editable>editables=new ArrayList<Editable>();
-	private Data(){
-        //FILLIN
-	}
+	public ArrayList<Editable>editables=new ArrayList<Editable>();
+	private Data(){}
 	public static Data getInstance(){
 		if(instance==null)try{
 			FileInputStream fIS=new FileInputStream("C:/Users/user/AppData/Local/C1_factory/Data.ser");

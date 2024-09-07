@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Toolkit;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 
@@ -12,7 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JWindow;
 
-class Message extends JWindow{
+public class Message extends JWindow{
 	public Message(String text){
 		Dimension d=Root.SCREEN_SIZE;
 		setBounds(d.width/3,d.height/10,d.width/3,d.width/9);

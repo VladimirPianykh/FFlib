@@ -14,7 +14,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-class User implements Serializable{
+public class User implements Serializable{
 	public static class Authorization implements Serializable{
 		public LocalDateTime inTime,outTime;
 		public int tries;
@@ -113,14 +113,17 @@ class User implements Serializable{
 		this.login=login;this.password=password;this.role=role;
 		userMap.put(login,this);
 	}
-	public boolean hasPermission(Permission p){}
+	public boolean hasPermission(Permission p){
+		for(Permission m:permissions.get(role))if(m==p)return true;
+		return false;
+	}
 	public boolean login(String password){
 		if(password.equals(this.password)){
 			lockTime=null;
 			user=this;
 			history.addFirst(new Authorization(this));
 			passTries=0;tries=0;
-			Main.frame=new WorkFrame(this);
+			ProgramStarter.frame=new WorkFrame(this);
 			new Message("Logged in succesfully!");
 			Runtime.getRuntime().addShutdownHook(new Thread(){
 				public void run(){logout();}

@@ -11,7 +11,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
-class HButton extends JButton{
+public class HButton extends JButton{
 	int scale,maxScale,reaction;
 	boolean pressed;
 	private final ReentrantLock lock=new ReentrantLock(true);
