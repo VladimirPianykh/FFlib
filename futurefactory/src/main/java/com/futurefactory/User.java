@@ -83,7 +83,10 @@ public class User implements Serializable{
 		user=new User(login,pass,userMap.isEmpty()?Role.ADMIN:Role.EMPTY);
 		userMap.put(login,user);
 	}
-	public static User getActiveUser(){return user;}
+	public static User getActiveUser(){
+		if(user==null)throw new RuntimeException("No user registered!");
+		return user;
+	}
 	public static int getUserCount(){
 		if(userMap==null)load();
 		return userMap.size();

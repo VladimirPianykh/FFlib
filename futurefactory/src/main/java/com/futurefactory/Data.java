@@ -23,6 +23,9 @@ public class Data implements Serializable{
 		}
 		public String name;
 		public ArrayList<ActionRecord>records=new ArrayList<ActionRecord>();
+		public Editable(){
+			records.add(new ActionRecord("Created.",User.getActiveUser()));
+		}
 	}
 	public ArrayList<Editable>editables=new ArrayList<Editable>();
 	private Data(){}
