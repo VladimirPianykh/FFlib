@@ -8,7 +8,11 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.TreeSet;
 
+/**
+ * Represents all the data (except the user-data).
+ */
 public class Data implements Serializable{
 	private static Data instance;
 	public static abstract class Editable{
@@ -28,7 +32,7 @@ public class Data implements Serializable{
 			records.add(new ActionRecord(":CREATED",User.getActiveUser()));
 		}
 	}
-	public ArrayList<Editable>editables=new ArrayList<Editable>();
+	public TreeSet<ArrayList<Editable>>editables=new TreeSet<ArrayList<Editable>>();
 	private Data(){}
 	public static Data getInstance(){
 		if(instance==null)try{

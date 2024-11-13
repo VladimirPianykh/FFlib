@@ -30,8 +30,10 @@ public class Message extends JWindow{
 		setVisible(true);
 		Wrapper<AWTEventListener>s=new Wrapper<AWTEventListener>(null);
 		s.var=e->{
-			dispose();
-			Toolkit.getDefaultToolkit().removeAWTEventListener(s.var);
+			if(e.getID()==501){
+				dispose();
+				Toolkit.getDefaultToolkit().removeAWTEventListener(s.var);
+			}
 		};
 		Toolkit.getDefaultToolkit().addAWTEventListener(s.var,AWTEvent.MOUSE_EVENT_MASK);
 	}

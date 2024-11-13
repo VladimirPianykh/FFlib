@@ -13,15 +13,13 @@ import java.awt.LinearGradientPaint;
 import java.awt.RadialGradientPaint;
 import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.event.ActionEvent;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
-import javax.swing.AbstractAction;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import com.futurefactory.User.DefaultFeature;
 import com.futurefactory.User.DefaultRole;
 import com.futurefactory.User.Feature;
 import com.futurefactory.User.Role;
@@ -38,7 +36,7 @@ public class WorkFrame extends JFrame{
 			g2.dispose();
 			JPanel tab=new JPanel(null);
 			Font font=new Font(Font.DIALOG,Font.PLAIN,content.getHeight()/20);
-			setAction(new AbstractAction(){
+			addActionListener(new ActionListener(){
 				public void actionPerformed(ActionEvent e){
 					if(tab.getComponentCount()>0){
 						((CardLayout)content.getLayout()).show(content,"tab"+index);
@@ -102,22 +100,20 @@ public class WorkFrame extends JFrame{
 		JScrollPane s=new JScrollPane(sidebar,JScrollPane.VERTICAL_SCROLLBAR_NEVER,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		s.setOpaque(false);
 		s.setBounds(0,0,getWidth(),getHeight()/4);
-		HButton exit=new HButton(){
-			private static final Color[]C1={new Color(112,30,4),new Color(115,55,3)},C2={new Color(135,123,35),new Color(110,100,32)};
-			private static final float[]FR={0,1};
-			public void paint(Graphics g){
+		HButton exit=new HButton(5,5){
+			public void paintComponent(Graphics g){
 				Graphics2D g2=(Graphics2D)g;
-				g2.setClip(new RoundRectangle2D.Double(0,0,getWidth(),getHeight(),getHeight()/10,getHeight()/10));
-				g2.setPaint(new RadialGradientPaint(getWidth(),getHeight(),getHeight(),FR,C1));
+				g2.setColor(new Color(scale*30+15,15,15));
 				g2.fillRect(0,0,getWidth(),getHeight());
-				Painter.lightInterBorder(g2,getWidth(),getHeight(),getForeground(),10);
-				g2.setStroke(new BasicStroke(scale==0?0:getHeight()/40));
-				g2.setPaint(new RadialGradientPaint(getWidth(),getHeight(),getHeight(),FR,C2));
-				g2.drawRoundRect(0,0,getWidth(),getHeight(),getHeight()/10,getHeight()/10);
+				g2.setStroke(new BasicStroke(getHeight()/10));
+				g2.setColor(Color.WHITE);
+				int h=scale*getHeight()/300;
+				g2.drawLine(getWidth()/4+h,getHeight()/4+h,getWidth()*3/4-h,getHeight()*3/4-h);
+				g2.drawLine(getWidth()*3/4-h,getHeight()/4+h,getWidth()/4+h,getHeight()*3/4-h);
 			}
 		};
 		exit.setForeground(new Color(54,23,13));
-		exit.setAction(new AbstractAction(){
+		exit.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				System.exit(0);
 			}

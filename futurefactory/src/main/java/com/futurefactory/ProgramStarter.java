@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.RadialGradientPaint;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.JFrame;
@@ -19,6 +20,10 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.ToolTipManager;
 
+/**
+ * Entry point of the program.
+ * To start your application, just initialize {@code Editor}, and invoke {@code runProgram()}.
+ */
 public class ProgramStarter{
 	public static WorkFrame frame;
 	public static IEditor editor;
@@ -61,27 +66,27 @@ public class ProgramStarter{
 		passLabel.setBounds(d.width/2-(fm.stringWidth("Password")+d.width/30),d.height/2-d.height/60,fm.stringWidth("Password")+d.width/60,d.height/30);
 		AbstractAction action=new AbstractAction(){
 			public void actionPerformed(ActionEvent e){
-				if(!(log.getText().isBlank()||pass.getText().isBlank())){
-					if(reg.on){
-						if(User.hasUser(log.getText()))new Message("Account already exists.");
-						else{
-							User.register(log.getText(),pass.getText());
-							new Message("User registered.");
-							f.dispose();
-						}
-					}else{
-						if(User.hasUser(log.getText())){
-							if(User.getUser(log.getText()).login(pass.getText())){
-								User.getActiveUser();
-								new Message("Successfully logged in.");
-								f.dispose();
-							}else new Message("Incorrect password.");
-						}else new Message("User is undefined.");
+				if(log.getText().isBlank()||pass.getText().isBlank())return;
+				if(reg.on){
+					if(User.hasUser(log.getText()))new Message("Account already exists.");
+					else{
+						User.register(log.getText(),pass.getText());
+						ProgramStarter.frame=new WorkFrame(User.getActiveUser());
+						new Message("User registered.");
+						f.dispose();
 					}
+				}else{
+					if(User.hasUser(log.getText())){
+						if(User.getUser(log.getText()).login(pass.getText())){
+							ProgramStarter.frame=new WorkFrame(User.getActiveUser());
+							new Message("Logged in succesfully!");
+							f.dispose();
+						}else new Message("Incorrect password.");
+					}else new Message("User is undefined.");
 				}
 			}
 		};
-		log.setAction(new AbstractAction(){
+		log.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){log.transferFocus();}
 		});
 		pass.setAction(action);
