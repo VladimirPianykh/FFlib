@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.TreeSet;
 
 /**
@@ -15,6 +16,13 @@ import java.util.TreeSet;
  */
 public class Data implements Serializable{
 	private static Data instance;
+	public static class EditableGroup extends ArrayList<Editable>{
+		public PathIcon icon;
+		public EditableGroup(PathIcon icon,Editable...elements){
+			this.icon=icon;
+			addAll(Arrays.asList(elements));
+		}
+	}
 	public static abstract class Editable{
 		public static class ActionRecord{
 			public String text;
@@ -32,7 +40,7 @@ public class Data implements Serializable{
 			records.add(new ActionRecord(":CREATED",User.getActiveUser()));
 		}
 	}
-	public TreeSet<ArrayList<Editable>>editables=new TreeSet<ArrayList<Editable>>();
+	public TreeSet<EditableGroup>editables=new TreeSet<EditableGroup>();
 	private Data(){}
 	public static Data getInstance(){
 		if(instance==null)try{
