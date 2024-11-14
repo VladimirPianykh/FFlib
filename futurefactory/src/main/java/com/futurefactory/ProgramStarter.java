@@ -56,7 +56,7 @@ public class ProgramStarter{
 		regText.setFont(font);
 		FontMetrics fm=regText.getFontMetrics(font);
 		reg.setBounds(d.width/2+d.width/60,d.height*2/3-d.height/60,d.width/25,d.height/30);
-		regText.setBounds(d.width/2-(fm.stringWidth("Зарегистрировать нового пользователя")+d.width/30),d.height*2/3-d.height/60,fm.stringWidth("Register new user")+d.width/60,d.height/30);
+		regText.setBounds(d.width/2-(fm.stringWidth("Зарегистрировать нового пользователя")+d.width/30),d.height*2/3-d.height/60,fm.stringWidth("Зарегистрировать нового пользователя")+d.width/60,d.height/30);
 		JTextField log=new JTextField(),pass=new JTextField();
 		JLabel logLabel=new JLabel("Логин"),passLabel=new JLabel("Пароль");
 		logLabel.setFont(font);passLabel.setFont(font);
