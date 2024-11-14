@@ -20,9 +20,10 @@ import java.util.HashMap;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import com.futurefactory.User.DefaultRole;
+
 import com.futurefactory.User.Feature;
 import com.futurefactory.User.Role;
+import com.futurefactory.defaults.DefaultRole;
 
 public class WorkFrame extends JFrame{
 	public static class WorkTabButton extends HButton{
@@ -70,6 +71,7 @@ public class WorkFrame extends JFrame{
 	public static HashMap<Role,Feature[]>ftrMap=new HashMap<Role,Feature[]>();
 	static{
 		ftrMap.put(DefaultRole.ADMIN,User.registeredFeatures.toArray(new Feature[0]));
+		ftrMap.put(DefaultRole.EMPTY,new Feature[0]);
 	}
 	public WorkFrame(User user){
 		setSize(Root.SCREEN_SIZE);
