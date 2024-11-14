@@ -46,23 +46,24 @@ public enum DefaultFeature implements Feature{
 			g2.fill(p);
 		}
 		public void fillTab(JPanel content,JPanel tab,Font font){
-			JPanel p=WorkTabButton.createTable(User.getActiveUser().history.size()+1,4,tab);
-			JLabel[]data0={new JLabel("login"),new JLabel("login time"),new JLabel("logout time"),new JLabel("IP")};
+			JPanel p=WorkTabButton.createTable(User.getActiveUser().history.size()+1,4,tab,true);
+			JLabel[]data0={new JLabel("логин"),new JLabel("время входа"),new JLabel("время выхода"),new JLabel("IP")};
 			for(JLabel l:data0){
 				l.setFont(font);
-				l.setForeground(Color.BLACK);
+				l.setForeground(Color.WHITE);
 				p.add(l);
 			}
 			User.getActiveUser().history.descendingIterator().forEachRemaining(a->{
 				JLabel[]data={new JLabel(a.login),new JLabel(a.inTime.toString()),new JLabel(a.outTime==null?"---":a.outTime.toString()),new JLabel(a.ip.toString())};
 				for(JLabel l:data){
 					l.setFont(font);
+					l.setForeground(Color.LIGHT_GRAY);
 					l.setToolTipText(l.getText());
 					p.add(l);
 				}
 			});
 		}
-		public String toString(){return "История запросов";}
+		public String toString(){return "История входов";}
 	},
 	ROLE_SETTING{
 		public void paint(Graphics2D g2,BufferedImage image,int h){
@@ -71,12 +72,16 @@ public enum DefaultFeature implements Feature{
 			g2.drawPolyline(new int[]{h/4,h/2-h/10,h/2+h/10,h*3/4},new int[]{h,h/2+h/15,h/2+h/15,h},4);
 		}
 		public void fillTab(JPanel content,JPanel tab,Font font){
-			JPanel p=WorkTabButton.createTable(User.getUserCount(),5,tab);
+			JPanel p=WorkTabButton.createTable(User.getUserCount(),5,tab,true);
 			Role[]roles=User.registeredRoles.toArray(new Role[0]);
 			User.forEachUser(u->{
 				JLabel name=new JLabel(u.login);
 				name.setFont(font);
+				name.setForeground(Color.WHITE);
 				JComboBox<Role>b=new JComboBox<Role>(roles);
+				b.setBackground(Color.DARK_GRAY);
+				b.setForeground(Color.LIGHT_GRAY);
+				b.setBorder(null);
 				b.setSelectedItem(u.role);
 				name.addMouseListener(new MouseAdapter(){
 					public void mouseClicked(MouseEvent e){
@@ -122,7 +127,7 @@ public enum DefaultFeature implements Feature{
 			g2.drawRect(s/10,s/3,s*4/5,s/3);
 			Color c1=new Color(42,46,30),c2=new Color(32,36,21);
 			for(ArrayList<Editable>group:Data.getInstance().editables){
-				JPanel p=WorkTabButton.createTable(d.editables.size()+(User.getActiveUser().hasPermission(DefaultPermission.CREATE)?1:0),1,tab);
+				JPanel p=WorkTabButton.createTable(d.editables.size()+(User.getActiveUser().hasPermission(DefaultPermission.CREATE)?1:0),1,tab,false);
 				for(Editable r:group){
 					HButton b=new HButton(){
 						public void paintComponent(Graphics g){

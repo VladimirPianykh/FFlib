@@ -3,6 +3,10 @@ package com.futurefactory.defaults;
 import com.futurefactory.User.Role;
 
 public enum DefaultRole implements Role{
-	EMPTY,
-	ADMIN
+	EMPTY{
+		public String toString(){return "НЕ ЗАДАНА";}
+	},
+	ADMIN{
+		public String toString(){return "АДМИНИСТРАТОР";}
+	}
 }

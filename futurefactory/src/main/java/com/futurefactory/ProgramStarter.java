@@ -17,16 +17,25 @@ import javax.swing.AbstractAction;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ToolTipManager;
 
 /**
  * Entry point of the program.
  * To start your application, just initialize {@code Editor}, and invoke {@code runProgram()}.
+ * 
+ * <p>
+ * 	You can also (optionally) set:
+ * 	<pre>
+ * 	- {@code welcomeMessage}
+ * 	<pre>
+ * </p>
  */
 public class ProgramStarter{
 	public static WorkFrame frame;
 	public static IEditor editor;
+	public static String welcomeMessage;
 	public static void runProgram(){
 		new File(Root.folder).mkdirs();
 		ToolTipManager.sharedInstance().setInitialDelay(0);
@@ -54,12 +63,14 @@ public class ProgramStarter{
 		Switcher reg=new Switcher();
 		JLabel regText=new JLabel("Зарегистрировать нового пользователя");
 		regText.setFont(font);
+		regText.setForeground(Color.BLACK);
 		FontMetrics fm=regText.getFontMetrics(font);
 		reg.setBounds(d.width/2+d.width/60,d.height*2/3-d.height/60,d.width/25,d.height/30);
 		regText.setBounds(d.width/2-(fm.stringWidth("Зарегистрировать нового пользователя")+d.width/30),d.height*2/3-d.height/60,fm.stringWidth("Зарегистрировать нового пользователя")+d.width/60,d.height/30);
 		JTextField log=new JTextField(),pass=new JTextField();
 		JLabel logLabel=new JLabel("Логин"),passLabel=new JLabel("Пароль");
 		logLabel.setFont(font);passLabel.setFont(font);
+		logLabel.setForeground(Color.BLACK);passLabel.setForeground(Color.BLACK);
 		log.setBounds(d.width/2+d.width/60,d.height/2-(d.height/25+d.height/60),d.width/5,d.height/30);
 		pass.setBounds(d.width/2+d.width/60,d.height/2-d.height/60,d.width/5,d.height/30);
 		logLabel.setBounds(d.width/2-(fm.stringWidth("Логин")+d.width/30),d.height/2-(d.height/25+d.height/60),fm.stringWidth("Логин")+d.width/60,d.height/30);
@@ -68,11 +79,11 @@ public class ProgramStarter{
 			public void actionPerformed(ActionEvent e){
 				if(log.getText().isBlank()||pass.getText().isBlank())return;
 				if(reg.on){
-					if(User.hasUser(log.getText()))new Message("Account already exists.");
+					if(User.hasUser(log.getText()))new Message("Аккаунт уже существует.");
 					else{
 						User.register(log.getText(),pass.getText());
 						ProgramStarter.frame=new WorkFrame(User.getActiveUser());
-						new Message("User registered.");
+						new Message("Пользователь зарегистрирован.");
 						f.dispose();
 					}
 				}else{
@@ -102,8 +113,19 @@ public class ProgramStarter{
 			}
 		};
 		confirm.setFont(new Font(Font.DIALOG_INPUT,Font.BOLD,font.getSize()*2));
-		confirm.setBounds(d.width*2/5,d.height*9/10,d.width/5,d.height/10);
+		confirm.setBounds(d.width*3/10,d.height*9/10,d.width*2/5,d.height/10);
 		confirm.setAction(action);
+		JTextArea a=new JTextArea(welcomeMessage);
+		a.setBounds(d.width/5,d.height/5,d.width*3/5,d.height/5);
+		a.setEditable(false);
+		a.setFocusable(false);
+		a.setOpaque(false);
+		a.setBorder(null);
+		a.setLineWrap(true);
+		a.setWrapStyleWord(true);
+		a.setFont(font.deriveFont(Font.ITALIC));
+		a.setForeground(Color.BLACK);
+		f.add(a);
 		f.add(reg);f.add(regText);
 		f.add(log);f.add(logLabel);
 		f.add(pass);f.add(passLabel);

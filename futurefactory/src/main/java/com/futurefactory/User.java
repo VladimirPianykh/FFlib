@@ -141,7 +141,7 @@ public class User implements Serializable{
 		}else{
 			passTries++;tries++;
 			save();
-			new Message("Incorrect password.");
+			new Message("Неверный пароль.");
 			return false;
 		}
 	}
