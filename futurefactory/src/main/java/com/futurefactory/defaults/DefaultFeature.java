@@ -3,14 +3,9 @@ package com.futurefactory.defaults;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.LinearGradientPaint;
+import java.awt.GridLayout;
 import java.awt.Polygon;
-import java.awt.RadialGradientPaint;
-import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -19,19 +14,19 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import com.futurefactory.Data;
-import com.futurefactory.HButton;
 import com.futurefactory.ProgramStarter;
 import com.futurefactory.User;
 import com.futurefactory.WorkFrame;
 import com.futurefactory.Data.Editable;
+import com.futurefactory.Data.EditableGroup;
 import com.futurefactory.User.Feature;
 import com.futurefactory.User.Role;
 import com.futurefactory.WorkFrame.WorkTabButton;
@@ -115,60 +110,31 @@ public enum DefaultFeature implements Feature{
 		}
 		public void fillTab(JPanel content,JPanel tab,Font font){
 			Data d=Data.getInstance();
-			int s=content.getHeight()/7;
-			BufferedImage editImage=new BufferedImage(content.getHeight()/7,content.getHeight()/7,6),
-			addImage=new BufferedImage(content.getHeight()/7,content.getHeight()/7,6);
-			Graphics2D g2=addImage.createGraphics();
-			g2.setPaint(new RadialGradientPaint(s/2,s/2,s/2,new float[]{0,1},new Color[]{new Color(94,86,82),new Color(66,60,57)}));
-			g2.fillRect(0,0,s,s);
-			g2.setStroke(new BasicStroke(s/40,2,2));
-			g2.setPaint(new RadialGradientPaint(s/2,s/2,s/2,new float[]{0,1},new Color[]{new Color(110,128,40),new Color(81,92,36)}));
-			g2.drawRect(s/3,s/10,s/3,s*4/5);
-			g2.drawRect(s/10,s/3,s*4/5,s/3);
-			Color c1=new Color(42,46,30),c2=new Color(32,36,21);
-			for(ArrayList<Editable>group:Data.getInstance().editables){
+			// int s=content.getHeight()/7;
+			// BufferedImage editImage=new BufferedImage(content.getHeight()/7,content.getHeight()/7,6),
+			// addImage=new BufferedImage(content.getHeight()/7,content.getHeight()/7,6);
+			// Graphics2D g2=addImage.createGraphics();
+			// g2.setPaint(new RadialGradientPaint(s/2,s/2,s/2,new float[]{0,1},new Color[]{new Color(94,86,82),new Color(66,60,57)}));
+			// g2.fillRect(0,0,s,s);
+			// g2.setStroke(new BasicStroke(s/40,2,2));
+			// g2.setPaint(new RadialGradientPaint(s/2,s/2,s/2,new float[]{0,1},new Color[]{new Color(110,128,40),new Color(81,92,36)}));
+			// g2.drawRect(s/3,s/10,s/3,s*4/5);
+			// g2.drawRect(s/10,s/3,s*4/5,s/3);
+			tab.setLayout(new GridLayout(1,Data.getInstance().editables.size()));
+			for(EditableGroup group:Data.getInstance().editables){
 				JPanel p=WorkTabButton.createTable(d.editables.size()+(User.getActiveUser().hasPermission(DefaultPermission.CREATE)?1:0),1,tab,false);
 				for(Editable r:group){
-					HButton b=new HButton(){
-						public void paintComponent(Graphics g){
-							Graphics2D g2=(Graphics2D)g;
-							g2.setColor(Color.GRAY);
-							g2.fillRect(0,0,getWidth(),getHeight());
-							g2.setFont(font);
-							FontMetrics fm=g2.getFontMetrics();
-							g2.setPaint(new GradientPaint(0,0,c1,0,getHeight(),c2));
-							g2.drawString(r.name,getWidth()/100,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
-							g2.drawImage(editImage,getWidth()-editImage.getWidth(),0,this);
-							g2.setColor(new Color(0,0,0,scale*10));
-							g2.fillRect(0,0,getWidth(),getHeight());
-							if(true){//FILLIN
-								g2.setPaint(new LinearGradientPaint(getWidth()-getHeight()/2,getHeight()/4,getWidth(),getHeight()*3/4,new float[]{0,0.5f},new Color[]{new Color(89+scale*5,87,63),new Color(122+scale*5,119,80)},CycleMethod.REFLECT));
-								g2.fillOval(getWidth()-getHeight()*9/8,getHeight()/8+1,getHeight()*3/4-1,getHeight()*3/4-1);
-								g2.setPaint(new LinearGradientPaint(getWidth()-getHeight()/2,getHeight()/4,getWidth(),getHeight()*3/4,new float[]{0,0.5f},new Color[]{new Color(135+scale*5,52,14),new Color(194+scale*5,47,17)},CycleMethod.REFLECT));
-								g2.fillOval(getWidth()-getHeight(),getHeight()/4,getHeight()/2,getHeight()/2);
-								g2.setPaint(new LinearGradientPaint(getWidth()-getHeight()/2,getHeight()/4,getWidth(),getHeight()*3/4,new float[]{0,0.5f},new Color[]{new Color(54,51,36),new Color(77,74,56)},CycleMethod.REFLECT));
-								g2.drawOval(getWidth()-getHeight(),getHeight()/4,getHeight()/2,getHeight()/2);
-								g2.drawOval(getWidth()-getHeight()*9/8,getHeight()/8+1,getHeight()*3/4-1,getHeight()*3/4-1);
-							}
-						}
-					};
+					JButton b=group.createElementButton(r,font);
 					b.addActionListener(new ActionListener(){
 						public void actionPerformed(ActionEvent e){
-							if(ProgramStarter.editor==null)throw new RuntimeException("Editor ha not been set.");
+							if(ProgramStarter.editor==null)throw new RuntimeException("Editor has not been set.");
 							ProgramStarter.editor.constructEditor(r);
 						}
 					});
 					p.add(b);
 				};
 				if(User.getActiveUser().hasPermission(DefaultPermission.CREATE)){
-					HButton add=new HButton(){
-					public void paintComponent(Graphics g){
-						g.setColor(Color.GRAY);
-						g.fillRect(0,0,getWidth(),getHeight());
-						g.drawImage(addImage,(getWidth()-addImage.getWidth())/2,0,this);
-						g.setColor(new Color(0,0,0,scale*10));
-						g.fillRect(0,0,getWidth(),getHeight());
-					}};
+					JButton add=group.createAddButton(font);
 					add.addActionListener(new ActionListener(){
 						public void actionPerformed(ActionEvent e){
 							if(ProgramStarter.editor==null)throw new RuntimeException("Editor ha not been set.");
@@ -179,6 +145,7 @@ public enum DefaultFeature implements Feature{
 					});
 					p.add(add);
 				}
+				tab.add(p);
 			}
 		}
 		public String toString(){return "Редактирование данных";}
