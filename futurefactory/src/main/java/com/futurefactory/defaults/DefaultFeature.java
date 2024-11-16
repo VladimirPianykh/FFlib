@@ -32,7 +32,7 @@ import com.futurefactory.User.Role;
 import com.futurefactory.WorkFrame.WorkTabButton;
 
 public enum DefaultFeature implements Feature{
-	HISTORY{
+	HISTORY("История входов"){
 		public void paint(Graphics2D g2,BufferedImage image,int h){
 			Area p=new Area(new Arc2D.Double(h/10,h/10,h*4/5,h*4/5,-90,270,Arc2D.PIE));
 			p.subtract(new Area(new Ellipse2D.Double(h/5,h/5,h*3/5,h*3/5)));
@@ -58,9 +58,8 @@ public enum DefaultFeature implements Feature{
 				}
 			});
 		}
-		public String toString(){return "История входов";}
 	},
-	ROLE_SETTING{
+	ROLE_SETTING("Управление ролями"){
 		public void paint(Graphics2D g2,BufferedImage image,int h){
 			g2.setStroke(new BasicStroke(h/15,2,0));
 			g2.drawOval(h/3,h/3-h/6,h/3,h/3);
@@ -99,9 +98,8 @@ public enum DefaultFeature implements Feature{
 				p.add(b);
 			});
 		}
-		public String toString(){return "Управление ролями";}
 	},
-	MODEL_EDITING{
+	MODEL_EDITING("Редактирование данных"){
 		public void paint(Graphics2D g2,BufferedImage image,int h){
 			g2.setStroke(new BasicStroke(h/40));
 			g2.drawPolyline(new int[]{h/4,h/4+h/20,h*3/4+h/20,h*3/4+h/20+h/10,h*3/4+h/5,h*3/4+h/5,h*3/4+h/5-h/40,h*3/4+h/5-h/40,h*3/4+h/20+h/10,h*3/4+h/40},new int[]{h*3/4,h*3/4,h/4,h/4,h/4-h/20,h/4-h/20-h/10,h/4-h/20-h/10,h/4-h/10,h/4-h/20,h/4-h/20},10);
@@ -121,8 +119,11 @@ public enum DefaultFeature implements Feature{
 			// g2.drawRect(s/3,s/10,s/3,s*4/5);
 			// g2.drawRect(s/10,s/3,s*4/5,s/3);
 			tab.setLayout(new GridLayout(1,Data.getInstance().editables.size()));
-			for(EditableGroup group:Data.getInstance().editables){
-				JPanel p=WorkTabButton.createTable(d.editables.size()+(User.getActiveUser().hasPermission(DefaultPermission.CREATE)?1:0),1,tab,false);
+			for(EditableGroup<?>group:d.editables){
+				JPanel subTab=new JPanel(null);
+				subTab.setOpaque(false);
+				subTab.setSize(tab.getWidth()/Data.getInstance().editables.size(),tab.getHeight());
+				JPanel p=WorkTabButton.createTable(group.size()+(User.getActiveUser().hasPermission(DefaultPermission.CREATE)?1:0),1,subTab,false);
 				for(Editable r:group){
 					JButton b=group.createElementButton(r,font);
 					b.addActionListener(new ActionListener(){
@@ -137,19 +138,25 @@ public enum DefaultFeature implements Feature{
 					JButton add=group.createAddButton(font);
 					add.addActionListener(new ActionListener(){
 						public void actionPerformed(ActionEvent e){
-							if(ProgramStarter.editor==null)throw new RuntimeException("Editor ha not been set.");
-							ProgramStarter.editor.constructEditor(null);
-							SwingUtilities.getWindowAncestor(content).dispose();
-							ProgramStarter.frame=new WorkFrame(User.getActiveUser());
+							try{
+								if(ProgramStarter.editor==null)throw new RuntimeException("Editor has not been set.");
+								Editable nEditable=null;
+								nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
+								group.add(nEditable);
+								ProgramStarter.editor.constructEditor(nEditable);
+								SwingUtilities.getWindowAncestor(content).dispose();
+								ProgramStarter.frame=new WorkFrame(User.getActiveUser());
+							}catch(Exception ex){throw new RuntimeException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}
 						}
 					});
 					p.add(add);
 				}
-				tab.add(p);
+				tab.add(subTab);
 			}
+			tab.revalidate();
+			tab.repaint(); 
 		}
-		public String toString(){return "Редактирование данных";}
-	},
+	};
 	/*REPORT{
 		public void paint(Graphics2D g2,BufferedImage image,int h){
 			g2.setStroke(new BasicStroke(h/15,2,0));
@@ -196,4 +203,7 @@ public enum DefaultFeature implements Feature{
 			tab.add(b);
 		}
 	}*/
+	private final String translation;
+	private DefaultFeature(String translation){this.translation=translation;}
+	public String toString(){return translation;}
 }

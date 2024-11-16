@@ -60,15 +60,10 @@ public class WorkFrame extends JFrame{
 			setText(feature.toString());
 			addActionListener(new ActionListener(){
 				public void actionPerformed(ActionEvent e){
-					if(tab.getComponentCount()>0){
-						((CardLayout)content.getLayout()).show(content,"tab"+index);
-						content.revalidate();
-						return;
-					}
-					feature.fillTab(content,tab,font);
+					if(tab.getComponentCount()==0)feature.fillTab(content,tab,font);
 					((CardLayout)content.getLayout()).show(content,"tab"+index);
 					content.revalidate();
-				}	
+				}
 			});
 			content.add(tab,"tab"+index);
 		}
