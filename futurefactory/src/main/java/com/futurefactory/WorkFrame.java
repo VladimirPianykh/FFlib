@@ -128,7 +128,7 @@ public class WorkFrame extends JFrame{
 				g2.drawLine(getWidth()*3/4-h,getHeight()/4+h,getWidth()/4+h,getHeight()*3/4-h);
 			}
 		};
-		exit.addActionListener(e->System.exit(0));
+		exit.addActionListener(e->{Data.save();System.exit(0);});
 		exit.setBounds(0,0,getHeight()/4,getHeight()/4);
 		exit.setForeground(new Color(54,23,13));
 		exit.setBorder(null);

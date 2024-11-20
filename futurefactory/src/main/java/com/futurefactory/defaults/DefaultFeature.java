@@ -30,6 +30,7 @@ import com.futurefactory.Data.EditableGroup;
 import com.futurefactory.User.Feature;
 import com.futurefactory.User.Role;
 import com.futurefactory.WorkFrame.WorkTabButton;
+import java.util.NoSuchElementException;
 
 public enum DefaultFeature implements Feature{
 	HISTORY("История входов"){
@@ -108,50 +109,44 @@ public enum DefaultFeature implements Feature{
 		}
 		public void fillTab(JPanel content,JPanel tab,Font font){
 			Data d=Data.getInstance();
-			// int s=content.getHeight()/7;
-			// BufferedImage editImage=new BufferedImage(content.getHeight()/7,content.getHeight()/7,6),
-			// addImage=new BufferedImage(content.getHeight()/7,content.getHeight()/7,6);
-			// Graphics2D g2=addImage.createGraphics();
-			// g2.setPaint(new RadialGradientPaint(s/2,s/2,s/2,new float[]{0,1},new Color[]{new Color(94,86,82),new Color(66,60,57)}));
-			// g2.fillRect(0,0,s,s);
-			// g2.setStroke(new BasicStroke(s/40,2,2));
-			// g2.setPaint(new RadialGradientPaint(s/2,s/2,s/2,new float[]{0,1},new Color[]{new Color(110,128,40),new Color(81,92,36)}));
-			// g2.drawRect(s/3,s/10,s/3,s*4/5);
-			// g2.drawRect(s/10,s/3,s*4/5,s/3);
 			tab.setLayout(new GridLayout(1,Data.getInstance().editables.size()));
 			for(EditableGroup<?>group:d.editables){
-				JPanel subTab=new JPanel(null);
-				subTab.setOpaque(false);
-				subTab.setSize(tab.getWidth()/Data.getInstance().editables.size(),tab.getHeight());
-				JPanel p=WorkTabButton.createTable(group.size()+(User.getActiveUser().hasPermission(DefaultPermission.CREATE)?1:0),1,subTab,false);
-				for(Editable r:group){
-					JButton b=group.createElementButton(r,font);
-					b.addActionListener(new ActionListener(){
-						public void actionPerformed(ActionEvent e){
-							if(ProgramStarter.editor==null)throw new RuntimeException("Editor has not been set.");
-							ProgramStarter.editor.constructEditor(r);
-						}
-					});
-					p.add(b);
-				};
-				if(User.getActiveUser().hasPermission(DefaultPermission.CREATE)){
-					JButton add=group.createAddButton(font);
-					add.addActionListener(new ActionListener(){
-						public void actionPerformed(ActionEvent e){
-							try{
+				try{
+					boolean canSee=User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
+					canCreate=User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
+					JPanel subTab=new JPanel(null);
+					subTab.setOpaque(false);
+					subTab.setSize(tab.getWidth()/Data.getInstance().editables.size(),tab.getHeight());
+					JPanel p=WorkTabButton.createTable(group.size()+(canCreate?1:0),1,subTab,false);
+					if(canSee)for(Editable r:group){
+						JButton b=group.createElementButton(r,font);
+						b.addActionListener(new ActionListener(){
+							public void actionPerformed(ActionEvent e){
 								if(ProgramStarter.editor==null)throw new RuntimeException("Editor has not been set.");
-								Editable nEditable=null;
-								nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
-								group.add(nEditable);
-								ProgramStarter.editor.constructEditor(nEditable);
-								SwingUtilities.getWindowAncestor(content).dispose();
-								ProgramStarter.frame=new WorkFrame(User.getActiveUser());
-							}catch(Exception ex){throw new RuntimeException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}
-						}
-					});
-					p.add(add);
-				}
-				tab.add(subTab);
+								ProgramStarter.editor.constructEditor(r);
+							}
+						});
+						p.add(b);
+					}
+					if(canCreate){
+						JButton add=group.createAddButton(font);
+						add.addActionListener(new ActionListener(){
+							public void actionPerformed(ActionEvent e){
+								try{
+									if(ProgramStarter.editor==null)throw new RuntimeException("Editor has not been set.");
+									Editable nEditable=null;
+									nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
+									group.add(nEditable);
+									ProgramStarter.editor.constructEditor(nEditable);
+									SwingUtilities.getWindowAncestor(content).dispose();
+									ProgramStarter.frame=new WorkFrame(User.getActiveUser());
+								}catch(Exception ex){throw new RuntimeException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}
+							}
+						});
+						p.add(add);
+					}
+					tab.add(subTab);
+				}catch(NoSuchElementException ex){throw new RuntimeException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.",ex);}
 			}
 			tab.revalidate();
 			tab.repaint(); 

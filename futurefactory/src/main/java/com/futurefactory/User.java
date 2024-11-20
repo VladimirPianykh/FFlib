@@ -3,6 +3,7 @@ package com.futurefactory;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -45,7 +46,9 @@ public class User implements Serializable{
 		public void paint(Graphics2D g2,BufferedImage image,int h);
 		public void fillTab(JPanel content,JPanel tab,Font font);
 	}
-	public static interface Permission{}
+	public static interface Permission{
+		public String name();
+	}
 	private static HashMap<String,User>userMap;
 	public static ArrayList<Role>registeredRoles=new ArrayList<Role>();
 	public static ArrayList<Permission>registeredPermissions=new ArrayList<Permission>();
@@ -109,6 +112,7 @@ public class User implements Serializable{
 	}
 	public static void save(){
 		try{
+			new File(Root.folder).mkdirs();
 			FileOutputStream fOS=new FileOutputStream(Root.folder+"Users.ser");
 			ObjectOutputStream oOS=new ObjectOutputStream(fOS);
 			oOS.writeObject(User.userMap);
@@ -149,4 +153,5 @@ public class User implements Serializable{
 		history.getFirst().writeLogout();
 		save();
 	}
+	public String toString(){return login;}
 }

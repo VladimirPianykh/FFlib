@@ -82,8 +82,8 @@ public class Data implements Serializable{
 		@SuppressWarnings("rawtypes")
 		public boolean equals(Object o){return o instanceof EditableGroup&&((EditableGroup)o).type.equals(type);}
 	}
-	public static abstract class Editable{
-		public static class ActionRecord{
+	public static abstract class Editable implements Serializable{
+		public static class ActionRecord implements Serializable{
 			public String text;
 			public User source;
 			public LocalDateTime time;
@@ -100,7 +100,6 @@ public class Data implements Serializable{
 		}
 	}
 	public HashSet<EditableGroup<?>>editables=new HashSet<EditableGroup<?>>();
-	private Data(){}
 	public static Data getInstance(){
 		if(instance==null)try{
 			FileInputStream fIS=new FileInputStream(Root.folder+"Data.ser");
@@ -112,7 +111,7 @@ public class Data implements Serializable{
 		}catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Data corrupted");}
 		return instance;
 	}
-	static void save(){
+	public static void save(){
 		try{
 			FileOutputStream fOS=new FileOutputStream(Root.folder+"Data.ser");
 			ObjectOutputStream oOS=new ObjectOutputStream(fOS);
@@ -120,4 +119,9 @@ public class Data implements Serializable{
 			oOS.close();fOS.close();
 		}catch(IOException ex){ex.printStackTrace();}
 	}
+	public EditableGroup<?>getGroup(Class<? extends Editable>type){
+		for(EditableGroup<?>group:editables)if(group.type.equals(type))return group;
+		throw new IllegalArgumentException("There is no group of type "+type.getName());
+	}
+	private Data(){}
 }
