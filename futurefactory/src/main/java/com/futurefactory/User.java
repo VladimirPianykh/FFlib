@@ -50,10 +50,10 @@ public class User implements Serializable{
 		public String name();
 	}
 	private static HashMap<String,User>userMap;
-	public static ArrayList<Role>registeredRoles=new ArrayList<Role>();
-	public static ArrayList<Permission>registeredPermissions=new ArrayList<Permission>();
-	public static ArrayList<Feature>registeredFeatures=new ArrayList<Feature>();
-	public static HashMap<Role,Permission[]>permissions=new HashMap<Role,Permission[]>();
+	public static ArrayList<Role>registeredRoles=new ArrayList<>();
+	public static ArrayList<Permission>registeredPermissions=new ArrayList<>();
+	public static ArrayList<Feature>registeredFeatures=new ArrayList<>();
+	public static HashMap<Role,Permission[]>permissions=new HashMap<>();
 	static{
 		for(Role r:DefaultRole.values())registeredRoles.add(r);
 		for(Feature f:DefaultFeature.values())registeredFeatures.add(f);

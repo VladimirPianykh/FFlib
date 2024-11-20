@@ -37,6 +37,9 @@ public class ProgramStarter{
 	public static WorkFrame frame;
 	public static IEditor editor;
 	public static String welcomeMessage;
+	/**
+	 * Indicates whether to require password ({@code true}) or just ask to choose the role.
+	 */
 	public static boolean authRequired=true;
 	public static void runProgram(){
 		new File(Root.folder).mkdirs();

@@ -118,6 +118,7 @@ public enum DefaultFeature implements Feature{
 					subTab.setOpaque(false);
 					subTab.setSize(tab.getWidth()/Data.getInstance().editables.size(),tab.getHeight());
 					JPanel p=WorkTabButton.createTable(group.size()+(canCreate?1:0),1,subTab,false);
+					//TODO: remove empty space
 					if(canSee)for(Editable r:group){
 						JButton b=group.createElementButton(r,font);
 						b.addActionListener(new ActionListener(){
