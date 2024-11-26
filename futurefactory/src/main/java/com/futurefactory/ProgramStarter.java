@@ -22,20 +22,24 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ToolTipManager;
 
+import com.futurefactory.editor.IEditor;
+import com.futurefactory.editor.ModuleEditor;
+
 /**
  * Entry point of the program.
- * To start your application, just initialize {@code Editor}, and invoke {@code runProgram()}.
+ * To start your application, just invoke {@code runProgram()}.
  * 
  * <p>
  * 	You can also (optionally) set:
  * 	<pre>
+ *  - {@code editor}
  * 	- {@code welcomeMessage}
  * 	<pre>
  * </p>
  */
 public class ProgramStarter{
 	public static WorkFrame frame;
-	public static IEditor editor;
+	public static IEditor editor=new ModuleEditor();
 	public static String welcomeMessage;
 	/**
 	 * Indicates whether to require password ({@code true}) or just ask to choose the role.
