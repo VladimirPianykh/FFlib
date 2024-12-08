@@ -23,7 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.ToolTipManager;
 
 import com.futurefactory.editor.IEditor;
-import com.futurefactory.editor.ModuleEditor;
+import com.futurefactory.editor.ModularEditor;
 
 /**
  * Entry point of the program.
@@ -38,13 +38,17 @@ import com.futurefactory.editor.ModuleEditor;
  * </p>
  */
 public class ProgramStarter{
+	private static boolean firstLaunch=!new File(Root.folder).exists();
 	public static WorkFrame frame;
-	public static IEditor editor=new ModuleEditor();
+	public static IEditor editor=new ModularEditor();
 	public static String welcomeMessage;
 	/**
 	 * Indicates whether to require password ({@code true}) or just ask to choose the role.
 	 */
 	public static boolean authRequired=true;
+	public static boolean isFirstLaunch(){
+		return firstLaunch;
+	}
 	public static void runProgram(){
 		new File(Root.folder).mkdirs();
 		ToolTipManager.sharedInstance().setInitialDelay(0);

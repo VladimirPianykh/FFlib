@@ -1,10 +1,12 @@
 package com.futurefactory.editor;
 
 import com.futurefactory.Data;
+import com.futurefactory.Wrapper;
 
-import java.awt.*;
 import java.lang.reflect.Field;
 
+import javax.swing.JComponent;
+
 public interface EditorEntryBase {
-    Component createEditorBase(Data.Editable o, Field f);
+    JComponent createEditorBase(Data.Editable o,Field f,Wrapper<Runnable>saver);
 }

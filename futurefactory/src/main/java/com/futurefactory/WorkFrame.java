@@ -1,5 +1,6 @@
 package com.futurefactory;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -36,7 +37,7 @@ public class WorkFrame extends JFrame{
 			int h=content.getHeight()/3;
 			image=new BufferedImage(h,h,6);
 			Graphics2D g2=image.createGraphics();
-			g2.setPaint(new GradientPaint(0,0,new Color(13,16,31,100),h,h,new Color(11,18,31,100)));
+			g2.setPaint(new GradientPaint(0,0,new Color(13,16,31),h,h,new Color(11,18,31)));
 			feature.paint(g2,image,h);
 			g2.dispose();
 			JPanel tab=new JPanel(null){
@@ -71,7 +72,9 @@ public class WorkFrame extends JFrame{
 			Graphics2D g2=(Graphics2D)g;
 			g2.setPaint(new LinearGradientPaint(0,0,getWidth()/2,getHeight()/2,new float[]{0,1},new Color[]{new Color(50-scale*2,50-scale,50-scale*2),Color.GRAY},CycleMethod.REFLECT));
 			g2.fillRect(0,0,getWidth(),getHeight());
+			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,0.45f));
 			g2.drawImage(image,0,0,this);
+			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
 			FontMetrics fm=g2.getFontMetrics();
 			g2.setColor(Color.BLACK);
 			String[]t=getText().split(" ");

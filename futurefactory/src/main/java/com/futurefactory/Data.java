@@ -7,6 +7,7 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -15,12 +16,15 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import javax.swing.JButton;
 
+import com.futurefactory.defaults.features.TaskBoard;
+
 /**
- * Represents all the data (except the user-data).
+ * A singletone that represents all editable data.
  */
 public class Data implements Serializable{
 	private static Data instance;
@@ -70,12 +74,18 @@ public class Data implements Serializable{
 			};
 		}
 		public PathIcon elementIcon,addIcon;
+		public boolean invisible;
 		@SafeVarargs
 		public EditableGroup(PathIcon elementIcon,PathIcon addIcon,Class<T>type,T...elements){
 			this.elementIcon=elementIcon;
 			this.addIcon=addIcon;
 			this.type=type;
 			addAll(Arrays.asList(elements));
+		}
+		@SafeVarargs
+		public EditableGroup(Class<T>type,T...elements){
+			this(null,null,type,elements);
+			this.invisible=true;
 		}
 		@SuppressWarnings("unchecked")
 		public boolean add(Editable e){return super.add((T)e);}
@@ -88,7 +98,8 @@ public class Data implements Serializable{
 			public User source;
 			public LocalDateTime time;
 			public ActionRecord(String text,User source){
-				this.text=text;this.source=source;
+				this.text=text;
+				this.source=source;
 				time=LocalDateTime.now();
 			}
 		}
@@ -99,26 +110,41 @@ public class Data implements Serializable{
 			records.add(new ActionRecord(":CREATED",User.getActiveUser()));
 		}
 	}
+	/**
+	 * An interface for creating {@link com.futurefactory.defaults.features.TaskBoard TaskBoards}
+	 */
+	public static abstract class Task implements Serializable{
+		
+	}
 	public HashSet<EditableGroup<?>>editables=new HashSet<EditableGroup<?>>();
+	public HashMap<String,TaskBoard<?>>boards=new HashMap<>();
 	public static Data getInstance(){
 		if(instance==null)try{
 			FileInputStream fIS=new FileInputStream(Root.folder+"Data.ser");
 			ObjectInputStream oIS=new ObjectInputStream(fIS);
 			instance=(Data)oIS.readObject();
-			oIS.close();fIS.close();
-		}catch(IOException ex){
-			instance=new Data();
-		}catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Data corrupted");}
+			oIS.close();
+		}catch(FileNotFoundException ex){instance=new Data();}
+		catch(IOException ex){throw new RuntimeException(ex);}
+		catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Data corrupted");}
 		return instance;
 	}
+	/**
+	 * Saves the Data into a file.
+	 */
 	public static void save(){
 		try{
 			FileOutputStream fOS=new FileOutputStream(Root.folder+"Data.ser");
 			ObjectOutputStream oOS=new ObjectOutputStream(fOS);
 			oOS.writeObject(instance);
 			oOS.close();fOS.close();
-		}catch(IOException ex){ex.printStackTrace();}
+		}catch(IOException ex){throw new RuntimeException(ex);}
 	}
+	/**
+	 * Tries to aqquire an {@link EditableGroup}.
+	 * @return a group with the given type, if any.
+	 * @throws IllegalArgumentException if there is no group of such type.
+	 */
 	public EditableGroup<?>getGroup(Class<? extends Editable>type){
 		for(EditableGroup<?>group:editables)if(group.type.equals(type))return group;
 		throw new IllegalArgumentException("There is no group of type "+type.getName());

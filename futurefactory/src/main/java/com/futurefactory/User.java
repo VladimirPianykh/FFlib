@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -21,9 +22,9 @@ import java.util.function.Consumer;
 
 import javax.swing.JPanel;
 
-import com.futurefactory.defaults.DefaultFeature;
 import com.futurefactory.defaults.DefaultPermission;
 import com.futurefactory.defaults.DefaultRole;
+import com.futurefactory.defaults.features.DefaultFeature;
 
 public class User implements Serializable{
 	public static class Authorization implements Serializable{
@@ -41,12 +42,12 @@ public class User implements Serializable{
 		}
 		public void writeLogout(){outTime=LocalDateTime.now();}
 	}
-	public static interface Role{}
-	public static interface Feature{
+	public static interface Role extends Serializable{}
+	public static interface Feature extends Serializable{
 		public void paint(Graphics2D g2,BufferedImage image,int h);
 		public void fillTab(JPanel content,JPanel tab,Font font);
 	}
-	public static interface Permission{
+	public static interface Permission extends Serializable{
 		public String name();
 	}
 	private static HashMap<String,User>userMap;
@@ -74,9 +75,9 @@ public class User implements Serializable{
 			ObjectInputStream oIS=new ObjectInputStream(fIS);
 			userMap=(HashMap<String,User>)oIS.readObject();
 			oIS.close();fIS.close();
-		}catch(IOException ex){
-			userMap=new HashMap<String,User>();
-		}catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Users corrupted");}
+		}catch(FileNotFoundException ex){userMap=new HashMap<String,User>();}
+		catch(IOException ex){throw new RuntimeException(ex);}
+		catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Users corrupted");}
 		for(User u:userMap.values())if(u.lockTime!=null){
 			if(u.lockTime.until(LocalDateTime.now(),ChronoUnit.MINUTES)<5)System.exit(1);
 			else u.lockTime=null;
@@ -85,6 +86,14 @@ public class User implements Serializable{
 	public static User register(String login,String pass){
 		if(userMap==null)load();
 		user=new User(login,pass,userMap.isEmpty()?DefaultRole.ADMIN:DefaultRole.EMPTY);
+		userMap.put(login,user);
+		save();
+		return user;
+	}
+	public static User register(String login,String pass,Role role){
+		if(userMap==null)load();
+		user=new User(login,pass,userMap.isEmpty()?DefaultRole.ADMIN:DefaultRole.EMPTY);
+		user.role=role;
 		userMap.put(login,user);
 		save();
 		return user;
