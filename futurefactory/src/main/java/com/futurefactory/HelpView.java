@@ -63,13 +63,18 @@ public class HelpView{
 				public L(char type,String text){
 					this.type=type;
 					setText(switch(type){
-						case 's'->ProgramStarter.authRequired?"Введите ваш логин и пароль.":"Выберите пользователя.";
+						case 's'->{
+							Wrapper<User>w=new Wrapper<>(null);
+							User.forEachUser(u->{if(u.login.equalsIgnoreCase(text.replace('_',' ')))w.var=u;});
+							if(w.var==null)throw new IllegalArgumentException("There is no user with login \""+text+"\".");
+							yield ProgramStarter.authRequired?"Введите логин и пароль: \""+w.var.login+"\","+w.var.password+".":"Выберите пользователя \""+w.var.login+"\".";
+						}
 						case 'f'->{
 							for(Feature f:User.registeredFeatures)if(f.toString().replace(' ','_').equalsIgnoreCase(text))yield "Перейдите на вкладку \""+f.toString()+"\".";
-							throw new RuntimeException("There is no feature with text \""+text+"\"");
+							throw new IllegalArgumentException("There is no feature with text \""+text+"\".");
 						}
-						case 't'->text.replace('_',' ');
-						case 'c'->text.replace('_',' ');
+						case 't'->text.replace('_',' ').replace(';','.');
+						case 'c'->text.replace('_',' ').replace(';','.');
 						default->"ОШИБКА!";
 					});
 					setIcon(switch(type){

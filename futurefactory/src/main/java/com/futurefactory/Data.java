@@ -21,15 +21,15 @@ import java.util.HashSet;
 
 import javax.swing.JButton;
 
-import com.futurefactory.defaults.features.TaskBoard;
+import com.futurefactory.User.Feature;
 
 /**
  * A singletone that represents all editable data.
  */
 public class Data implements Serializable{
 	private static Data instance;
-	public static class EditableGroup<T extends Editable> extends ArrayList<T>{
-		public Class<?>type;
+	public static class EditableGroup<T extends Editable>extends ArrayList<T>{
+		public Class<T>type;
 		/**
 		 * Creates a button for editing element
 		 * @param e Editable to create button for
@@ -87,6 +87,7 @@ public class Data implements Serializable{
 			this(null,null,type,elements);
 			this.invisible=true;
 		}
+		public EditableGroup<T>hide(){invisible=true;return this;}
 		@SuppressWarnings("unchecked")
 		public boolean add(Editable e){return super.add((T)e);}
 		@SuppressWarnings("rawtypes")
@@ -113,11 +114,9 @@ public class Data implements Serializable{
 	/**
 	 * An interface for creating {@link com.futurefactory.defaults.features.TaskBoard TaskBoards}
 	 */
-	public static abstract class Task implements Serializable{
-		
-	}
+	public static abstract class Task implements Serializable{}
 	public HashSet<EditableGroup<?>>editables=new HashSet<EditableGroup<?>>();
-	public HashMap<String,TaskBoard<?>>boards=new HashMap<>();
+	public HashMap<String,HashMap<String,? extends Feature>>ftrInstances=new HashMap<>();
 	public static Data getInstance(){
 		if(instance==null)try{
 			FileInputStream fIS=new FileInputStream(Root.folder+"Data.ser");
@@ -145,9 +144,14 @@ public class Data implements Serializable{
 	 * @return a group with the given type, if any.
 	 * @throws IllegalArgumentException if there is no group of such type.
 	 */
-	public EditableGroup<?>getGroup(Class<? extends Editable>type){
-		for(EditableGroup<?>group:editables)if(group.type.equals(type))return group;
+	@SuppressWarnings("unchecked")
+	public synchronized<T extends Editable>EditableGroup<T>getGroup(Class<T>type){
+		for(EditableGroup<?>group:editables)if(group.type.equals(type))return(EditableGroup<T>)group;
 		throw new IllegalArgumentException("There is no group of type "+type.getName());
+	}
+	@SuppressWarnings("unchecked")
+	public <T extends Feature>HashMap<String,T>getFtrInstances(Class<T>type){
+		return(HashMap<String,T>)ftrInstances.get(type.getName());
 	}
 	private Data(){}
 }

@@ -104,8 +104,7 @@ public enum DefaultFeature implements Feature{
 		public void paint(Graphics2D g2,BufferedImage image,int h){
 			g2.setStroke(new BasicStroke(h/40));
 			g2.drawPolyline(new int[]{h/4,h/4+h/20,h*3/4+h/20,h*3/4+h/20+h/10,h*3/4+h/5,h*3/4+h/5,h*3/4+h/5-h/40,h*3/4+h/5-h/40,h*3/4+h/20+h/10,h*3/4+h/40},new int[]{h*3/4,h*3/4,h/4,h/4,h/4-h/20,h/4-h/20-h/10,h/4-h/20-h/10,h/4-h/10,h/4-h/20,h/4-h/20},10);
-			for(int x=0;x<h;x++)for(int y=0;y<h-x;y++)
-			image.setRGB(x,y,image.getRGB(h-y-1,h-x-1));
+			for(int x=0;x<h;x++)for(int y=0;y<h-x;y++)image.setRGB(x,y,image.getRGB(h-y-1,h-x-1));
 		}
 		public void fillTab(JPanel content,JPanel tab,Font font){
 			Data d=Data.getInstance();

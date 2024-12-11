@@ -6,13 +6,16 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.AWTEventListener;
+
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JWindow;
 
-public class Message extends JWindow{
+public class Message extends JDialog{
 	public Message(String text){
+		super(Window.getWindows()[Window.getWindows().length-1],ModalityType.APPLICATION_MODAL);
 		Dimension d=Root.SCREEN_SIZE;
 		setBounds(d.width/3,d.height/10,d.width/3,d.width/9);
 		setContentPane(new JPanel(){

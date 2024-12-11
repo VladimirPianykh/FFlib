@@ -30,23 +30,25 @@ import com.futurefactory.editor.EditorEntry;
 /**
  * A board with tasks of the given type.
  */
+
+@SuppressWarnings("unchecked")
 public class TaskBoard<T extends Task>implements Feature{
+	private static final HashMap<String,TaskBoard<?>>boards;
+	static{
+		if(!Data.getInstance().ftrInstances.containsKey(TaskBoard.class.getName()))Data.getInstance().ftrInstances.put(TaskBoard.class.getName(),new HashMap<>());
+		boards=(HashMap<String,TaskBoard<?>>)Data.getInstance().ftrInstances.get(TaskBoard.class.getName());
+	}
 	private Class<T>type;
 	private String name;
 	private ArrayList<T>tasks=new ArrayList<>();
 	private transient ArrayList<Consumer<JTable>>tableDecorators;
 	private transient Function<T,String>slicer;
-	private TaskBoard(String name,Class<T>type){
-		this.name=name;
-		this.type=type;
-	}
+	private TaskBoard(String name,Class<T>type){this.name=name;this.type=type;}
 	public static TaskBoard<?>getBoard(String name){
-		if(Data.getInstance().boards.containsKey(name))return Data.getInstance().boards.get(name);
+		if(boards.containsKey(name))return boards.get(name);
 		else throw new IllegalArgumentException("Board \""+name+"\" does not exist.");
 	}
-	@SuppressWarnings("unchecked")
 	public static<T extends Task>TaskBoard<T>registerBoard(String name,Class<T>type){
-		HashMap<String,TaskBoard<?>>boards=Data.getInstance().boards;
 		if(boards.containsKey(name)&&boards.get(name).type.equals(type))return(TaskBoard<T>)boards.get(name);
 		TaskBoard<T>b=new TaskBoard<T>(name,type);
 		boards.put(name,b);
@@ -91,6 +93,7 @@ public class TaskBoard<T extends Task>implements Feature{
 		this.slicer=slicer;
 		return this;
 	}
+	public ArrayList<T>getTasks(){return tasks;}
 	public T createTask(){
 		try{
 			T task=type.getDeclaredConstructor().newInstance();

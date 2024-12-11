@@ -29,6 +29,7 @@ import javax.swing.Timer;
 
 import com.futurefactory.Data;
 import com.futurefactory.Data.Editable;
+import com.futurefactory.Message;
 import com.futurefactory.ProgramStarter;
 import com.futurefactory.Wrapper;
 import com.futurefactory.editor.EditorEntry;
@@ -107,8 +108,20 @@ public class FormModule implements IEditorModule{
 		tab.add(p);
 		Wrapper<Integer>w=new Wrapper<Integer>(0);
 		ok.addActionListener(e->{
+			if(savers.size()==0){
+				editor.dispose();
+				editable.name=nameField.getText();
+				return;
+			}
 			if(w.var==savers.size()-1){
-				if(verifier.var==null||verifier.var.verify(editable,isNew)){
+				try{savers.get(w.var).run();}catch(RuntimeException ex){
+					ok.setBackground(Color.RED);
+					Timer t=new Timer(1000,evt->ok.setBackground(Color.GRAY));
+					t.setRepeats(false);
+					t.start();
+					return;
+				}
+				if(verifier.var==null||verifier.var.verify(editable,isNew).isEmpty()){
 					editor.dispose();
 					editable.name=nameField.getText();
 				}else{
@@ -116,6 +129,9 @@ public class FormModule implements IEditorModule{
 					Timer t=new Timer(1000,evt->ok.setBackground(Color.GRAY));
 					t.setRepeats(false);
 					t.start();
+					layout.show(form,String.valueOf(w.var=0));
+					p.setValue(0);
+					new Message(verifier.var.verify(editable,isNew));
 				}
 			}else{
 				try{savers.get(w.var).run();}catch(RuntimeException ex){
@@ -153,7 +169,7 @@ public class FormModule implements IEditorModule{
 				JTextArea a=new JTextArea((String)f.get(o));
 				a.setLineWrap(true);
 				a.setWrapStyleWord(true);
-				saver.var=()->{try{f.set(o,a.getText());}catch(IllegalAccessException ex){}};
+				saver.var=()->{try{f.set(o,a.getText());}catch(IllegalAccessException ex){throw new RuntimeException(ex);}};
 				return a;
 			}else if(f.getType()==int.class){
 				JSpinner a=new JSpinner(new SpinnerNumberModel((int)f.get(o),0,10000,1));
@@ -162,14 +178,14 @@ public class FormModule implements IEditorModule{
 			}else if(f.getType()==LocalDate.class){
 				JTextField a=new JTextField();
 				a.setText(((LocalDate)f.get(o)).toString());
-				saver.var=()->{try{f.set(o,LocalDate.parse(a.getText()));}catch(IllegalAccessException|DateTimeParseException ex){}};
+				saver.var=()->{try{f.set(o,LocalDate.parse(a.getText()));}catch(IllegalAccessException|DateTimeParseException ex){throw new RuntimeException(ex);}};
 				return a;
 			}else if(Editable.class.isAssignableFrom(f.getType())){
 				try{
 					JComboBox<Editable>a=new JComboBox<>();
 					for(Editable e:Data.getInstance().getGroup((Class<? extends Editable>)f.getType()))a.addItem(e);
 					a.setSelectedItem(f.get(o));
-					saver.var=()->{try{f.set(o,a.getSelectedItem());}catch(IllegalAccessException ex){}};
+					saver.var=()->{try{f.set(o,a.getSelectedItem());}catch(IllegalAccessException ex){throw new RuntimeException(ex);}};
 					return a;
 				}catch(IllegalArgumentException ex){
 					JButton a=new JButton("Открыть");
@@ -179,7 +195,8 @@ public class FormModule implements IEditorModule{
 			}else if(f.getType().isEnum()){
 				JComboBox<Object>a=new JComboBox<>();
 				Object en=f.get(o);
-				for(Object obj:(Object[])en.getClass().getMethod("values").invoke(o))a.addItem(obj);
+				if(en==null)throw new NullPointerException("Enum value of field \""+f.getName()+"\" is null.");
+			for(Object obj:(Object[])en.getClass().getMethod("values").invoke(o))a.addItem(obj);
 				a.setSelectedItem(f.get(o));
 				saver.var=()->{try{f.set(o,a.getSelectedItem());}catch(IllegalAccessException ex){}};
 				return a;
