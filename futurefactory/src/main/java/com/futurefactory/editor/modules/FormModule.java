@@ -10,9 +10,12 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -35,6 +38,7 @@ import com.futurefactory.editor.EditorEntry;
 import com.futurefactory.editor.EditorEntryBase;
 import com.futurefactory.editor.VerifiedInput;
 import com.futurefactory.editor.Verifier;
+import com.toedter.calendar.JDateChooser;
 
 public class FormModule implements IEditorModule{
 	public JPanel createTab(JDialog editor,Editable editable,boolean isNew){
@@ -160,10 +164,16 @@ public class FormModule implements IEditorModule{
 				saver.var=()->{try{f.set(o,a.getValue());}catch(IllegalAccessException ex){throw new RuntimeException(ex);}};
 				return a;
 			}else if(f.getType()==LocalDate.class){
-				JTextField a=new JTextField();
-				a.setText(((LocalDate)f.get(o)).toString());
-				saver.var=()->{try{f.set(o,LocalDate.parse(a.getText()));}catch(IllegalAccessException|DateTimeParseException ex){}};
-				return a;
+				JDateChooser d=new JDateChooser();
+				d.setDateFormatString("yyyy-MM-dd");
+
+				saver.var = () -> {
+					try {
+						f.set(o, Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate());
+					} catch (IllegalAccessException | DateTimeParseException _) {
+					}
+				};
+				return d;
 			}else if(Editable.class.isAssignableFrom(f.getType())){
 				try{
 					JComboBox<Editable>a=new JComboBox<>();
