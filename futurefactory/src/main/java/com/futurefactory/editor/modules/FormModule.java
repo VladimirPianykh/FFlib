@@ -135,7 +135,7 @@ public class FormModule implements IEditorModule{
 					t.start();
 					layout.show(form,String.valueOf(w.var=0));
 					p.setValue(0);
-					new Message(verifier.var.verify(editable,isNew));
+					new Message(verifier.var.verify(editable,isNew),Color.RED);
 				}
 			}else{
 				try{savers.get(w.var).run();}catch(RuntimeException ex){
@@ -180,10 +180,15 @@ public class FormModule implements IEditorModule{
 				saver.var=()->{try{f.set(o,a.getValue());}catch(IllegalAccessException ex){throw new RuntimeException(ex);}};
 				return a;
 			}else if(f.getType()==LocalDate.class){
-				JTextField a=new JTextField();
-				a.setText(((LocalDate)f.get(o)).toString());
-				saver.var=()->{try{f.set(o,LocalDate.parse(a.getText()));}catch(IllegalAccessException|DateTimeParseException ex){throw new RuntimeException(ex);}};
-				return a;
+				JDateChooser d=new JDateChooser();
+				d.setDateFormatString("yyyy-MM-dd");
+				d.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+				saver.var = () -> {
+					try {
+						f.set(o, Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate());
+					} catch (IllegalAccessException | DateTimeParseException ex) {throw new RuntimeException(ex);}
+				};
+				return d;
 			}else if(Editable.class.isAssignableFrom(f.getType())){
 				try{
 					JComboBox<Editable>a=new JComboBox<>();
@@ -193,7 +198,8 @@ public class FormModule implements IEditorModule{
 					return a;
 				}catch(IllegalArgumentException ex){
 					JButton a=new JButton("Открыть");
-					saver.var=()->{try{ProgramStarter.editor.constructEditor((Editable)f.get(o),false);}catch(IllegalAccessException exception){throw new RuntimeException(ex);}};
+					a.addActionListener(e->{try{ProgramStarter.editor.constructEditor((Editable)f.get(o),false);}catch(IllegalAccessException exception){throw new RuntimeException(ex);}});
+					saver.var=()->{};
 					return a;
 				}
 			}else if(f.getType().isEnum()){

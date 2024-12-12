@@ -1,5 +1,6 @@
 package com.futurefactory;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -154,7 +155,7 @@ public class User implements Serializable{
 		}else{
 			passTries++;tries++;
 			save();
-			new Message("Неверный пароль.");
+			new Message("Неверный пароль.",Color.RED);
 			return false;
 		}
 	}

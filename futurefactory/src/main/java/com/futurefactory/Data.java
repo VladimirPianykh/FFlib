@@ -6,6 +6,7 @@ import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -13,6 +14,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,10 +89,7 @@ public class Data implements Serializable{
 			addAll(Arrays.asList(elements));
 		}
 		@SafeVarargs
-		public EditableGroup(Class<T>type,T...elements){
-			this(null,null,type,elements);
-			this.invisible=true;
-		}
+		public EditableGroup(Class<T>type,T...elements){this(null,null,type,elements);this.invisible=true;}
 		public EditableGroup<T>hide(){invisible=true;return this;}
 		@SuppressWarnings("unchecked")
 		public boolean add(Editable e){return super.add((T)e);}
@@ -98,11 +101,7 @@ public class Data implements Serializable{
 			public String text;
 			public User source;
 			public LocalDateTime time;
-			public ActionRecord(String text,User source){
-				this.text=text;
-				this.source=source;
-				time=LocalDateTime.now();
-			}
+			public ActionRecord(String text,User source){this.text=text;this.source=source;time=LocalDateTime.now();}
 		}
 		public String name;
 		public ArrayList<ActionRecord>records=new ArrayList<ActionRecord>();
@@ -110,11 +109,11 @@ public class Data implements Serializable{
 			this.name=name;
 			records.add(new ActionRecord(":CREATED",User.getActiveUser()));
 		}
+		public String toString(){return name;}
 	}
 	/**
-	 * An interface for creating {@link com.futurefactory.defaults.features.TaskBoard TaskBoards}
+	 * An interface for creating {@link com.futurefactory.defaults.features.Board TaskBoards}
 	 */
-	public static abstract class Task implements Serializable{}
 	public HashSet<EditableGroup<?>>editables=new HashSet<EditableGroup<?>>();
 	public HashMap<String,HashMap<String,? extends Feature>>ftrInstances=new HashMap<>();
 	public static Data getInstance(){
@@ -124,8 +123,19 @@ public class Data implements Serializable{
 			instance=(Data)oIS.readObject();
 			oIS.close();
 		}catch(FileNotFoundException ex){instance=new Data();}
-		catch(IOException ex){throw new RuntimeException(ex);}
-		catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Data corrupted");}
+		catch(IOException ex){
+			FileVisitor<Path>del=new FileVisitor<>(){
+				public FileVisitResult preVisitDirectory(Path dir,BasicFileAttributes attrs)throws IOException{return FileVisitResult.CONTINUE;}
+				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs)throws IOException{file.toFile().delete();return FileVisitResult.CONTINUE;}
+				public FileVisitResult visitFileFailed(Path file,IOException exc)throws IOException{return FileVisitResult.CONTINUE;}
+				public FileVisitResult postVisitDirectory(Path dir,IOException exc)throws IOException{dir.toFile().delete();return FileVisitResult.CONTINUE;}
+			};
+			try{
+				Files.walkFileTree(Path.of(Root.folder),del);
+			}catch(IOException exception){throw new RuntimeException(exception);}
+			new Message("Обнаружено устаревшее сохранение. Удалите его и перезапустите программу.",Color.RED);
+			Runtime.getRuntime().halt(0);
+		}catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Data corrupted");}
 		return instance;
 	}
 	/**

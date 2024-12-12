@@ -5,20 +5,21 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
 
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 public class Message extends JDialog{
-	public Message(String text){
+	public Message(String text,Color c){
 		super(Window.getWindows()[Window.getWindows().length-1],ModalityType.APPLICATION_MODAL);
 		Dimension d=Root.SCREEN_SIZE;
-		setBounds(d.width/3,d.height/10,d.width/3,d.width/9);
-		setContentPane(new JPanel(){
+		setBounds(d.width/4,d.height/10,d.width/2,d.width/7);
+		setContentPane(new JPanel(new GridLayout()){
 			public void paintComponent(Graphics g){
 				g.setColor(Color.DARK_GRAY);
 				g.fillRect(0,0,getWidth(),getHeight());
@@ -26,9 +27,12 @@ public class Message extends JDialog{
 				g.drawRect(0,0,getWidth(),getHeight());
 			}
 		});
-		JLabel l=new JLabel(text);
+		JTextArea l=new JTextArea(text);
+		l.setLineWrap(true);
+		l.setWrapStyleWord(true);
 		l.setFont(new Font(Font.DIALOG,Font.PLAIN,getHeight()/5));
-		l.setForeground(Color.LIGHT_GRAY);
+		l.setBackground(Color.DARK_GRAY);
+		l.setForeground(c);
 		add(l);
 		setVisible(true);
 		Wrapper<AWTEventListener>s=new Wrapper<AWTEventListener>(null);

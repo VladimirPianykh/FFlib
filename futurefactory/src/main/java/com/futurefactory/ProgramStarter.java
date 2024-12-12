@@ -117,21 +117,21 @@ public class ProgramStarter{
 				public void actionPerformed(ActionEvent e){
 					if(log.getText().isBlank()||pass.getText().isBlank())return;
 					if(reg.on){
-						if(User.hasUser(log.getText()))new Message("Аккаунт уже существует.");
+						if(User.hasUser(log.getText()))new Message("Аккаунт уже существует.",Color.RED);
 						else{
 							User.register(log.getText(),pass.getText());
 							ProgramStarter.frame=new WorkFrame(User.getActiveUser());
-							new Message("Пользователь зарегистрирован.");
+							new Message("Пользователь зарегистрирован.",Color.GREEN);
 							f.dispose();
 						}
 					}else{
 						if(User.hasUser(log.getText())){
 							if(User.getUser(log.getText()).login(pass.getText())){
 								frame=new WorkFrame(User.getActiveUser());
-								new Message("Успешно зарегистрирован!");
+								new Message("Вход выполнен.",Color.GREEN);
 								f.dispose();
-							}else new Message("Неверный пароль.");
-						}else new Message("Неизвестный пользователь.");
+							}else new Message("Неверный пароль.",Color.RED);
+						}else new Message("Неизвестный пользователь.",Color.RED);
 					}
 				}
 			};

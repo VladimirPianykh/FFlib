@@ -32,16 +32,16 @@ public class EditableList<T extends Editable>implements Feature{
 	static{
 		if(!Data.getInstance().ftrInstances.containsKey(EditableList.class.getName()))Data.getInstance().ftrInstances.put(EditableList.class.getName(),new HashMap<>());
 	}
-	private String name;
 	private Class<T>type;
+	private String name;
 	private transient Function<T,JComponent>componentProvider;
 	private EditableList(String name,EditableGroup<T>group){
 		this.name=name;
 		Registrator.register(group);
 		type=group.type;
 	}
-	public static EditableList<?>getList(String name){
-		if(((HashMap<String,EditableList<?>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).containsKey(name))return ((HashMap<String,EditableList<?>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).get(name);
+	public static<T extends Editable>EditableList<T>getList(String name){
+		if(((HashMap<String,EditableList<T>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).containsKey(name))return ((HashMap<String,EditableList<T>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).get(name);
 		else throw new IllegalArgumentException("Table \""+name+"\" does not exist.");
 	}
 	public static<T extends Editable>EditableList<T>registerList(String name,EditableGroup<T>group){
@@ -57,7 +57,7 @@ public class EditableList<T extends Editable>implements Feature{
 	 * </br>
 	 * @param provider - provider to use
 	 */
-	public void setComponentProvider(Function<T,JComponent>provider){componentProvider=provider;}
+	public EditableList<T>setComponentProvider(Function<T,JComponent>provider){componentProvider=provider;return this;}
 	/**
 	 * Returns a group of {@link Editable}s associated with this list.
 	 */
