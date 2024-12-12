@@ -5,10 +5,10 @@ The author does not give any warranties.
 To plug:
 ```xml
 <dependency>
-		<groupId>com.futurefactory</groupId>
-		<artifactId>futurefactory</artifactId>
-		<version>1.0</version>
-		<scope>system</scope>
-		<systemPath>${project.basedir}/FutureFactory.jar</systemPath>
+	<groupId>com.futurefactory</groupId>
+	<artifactId>futurefactory</artifactId>
+	<version>1.0</version>
+	<scope>system</scope>
+	<systemPath>${project.basedir}/FutureFactory.jar</systemPath>
 </dependency>
 ```
