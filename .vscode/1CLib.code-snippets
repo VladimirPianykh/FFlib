@@ -12,8 +12,10 @@
 		"scope":"java",
 		"prefix":"_start",
 		"body":[
-			"ProgramStarter.authRequired=${1|true,false|};",
-			"$2",
+			"Navigator.init();",
+			"ProgramStarter.welcomeMessage=\"$1\";",
+			"ProgramStarter.authRequired=${2|true,false|};",
+			"$0",
 			"ProgramStarter.runProgram();"
 		],
 		"description":"Fill the `main()` method"
@@ -24,10 +26,10 @@
 		"body":[
 			"public enum ApplicationRole implements Role{",
 				"\t$1(",
-					"\t\tnew Permission[]{},",
-					"\t\tnew Feature[]{}",
+					"\t\t()->new Permission[]{},",
+					"\t\t()->new Feature[]{}",
 				"\t);",
-				"\tprivate ApplicationRole(Permission[]p,Feature[]f){Registrator.register(this,f,p);}",
+				"\tprivate ApplicationRole(Supplier<Permission[]>p,Supplier<Feature[]>f){SwingUtilities.invokeLater(()->Registrator.register(this,f.get(),p.get()));}",
 			"}",
 			"public enum ApplicationPermission implements Permission{",
 				"\t$2;",

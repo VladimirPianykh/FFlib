@@ -24,7 +24,7 @@ import com.futurefactory.Data.Editable;
 import com.futurefactory.Data.Editable.ActionRecord;
 import com.futurefactory.HButton;
 
-public class LogWatchModule implements IEditorModule{
+public class LogWatchModule implements EditorModule{
     public JPanel createTab(JDialog editor,Editable editable,boolean isNew){
 		JPanel tab=new JPanel(null);
 		tab.setBackground(new Color(102,107,89));

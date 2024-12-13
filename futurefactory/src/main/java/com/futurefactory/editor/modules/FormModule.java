@@ -41,7 +41,7 @@ import com.futurefactory.editor.VerifiedInput;
 import com.futurefactory.editor.Verifier;
 import com.toedter.calendar.JDateChooser;
 
-public class FormModule implements IEditorModule{
+public class FormModule implements EditorModule{
 	public JPanel createTab(JDialog editor,Editable editable,boolean isNew){
 		JPanel tab=new JPanel(null);
 		tab.setBackground(Color.BLACK);
@@ -197,8 +197,12 @@ public class FormModule implements IEditorModule{
 					saver.var=()->{try{f.set(o,a.getSelectedItem());}catch(IllegalAccessException ex){throw new RuntimeException(ex);}};
 					return a;
 				}catch(IllegalArgumentException ex){
-					JButton a=new JButton("Открыть");
-					a.addActionListener(e->{try{ProgramStarter.editor.constructEditor((Editable)f.get(o),false);}catch(IllegalAccessException exception){throw new RuntimeException(ex);}});
+					JButton a=new JButton(f.get(o)==null?"":"Открыть");
+					if(f.get(o)!=null)a.addActionListener(e->{
+						try{
+							ProgramStarter.editor.constructEditor((Editable)f.get(o),false);
+						}catch(IllegalAccessException ex2){throw new RuntimeException(ex2);}
+					});
 					saver.var=()->{};
 					return a;
 				}

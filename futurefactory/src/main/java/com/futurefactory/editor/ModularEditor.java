@@ -13,16 +13,16 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import com.futurefactory.Data.Editable;
 import com.futurefactory.editor.modules.FormModule;
-import com.futurefactory.editor.modules.IEditorModule;
+import com.futurefactory.editor.modules.EditorModule;
 import com.futurefactory.HButton;
 import com.futurefactory.PathIcon;
 import com.futurefactory.ProgramStarter;
 import com.futurefactory.Root;
 
 public class ModularEditor implements IEditor{
-	public ArrayList<IEditorModule>modules=new ArrayList<>();
+	public ArrayList<EditorModule>modules=new ArrayList<>();
 	public ModularEditor(){modules.add(new FormModule());}
-	public ModularEditor(IEditorModule...modules){this.modules.addAll(Arrays.asList(modules));}
+	public ModularEditor(EditorModule...modules){this.modules.addAll(Arrays.asList(modules));}
 	public void constructEditor(Editable editable,boolean isNew){
 		JDialog editor=new JDialog(ProgramStarter.frame,true);
 		editor.setSize(Root.SCREEN_SIZE);
@@ -62,7 +62,7 @@ public class ModularEditor implements IEditor{
 		editor.add(left);editor.add(right);
 		editor.add(mainPanel);
 		int k=1;
-		for(IEditorModule m:modules){
+		for(EditorModule m:modules){
 			JPanel tab=m.createTab(editor,editable,isNew);
 			if(tab!=null){
 				mainPanel.add(tab,"tab"+k);
