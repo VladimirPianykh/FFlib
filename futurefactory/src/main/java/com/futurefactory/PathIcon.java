@@ -12,8 +12,10 @@ public class PathIcon implements Icon,Serializable{
 	public PathIcon(String path,int w,int h){this.path=path;this.w=w;this.h=h;}
 	public PathIcon(String path){this.path=path;}
 	public void paintIcon(Component c,Graphics g,int x,int y){
-		if(w==0){w=c.getWidth();h=c.getHeight();}
-		g.drawImage(Root.loadIcon(path,w,h).getImage(),x,y,c);
+		try{
+			if(w==0){w=c.getWidth();h=c.getHeight();}
+			g.drawImage(Root.loadIcon(path,w,h).getImage(),x,y,c);
+		}catch(NullPointerException ex){throw new RuntimeException("Problems with icon \""+path+"\"");}
 	}
 	public int getIconWidth(){return w;}
 	public int getIconHeight(){return h;}
