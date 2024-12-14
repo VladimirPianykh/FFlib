@@ -2,7 +2,9 @@ This library is not for public usage, but you can download it if you feel curiou
 
 The author does not give any warranties.
 
-To plug:
+# The plan
+
+## 1) Plug the library in.
 ```xml
 <dependency>
 	<groupId>com.futurefactory</groupId>
@@ -12,3 +14,13 @@ To plug:
 	<systemPath>${project.basedir}/FutureFactory.jar</systemPath>
 </dependency>
 ```
+
+## 2) Use `_init` snippet in the `Main` class and `_start` snippet inside of the `main` method.
+
+## 3) Fill in the application.
+* Create editable objects required with `_editable` snippet.
+* Add new screens (`Feature`s) by calling `registerList()`, `registerBoard()`, etc on classes in the `com.futurefactory.defaults.features` package.
+* 
+## 4) Create and fill in the `helppath.cfg` file.
+Call `Navigator.init()` and add all the mechanics implemented to the helppath.cfg list.
+See the `HelpView` documentation for details.
