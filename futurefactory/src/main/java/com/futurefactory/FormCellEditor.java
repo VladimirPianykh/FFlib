@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.Iterator;
+import java.util.function.Supplier;
 
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
@@ -18,12 +19,12 @@ public class FormCellEditor implements TableCellEditor{
     private ArrayList<CellEditorListener>a=new ArrayList<>();
     private Component editor;
     private FieldCellValue v;
-    private Wrapper<Runnable>saver=new Wrapper<>(null);
+    private Wrapper<Supplier<?>>saver=new Wrapper<>(null);
     public Object getCellEditorValue(){return v;}
     public boolean isCellEditable(EventObject e){return true;}
     public boolean shouldSelectCell(EventObject e){return true;}
     public boolean stopCellEditing(){
-        try{saver.var.run();}catch(RuntimeException ex){return false;}
+        try{v.f.set(v.o,saver.var.get());}catch(IllegalAccessException ex){return false;}
         ChangeEvent e=new ChangeEvent(this);
         Iterator<CellEditorListener>it=a.iterator();
         while(it.hasNext())it.next().editingStopped(e);

@@ -2,6 +2,7 @@ package com.futurefactory.defaults.editorbases;
 
 import java.awt.event.ActionEvent;
 import java.lang.reflect.Field;
+import java.util.function.Supplier;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -17,7 +18,7 @@ import com.futurefactory.Wrapper;
 import com.futurefactory.editor.EditorEntryBase;
 
 public class SelectionListEditor implements EditorEntryBase{
-    public JComponent createEditorBase(Object o,Field f,Wrapper<Runnable>saver){
+    public JComponent createEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver){
         if(f.getType()!=Selectable.class)throw new IllegalArgumentException("The field must have type Selectable<?>, but the actual type is "+f.getType()+".");
         try{
             Selectable<?>s=(Selectable<?>)((Selectable<?>)f.get(o)).clone();
@@ -33,7 +34,7 @@ public class SelectionListEditor implements EditorEntryBase{
             }
             JButton b=new JButton("Выбрать...");
             b.addActionListener(e->menu.show(b.getTopLevelAncestor(),b.getLocationOnScreen().x,b.getLocationOnScreen().y));
-            saver.var=()->{try{f.set(o,s);}catch(IllegalAccessException ex){throw new RuntimeException(ex);}};
+            saver.var=()->s;
             return b;
         }catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
     }

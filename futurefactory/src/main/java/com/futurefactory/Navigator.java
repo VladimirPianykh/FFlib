@@ -16,6 +16,9 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+/**
+ * Displays the list of all program functions designated in the {@code helppath.cfg}.
+ */
 public class Navigator extends JDialog{
 	public Navigator(Window w){
 		setSize(Root.SCREEN_SIZE);

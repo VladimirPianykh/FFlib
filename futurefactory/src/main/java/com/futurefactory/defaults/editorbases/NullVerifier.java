@@ -10,7 +10,7 @@ public class NullVerifier implements Verifier{
 	public String verify(Editable e,boolean isNew){
 		try{
             Field[]fields=e.getClass().getFields();
-            for(Field f:fields)if(f.get(e)==null)return f.getAnnotation(EditorEntry.class).translation()+" не задан(а).";
+            for(Field f:fields)if(f.isAnnotationPresent(EditorEntry.class)&&f.get(e)==null)return f.getAnnotation(EditorEntry.class).translation()+" не задан(а).";
             return "";
         }catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
     }

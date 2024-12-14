@@ -96,9 +96,9 @@ public class DatedList<T extends Editable>implements Feature{
 		p.add(dates);
 		if(flag)try{
 			JPopupMenu menu=new JPopupMenu("Параметры:");
-			ArrayList<Runnable>savers=new ArrayList<>();
+			ArrayList<Supplier<?>>savers=new ArrayList<>();
 			for(int i=0;i<fields.length;++i){
-				Wrapper<Runnable>saver=new Wrapper<>(null);
+				Wrapper<Supplier<?>>saver=new Wrapper<>(null);
 				JPanel c=new JPanel(new GridLayout());
 				c.setPreferredSize(new Dimension(tab.getWidth()/6,tab.getHeight()/15));
 				c.setBorder(BorderFactory.createTitledBorder(fields[i].getAnnotation(EditorEntry.class).translation()));
@@ -116,8 +116,8 @@ public class DatedList<T extends Editable>implements Feature{
 				public void popupMenuWillBecomeVisible(PopupMenuEvent e){}
 				public void popupMenuWillBecomeInvisible(PopupMenuEvent e){
 					try{
-						for(Runnable r:savers)r.run();
-					}catch(RuntimeException ex){}
+						for(int i=0;i<fields.length;++i)fields[i].set(t,savers.get(i).get());
+					}catch(IllegalAccessException ex){throw new RuntimeException(ex);}
 				}
 				public void popupMenuCanceled(PopupMenuEvent e){}
 			});

@@ -28,7 +28,23 @@ import javax.swing.JScrollPane;
 import com.futurefactory.User.Feature;
 
 /**
- * Displays help window when necessary.
+ * <br>Displays step-by step guide for reaching some functions.</br>
+ * <br>Guides are parsed from the {@code helppath.cfg} file.</br>
+ * <br>
+ * Each line of the file should consist of <i>path</i> and description, separeted with a space.
+ * Path contains elements, delimited with a dot.
+ * Each element starts with a <i>flag</i> and continues with some text (it depends on the flag choosen).
+ * </br>
+ * <br>
+ * There are 4 flags with the corresponding meaning:
+ * <ul>
+ * <li>s - "Log in with the designated user."</li>
+ * <li>f - "Lelect the given feature."</li>
+ * <li>t - any text</li>
+ * <li>c - any darkened italic text</li>
+ * </ul>
+ * Use underlines instead of spaces and semicolons instead of dots after the flag.
+ * </br>
  */
 public class HelpView{
 	public static HashMap<String,String>paths=new HashMap<>();
