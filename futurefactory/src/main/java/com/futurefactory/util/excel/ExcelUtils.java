@@ -1,4 +1,4 @@
-package com.futurefactory.exel;
+package com.futurefactory.util.excel;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
