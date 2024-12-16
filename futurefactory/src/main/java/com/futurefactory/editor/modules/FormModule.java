@@ -3,11 +3,14 @@ package com.futurefactory.editor.modules;
 import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -15,6 +18,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Vector;
 import java.util.function.Supplier;
 
 import javax.swing.BorderFactory;
@@ -22,15 +26,22 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLayer;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.Timer;
+import javax.swing.plaf.LayerUI;
+import javax.swing.table.AbstractTableModel;
 
 import com.futurefactory.Data;
+import com.futurefactory.EditableDemo;
 import com.futurefactory.Data.Editable;
 import com.futurefactory.HButton;
 import com.futurefactory.Message;
@@ -38,7 +49,9 @@ import com.futurefactory.ProgramStarter;
 import com.futurefactory.Wrapper;
 import com.futurefactory.editor.EditorEntry;
 import com.futurefactory.editor.EditorEntryBase;
-import com.futurefactory.editor.VerifiedInput;
+import com.futurefactory.editor.InfoProvider;
+import com.futurefactory.editor.Input;
+import com.futurefactory.editor.NameProvider;
 import com.futurefactory.editor.Verifier;
 import com.toedter.calendar.JDateChooser;
 
@@ -70,18 +83,32 @@ public class FormModule implements EditorModule{
 		nameField.setBackground(Color.DARK_GRAY);
 		nameField.setForeground(Color.LIGHT_GRAY);
 		Wrapper<Verifier>verifier=new Wrapper<Verifier>(null);
-		VerifiedInput v=((VerifiedInput)editable.getClass().getAnnotation(VerifiedInput.class));
-		if(v!=null)try{verifier.var=v.verifier().getDeclaredConstructor().newInstance();}catch(Exception ex){throw new RuntimeException(ex);}
+		Wrapper<NameProvider>nameProvider=new Wrapper<NameProvider>(null);
+		Wrapper<InfoProvider>infoProvider=new Wrapper<InfoProvider>(null);
+		Input v=((Input)editable.getClass().getAnnotation(Input.class));
+		if(v!=null)try{
+			if(v.verifier()!=Verifier.class)verifier.var=v.verifier().getDeclaredConstructor().newInstance();
+			if(v.nameProvider()!=NameProvider.class)nameProvider.var=v.nameProvider().getDeclaredConstructor().newInstance();
+			if(v.infoProvider()!=InfoProvider.class)infoProvider.var=v.infoProvider().getDeclaredConstructor().newInstance();
+		}catch(Exception ex){throw new RuntimeException(ex);}
 		tab.add(nameField);
 		tab.add(ok);
+		ArrayList<Field>editableFields=new ArrayList<>();
+		r:for(Field f:editable.getClass().getFields()){
+			EditorEntry a=(EditorEntry)f.getAnnotation(EditorEntry.class);
+			if(a==null)continue;
+			for(String p:a.properties())switch(p){
+				case "hide"->{continue r;}
+			};
+			editableFields.add(f);
+		}
 		CardLayout layout=new CardLayout();
 		JPanel form=new JPanel(layout);
 		Font font=new Font(Font.DIALOG,Font.PLAIN,editor.getHeight()*3/40);
 		ArrayList<Supplier<?>>savers=new ArrayList<>();
 		Wrapper<Supplier<?>>currentSaver=new Wrapper<Supplier<?>>(null);
 		int k=0;
-		ArrayList<Field>editableFields=new ArrayList<>();
-		for(Field f:editable.getClass().getFields())if(f.isAnnotationPresent(EditorEntry.class))editableFields.add(f);
+		Vector<String>results=new Vector<>();
 		for(Field f:editableFields)try{
 			EditorEntry a=(EditorEntry)f.getAnnotation(EditorEntry.class);
 			JPanel entry=new JPanel(new GridLayout(1,2));
@@ -100,11 +127,24 @@ public class FormModule implements EditorModule{
 			savers.add(currentSaver.var);
 			if(c!=null){
 				c.setBorder(BorderFactory.createTitledBorder(null,"Значение",0,0,font.deriveFont(font.getSize2D()/2),Color.LIGHT_GRAY));
-				entry.add(c);
+				boolean flag=false;
+				for(String s:a.properties())if(s.equals("readonly")){flag=true;break;}
+				if(flag){
+					c.setFocusable(false);
+					entry.add(new JLayer<JComponent>(c,new LayerUI<>(){
+						protected void processMouseEvent(MouseEvent e,JLayer<? extends JComponent>l){e.consume();}
+						protected void processKeyEvent(KeyEvent e,JLayer<? extends JComponent>l){e.consume();}
+					}));
+				}else entry.add(c);
 			}
 			form.add(String.valueOf(k),entry);
+			results.add(a.translation());
+			//TODO: put something more interesting in the results
 			++k;
 		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
+		EditableDemo demo=new EditableDemo(editable.getClass(),savers);
+		JList<String>l=new JList<>(results);
+		form.add(String.valueOf(k),l);
 		ok.setText(savers.size()<=1?"Готово":"Далее");
 		ok.setBackground(savers.size()<=1?Color.GREEN:Color.GRAY);
 		if(!isNew){
@@ -131,6 +171,13 @@ public class FormModule implements EditorModule{
 		p.setForeground(Color.GREEN);
 		tab.add(p);
 		Wrapper<Integer>w=new Wrapper<Integer>(0);
+		JComponent info=null;
+		if(infoProvider.var!=null){
+			info=infoProvider.var.provideInfo(demo);
+			info.setBounds(editor.getWidth()*5/6,editor.getHeight()/4,editor.getWidth()/6,editor.getHeight()/2);
+			tab.add(info);
+		}
+		final JComponent fInfo=info;
 		ok.addActionListener(e->{
 			try{
 				if(savers.size()==0){
@@ -138,10 +185,8 @@ public class FormModule implements EditorModule{
 					editable.name=nameField.getText();
 					return;
 				}
-				if(w.var==savers.size()-1){
-					Editable demo=editable.getClass().getDeclaredConstructor().newInstance();
-					for(int i=0;i<editableFields.size();++i)editableFields.get(i).set(demo,savers.get(i).get());
-					if(verifier.var==null||verifier.var.verify(demo,isNew).isEmpty()){
+				if(w.var==savers.size()){
+					if(verifier.var==null||verifier.var.verify(editable,demo.get(),isNew).isEmpty()){
 						for(int i=0;i<editableFields.size();++i)editableFields.get(i).set(editable,savers.get(i).get());
 						editor.dispose();
 						editable.name=nameField.getText();
@@ -152,19 +197,29 @@ public class FormModule implements EditorModule{
 						t.start();
 						layout.show(form,String.valueOf(w.var=0));
 						p.setValue(0);
-						new Message(verifier.var.verify(editable,isNew),Color.RED);
+						new Message(verifier.var.verify(editable,demo.get(),isNew),Color.RED);
 					}
 				}else{
 					p.setValue(++w.var);
 					layout.show(form,String.valueOf(w.var));
-					if(w.var==savers.size()-1){
+					if(fInfo!=null){
+						if(fInfo instanceof JTable)((AbstractTableModel)((JTable)fInfo).getModel()).fireTableDataChanged();
+						else if(fInfo instanceof JScrollPane){
+							Component c=((JScrollPane)fInfo).getViewport().getView();
+							if(c instanceof JTable)((AbstractTableModel)((JTable)c).getModel()).fireTableDataChanged();
+						}
+						fInfo.repaint();
+						fInfo.revalidate();
+					}
+					if(w.var==savers.size()){
 						ok.setText("Готово");
 						ok.setBackground(Color.GREEN);
+						if(nameProvider.var!=null)nameField.setText(nameProvider.var.provideName(demo.get()));
 					}
 				}
 			}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 		});
-		form.setBounds(editor.getWidth()/8,editor.getHeight()/4,editor.getWidth()*3/4,editor.getHeight()/2);
+		form.setBounds(infoProvider.var==null?editor.getWidth()/8:editor.getWidth()/20,editor.getHeight()/4,editor.getWidth()*3/4,editor.getHeight()/2);
 		tab.add(form);
 		nameField.requestFocusInWindow();
 		nameField.setSelectionStart(0);
@@ -187,7 +242,7 @@ public class FormModule implements EditorModule{
 				saver.var=()->a.getText();
 				return a;
 			}else if(f.getType()==int.class){
-				JSpinner a=new JSpinner(new SpinnerNumberModel((int)f.get(o),0,10000,1));
+				JSpinner a=new JSpinner(new SpinnerNumberModel((int)f.get(o),0,10000000,1));
 				saver.var=()->a.getValue();
 				return a;
 			}else if(f.getType()==LocalDate.class){

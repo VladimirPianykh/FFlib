@@ -64,8 +64,8 @@ public class Board<T extends Serializable>implements Feature{
 	private String name;
 	private ArrayList<T>objects=new ArrayList<>(){
 		private void writeObject(ObjectOutputStream out)throws IOException,ClassNotFoundException{
+			if(elementSupplier!=null)clear();
 			out.defaultWriteObject();
-			if(elementSupplier!=null)objects.clear();
 		}
 	};
 	private transient ArrayList<Consumer<JTable>>tableDecorators;
@@ -146,7 +146,6 @@ public class Board<T extends Serializable>implements Feature{
 	 */
 	public Board<T>setElementSupplier(Supplier<ArrayList<T>>supplier){
 		elementSupplier=supplier;
-		objects=supplier.get();
 		return this;
 	}
 	public ArrayList<T>getObjects(){return objects;}
@@ -158,6 +157,7 @@ public class Board<T extends Serializable>implements Feature{
 		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
+		objects=elementSupplier.get();
 		tab.setLayout(new BorderLayout());
 		tab.setBorder(BorderFactory.createEmptyBorder(tab.getHeight()/300,tab.getWidth()/300,tab.getHeight()/300,tab.getWidth()/300));
 		JComponent filterConfig=null;

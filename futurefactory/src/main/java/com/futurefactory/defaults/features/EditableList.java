@@ -35,6 +35,7 @@ public class EditableList<T extends Editable>implements Feature{
 	private Class<T>type;
 	private String name;
 	private transient Function<T,JComponent>componentProvider;
+	private transient boolean canCreate;
 	private EditableList(String name,EditableGroup<T>group){
 		this.name=name;
 		Registrator.register(group);
@@ -42,7 +43,7 @@ public class EditableList<T extends Editable>implements Feature{
 	}
 	public static<T extends Editable>EditableList<T>getList(String name){
 		if(((HashMap<String,EditableList<T>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).containsKey(name))return ((HashMap<String,EditableList<T>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).get(name);
-		else throw new IllegalArgumentException("Table \""+name+"\" does not exist.");
+		else throw new IllegalArgumentException("List \""+name+"\" does not exist.");
 	}
 	public static<T extends Editable>EditableList<T>registerList(String name,EditableGroup<T>group){
 		if(((HashMap<String,EditableList<?>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).containsKey(name)&&((HashMap<String,EditableList<?>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).get(name).type.equals(group.type))return(EditableList<T>)((HashMap<String,EditableList<?>>)Data.getInstance().ftrInstances.get(EditableList.class.getName())).get(name);
@@ -59,7 +60,11 @@ public class EditableList<T extends Editable>implements Feature{
 	 */
 	public EditableList<T>setComponentProvider(Function<T,JComponent>provider){componentProvider=provider;return this;}
 	/**
-	 * Returns a group of {@link Editable}s associated with this list.
+	 * Determines whether to display "add" button.
+	 */
+	public EditableList<T>setAllowCreation(boolean canCreate){this.canCreate=canCreate;return this;}
+	/**
+	 * Returns the group of {@link Editable}s associated with this list.
 	 */
 	public EditableGroup<T>getGroup(){return Data.getInstance().getGroup(type);}
 	public T createObject(){
@@ -101,24 +106,26 @@ public class EditableList<T extends Editable>implements Feature{
 		for(T t:group){
 			panel.add(componentProvider.apply(t));
 		}
-		HButton add=new HButton(){
-			public void paint(Graphics g){
-				int c=50-scale*4;
-				if(getModel().isPressed())c-=25;
-				g.setColor(new Color(c,c,c));
-				g.fillRect(0,0,getWidth(),getHeight());
-				group.addIcon.paintIcon(this,g,(getWidth()-group.addIcon.getIconWidth())/2,(getHeight()-group.addIcon.getIconHeight())/2);
-			}
-		};
-		add.addActionListener(e->{
-			T t=createObject();
-			ProgramStarter.editor.constructEditor(t,true);
-			panel.add(componentProvider.apply(t),panel.getComponentCount()-1);
-			panel.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*panel.getComponentCount()/10));
-			panel.setLayout(new GridLayout(Math.max(10,group.size()+1),1));
-			panel.revalidate();
-		});
-		panel.add(add);
+		if(canCreate){
+			HButton add=new HButton(){
+				public void paint(Graphics g){
+					int c=50-scale*4;
+					if(getModel().isPressed())c-=25;
+					g.setColor(new Color(c,c,c));
+					g.fillRect(0,0,getWidth(),getHeight());
+					group.addIcon.paintIcon(this,g,(getWidth()-group.addIcon.getIconWidth())/2,(getHeight()-group.addIcon.getIconHeight())/2);
+				}
+			};
+			add.addActionListener(e->{
+				T t=createObject();
+				ProgramStarter.editor.constructEditor(t,true);
+				panel.add(componentProvider.apply(t),panel.getComponentCount()-1);
+				panel.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*panel.getComponentCount()/10));
+				panel.setLayout(new GridLayout(Math.max(10,group.size()+1),1));
+				panel.revalidate();
+			});
+			panel.add(add);
+		}
 		panel.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*panel.getComponentCount()/10));
 		tab.add(s);
 	}

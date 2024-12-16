@@ -18,6 +18,7 @@ import javax.swing.JScrollPane;
 
 /**
  * Displays the list of all program functions designated in the {@code helppath.cfg}.
+ * @see HelpView
  */
 public class Navigator extends JDialog{
 	public Navigator(Window w){

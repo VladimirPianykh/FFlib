@@ -39,7 +39,7 @@ import com.futurefactory.User.Feature;
  * There are 4 flags with the corresponding meaning:
  * <ul>
  * <li>s - "Log in with the designated user."</li>
- * <li>f - "Lelect the given feature."</li>
+ * <li>f - "Select the given feature."</li>
  * <li>t - any text</li>
  * <li>c - any darkened italic text</li>
  * </ul>

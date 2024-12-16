@@ -2,7 +2,6 @@ package com.futurefactory;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
-import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -61,12 +60,15 @@ public class WorkFrame extends JFrame{
 			setText(feature.toString());
 			addActionListener(new ActionListener(){
 				public void actionPerformed(ActionEvent e){
-					if(tab.getComponentCount()==0)feature.fillTab(content,tab,font);
-					((CardLayout)content.getLayout()).show(content,"tab"+index);
+					content.removeAll();
+					tab.removeAll();
+					tab.setSize(content.getSize());
+					feature.fillTab(content,tab,font);
+					content.add(tab);
 					content.revalidate();
+					content.repaint();
 				}
 			});
-			content.add(tab,"tab"+index);
 		}
 		public void paintComponent(Graphics g){
 			Graphics2D g2=(Graphics2D)g;
@@ -107,8 +109,7 @@ public class WorkFrame extends JFrame{
 		setExtendedState(3);
 		setUndecorated(true);
 		setContentPane(new JPanel(null));
-		CardLayout l=new CardLayout();
-		JPanel content=new JPanel(l);
+		JPanel content=new JPanel(new GridLayout(1,1));
 		content.setBounds(0,getHeight()/4,getWidth(),getHeight()*3/4);
 		content.setOpaque(false);
 		add(content);

@@ -15,8 +15,6 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.EventObject;
 import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Vector;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -27,11 +25,13 @@ import javax.swing.table.TableCellEditor;
 
 import com.futurefactory.Data;
 import com.futurefactory.Data.Editable;
+import com.futurefactory.Data.EditableGroup;
 import com.futurefactory.FieldCellRenderer;
 import com.futurefactory.FieldCellValue;
 import com.futurefactory.FormCellEditor;
 import com.futurefactory.HButton;
 import com.futurefactory.ProgramStarter;
+import com.futurefactory.Registrator;
 import com.futurefactory.User.Feature;
 import com.futurefactory.editor.EditorEntry;
 
@@ -44,34 +44,40 @@ public class MappedList<T extends Editable,V extends Serializable>implements Fea
 	private Class<V>vType;
 	private String name;
 	private HashMap<T,V>objects=new HashMap<>();
-	private MappedList(String name,Class<T>type,Class<V>vType){this.name=name;this.type=type;this.vType=vType;}
+	private MappedList(String name,EditableGroup<T>group,Class<V>vType){this.name=name;this.type=group.type;this.vType=vType;}
 	public static<T extends Editable,V extends Serializable>MappedList<T,V>getList(String name){
 		if(((HashMap<String,MappedList<T,V>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).containsKey(name))return ((HashMap<String,MappedList<T,V>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).get(name);
-		else throw new IllegalArgumentException("Table \""+name+"\" does not exist.");
+		else throw new IllegalArgumentException("List \""+name+"\" does not exist.");
 	}
-	public static<T extends Editable,V extends Serializable>MappedList<T,V>registerList(String name,Class<T>type,Class<V>vType){
+	public static<T extends Editable,V extends Serializable>MappedList<T,V>registerList(String name,EditableGroup<T>group,Class<V>vType){
 		if(((HashMap<String,MappedList<?,?>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).containsKey(name)){
-			if(((HashMap<String,MappedList<?,?>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).get(name).type.equals(type))return(MappedList<T,V>)((HashMap<String,MappedList<?,?>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).get(name);
-			else throw new IllegalStateException("\""+name+"\" has already been registered.");
+			if(((HashMap<String,MappedList<?,?>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).get(name).type.equals(group.type))return(MappedList<T,V>)((HashMap<String,MappedList<?,?>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).get(name);
+			else throw new IllegalStateException("\""+name+"\" has already been registered with the type"+((HashMap<String,MappedList<?,?>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).get(name).type+".");
 		}
-		MappedList<T,V>b=new MappedList<>(name,type,vType);
+		Registrator.register(group); 
+		MappedList<T,V>b=new MappedList<>(name,group,vType);
 		((HashMap<String,MappedList<?,?>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).put(name,b);
 		return b;
 	}
 	private void fillTable(DefaultTableModel m){
-		for(Entry<T,V>e:objects.entrySet()){
+		for(T t:Data.getInstance().getGroup(type)){
 			Vector<Object>l=new Vector<>();
-			l.add(e.getKey());
-			for(Field f:vType.getFields())l.add(new FieldCellValue(f,e.getValue()));
+			l.add(t);
+			for(Field f:vType.getFields())l.add(new FieldCellValue(f,getMapping(t)));
 			m.addRow(l);
 		}
 	}
-	public Set<T>getObjects(){return objects.keySet();}
+	public V getMapping(T t){
+		try{
+			if(!objects.containsKey(t))objects.put(t,vType.getDeclaredConstructor(type).newInstance(t));
+			return objects.get(t);
+		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
+	}
 	public T createObject(){
 		try{
-			T object=type.getDeclaredConstructor().newInstance();
-			objects.put(object,vType.getDeclaredConstructor(type).newInstance(object));
-			return object;
+			T t=type.getDeclaredConstructor().newInstance();
+			Data.getInstance().getGroup(type).add(t);
+			return t;
 		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 	}
 	public void paint(Graphics2D g2,BufferedImage image,int h){
@@ -151,7 +157,7 @@ public class MappedList<T extends Editable,V extends Serializable>implements Fea
 			ProgramStarter.editor.constructEditor(o,true);
 			Vector<Object>l=new Vector<>();
 			l.add(o);
-			for(Field f:vType.getFields())l.add(new FieldCellValue(f,objects.get(o)));
+			for(Field f:vType.getFields())l.add(new FieldCellValue(f,getMapping(o)));
 			m.addRow(l);
 		});
 		add.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/10));

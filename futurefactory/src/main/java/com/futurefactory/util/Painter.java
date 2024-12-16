@@ -1,4 +1,4 @@
-package com.futurefactory;
+package com.futurefactory.util;
 
 import java.awt.Color;
 import java.awt.GradientPaint;

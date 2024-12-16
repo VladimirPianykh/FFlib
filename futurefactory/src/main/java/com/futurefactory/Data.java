@@ -33,10 +33,14 @@ import com.futurefactory.User.Feature;
  */
 public class Data implements Serializable{
 	private static Data instance;
+	/**
+	 * An array with icons (icons are optional).
+	 * To change display buttons in the model editing tab, redefine {@code createElementButton} and {@code createAddButton}
+	 */
 	public static class EditableGroup<T extends Editable>extends ArrayList<T>{
 		public Class<T>type;
 		/**
-		 * Creates a button for editing element
+		 * Creates a button for editing element.
 		 * @param e Editable to create button for
 		 */
 		public JButton createElementButton(Editable e,Font font){
@@ -89,9 +93,16 @@ public class Data implements Serializable{
 		}
 		@SafeVarargs
 		public EditableGroup(Class<T>type,T...elements){this(null,null,type,elements);this.invisible=true;}
+		/**
+		 * Makes this group not display in the list.
+		 * @return this group
+		 */
 		public EditableGroup<T>hide(){invisible=true;return this;}
 		@SuppressWarnings("unchecked")
-		public boolean add(Editable e){return super.add((T)e);}
+		public boolean add(Editable e){
+			if(e.getClass()!=type)throw new RuntimeException(e.getClass()+" cannot be added to the group of type "+type);
+			return super.add((T)e);
+		}
 		@SuppressWarnings("rawtypes")
 		public boolean equals(Object o){return o instanceof EditableGroup&&((EditableGroup)o).type.equals(type);}
 	}

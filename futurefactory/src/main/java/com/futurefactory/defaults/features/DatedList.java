@@ -29,10 +29,10 @@ import javax.swing.event.PopupMenuListener;
 import com.futurefactory.Data;
 import com.futurefactory.HButton;
 import com.futurefactory.ProgramStarter;
+import com.futurefactory.Wrapper;
 import com.futurefactory.Data.Editable;
 import com.futurefactory.Dater;
 import com.futurefactory.User.Feature;
-import com.futurefactory.Wrapper;
 import com.futurefactory.editor.EditorEntry;
 import com.futurefactory.editor.EditorEntryBase;
 import com.futurefactory.editor.modules.FormModule;
@@ -49,7 +49,7 @@ public class DatedList<T extends Editable>implements Feature{
 	private DatedList(String name,Class<T>type){this.name=name;this.type=type;}
 	public static<T extends Editable>DatedList<T>getList(String name){
 		if(((HashMap<String,DatedList<T>>)Data.getInstance().ftrInstances.get(DatedList.class.getName())).containsKey(name))return ((HashMap<String,DatedList<T>>)Data.getInstance().ftrInstances.get(DatedList.class.getName())).get(name);
-		else throw new IllegalArgumentException("Table \""+name+"\" does not exist.");
+		else throw new IllegalArgumentException("List \""+name+"\" does not exist.");
 	}
 	public static<T extends Editable>DatedList<T>registerList(String name,Class<T>type){
 		if(((HashMap<String,DatedList<?>>)Data.getInstance().ftrInstances.get(DatedList.class.getName())).containsKey(name)){

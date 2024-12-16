@@ -38,7 +38,7 @@
 		],
 		"description":"Create Role and Permission enum-implementations"
 	},
-	"Define a new Editable subclass":{
+	"Define an Editable subclass":{
 		"scope":"java",
 		"prefix":"_editable",
 		"body":[
@@ -49,9 +49,9 @@
 				"\t}",
 			"}"
 		],
-		"description":"Create an Editable subclass"
+		"description":"Create a new Editable subclass"
 	},
-	"Register a new EditableGroup":{
+	"Register an EditableGroup":{
 		"scope":"java",
 		"prefix":"_group",
 		"body":[
@@ -61,6 +61,57 @@
 				"\t$1.class",
 			");"
 		],
-		"description":"Create an Editable subclass"
+		"description":""
+	},
+	"Create a status enum":{
+		"scope":"java",
+		"prefix":"_enum",
+		"body":[
+			"public static enum ${1:Status}{",
+				"\t$0;",
+				"\tprivate String translation;",
+				"\tprivate ${1:Status}(String translation){this.translation=translation;}",
+				"\tpublic String toString(){return translation;}",
+			"}"
+		],
+		"description":""
+	},
+	"Cast editable to the current type":{
+		"scope":"java",
+		"prefix":"_cast",
+		"body":[
+			"${TM_FILENAME_BASE} e=(${TM_FILENAME_BASE})editable;",
+			"$0"
+		],
+		"description":""
+	},
+	"Create editor module":{
+		"scope":"java",
+		"prefix":"_module",
+		"body":[
+			"public class ${TM_FILENAME_BASE} implements EditorModule{",
+				"\tpublic JPanel createTab(JDialog editor,Editable editable,boolean isNew){",
+					"\t\tJPanel tab=new JPanel();",
+					"\t\t$0",
+					"\t\treturn tab;",
+				"\t}",
+			"}"
+		],
+		"description":""
+	},
+	"Create feature":{
+		"scope":"java",
+		"prefix":"_feature",
+		"body":[
+			"public class ${TM_FILENAME_BASE} implements Feature{",
+				"\tpublic void fillTab(JPanel content,JPanel tab,Font font){",
+					"\t\t$0",
+				"\t}",
+				"\tpublic void paint(Graphics2D g2,BufferedImage image,int h){",
+					"\t\t",
+				"\t}",
+			"}"
+		],
+		"description":""
 	}
 }
