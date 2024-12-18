@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -28,10 +29,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-import com.futurefactory.Data;
-import com.futurefactory.FieldCellValue;
-import com.futurefactory.FormCellEditor;
-import com.futurefactory.User.Feature;
+
+import com.futurefactory.core.Data;
+import com.futurefactory.core.User.Feature;
+import com.futurefactory.defaults.table.FieldCellValue;
+import com.futurefactory.defaults.table.FormCellEditor;
 import com.futurefactory.editor.EditorEntry;
 
 /**
@@ -41,7 +43,9 @@ import com.futurefactory.editor.EditorEntry;
 public class Board<T extends Serializable>implements Feature{
 	public static interface Filter<T>extends Predicate<T>{
 		public default JComponent getConfigurator(Runnable saver,ArrayList<T>objects){return null;}
-		public boolean test(T t);
+	}
+	public static interface Sorter<T>extends Comparator<T>{
+		public default JComponent getConfigurator(Runnable saver,ArrayList<T>objects){return null;}
 	}
 	private static class Slicer<T>implements Filter<T>{
 		private JComboBox<String>c;
@@ -69,7 +73,7 @@ public class Board<T extends Serializable>implements Feature{
 		}
 	};
 	private transient ArrayList<Consumer<JTable>>tableDecorators;
-	private transient Comparator<T>sorter;
+	private transient Sorter<T>sorter;
 	private transient Filter<T>filter;
 	private transient Supplier<ArrayList<T>>elementSupplier;
 	private Board(String name,Class<T>type){this.name=name;this.type=type;}
@@ -136,7 +140,7 @@ public class Board<T extends Serializable>implements Feature{
 	 * Sets a sorter to this board.
 	 * @param sorter - comparator to be used for sorting
 	 */
-	public Board<T>setSorter(Comparator<T>sorter){
+	public Board<T>setSorter(Sorter<T>sorter){
 		this.sorter=sorter;
 		return this;
 	}
@@ -157,10 +161,11 @@ public class Board<T extends Serializable>implements Feature{
 		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
-		objects=elementSupplier.get();
+		if(elementSupplier!=null)objects=elementSupplier.get();
 		tab.setLayout(new BorderLayout());
 		tab.setBorder(BorderFactory.createEmptyBorder(tab.getHeight()/300,tab.getWidth()/300,tab.getHeight()/300,tab.getWidth()/300));
-		JComponent filterConfig=null;
+		JPanel config=null;
+		JComponent filterConfig=null,sorterConfig=null;
 		JTable t=new JTable();
 		t.setBackground(Color.DARK_GRAY);
 		t.setForeground(Color.WHITE);
@@ -173,16 +178,20 @@ public class Board<T extends Serializable>implements Feature{
 		ArrayList<String>s=new ArrayList<>();
 		for(Field f:type.getFields())if(f.isAnnotationPresent(EditorEntry.class))s.add(f.getAnnotation(EditorEntry.class).translation());
 		DefaultTableModel m=new DefaultTableModel(s.toArray(new String[0]),0);
-		if(filter!=null){
-			filterConfig=filter.getConfigurator(()->{m.setRowCount(0);fillTable(m);},objects);
-			filterConfig.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/9));
+		if(filter!=null)filterConfig=filter.getConfigurator(()->{m.setRowCount(0);fillTable(m);},objects);
+		if(sorter!=null)sorterConfig=sorter.getConfigurator(()->{m.setRowCount(0);fillTable(m);},objects);
+		if(filterConfig!=null||sorterConfig!=null){
+			config=new JPanel(new GridLayout());
+			config.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/9));
+			if(filterConfig!=null)config.add(filterConfig);
+			if(sorterConfig!=null)config.add(sorterConfig);
 		}
 		fillTable(m);
-		sPane.setPreferredSize(new Dimension(tab.getWidth(),filterConfig==null?tab.getHeight():tab.getHeight()*8/9));
+		sPane.setPreferredSize(new Dimension(tab.getWidth(),config==null?tab.getHeight():tab.getHeight()*8/9));
 		t.setModel(m);
 		if(tableDecorators!=null)for(Consumer<JTable>c:tableDecorators)c.accept(t);
 		tab.add(sPane,BorderLayout.SOUTH);
-		if(filterConfig!=null)tab.add(filterConfig,BorderLayout.NORTH);
+		if(config!=null)tab.add(config,BorderLayout.NORTH);
 		//TODO: allow adding elements
 	}
 	public void paint(Graphics2D g2,BufferedImage image,int s){

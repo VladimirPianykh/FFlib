@@ -6,7 +6,7 @@ import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 
-import com.futurefactory.Data.Editable;
+import com.futurefactory.core.Data.Editable;
 
 public class ExcludeModule implements EditorModule{
     private EditorModule module;

@@ -20,9 +20,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import com.futurefactory.Data.Editable;
-import com.futurefactory.Data.Editable.ActionRecord;
 import com.futurefactory.HButton;
+import com.futurefactory.core.Data.Editable;
+import com.futurefactory.core.Data.Editable.ActionRecord;
 
 public class LogWatchModule implements EditorModule{
     public JPanel createTab(JDialog editor,Editable editable,boolean isNew){

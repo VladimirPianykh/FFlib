@@ -14,6 +14,8 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
+import com.futurefactory.core.Root;
+
 public class Message extends JDialog{
 	public Message(String text,Color c){
 		super(Window.getWindows()[Window.getWindows().length-1],ModalityType.APPLICATION_MODAL);

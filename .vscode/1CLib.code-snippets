@@ -24,16 +24,16 @@
 		"scope":"java",
 		"prefix":"_init",
 		"body":[
-			"public enum ApplicationRole implements Role{",
+			"public enum AppRole implements Role{",
 				"\t$1(",
 					"\t\t()->new Permission[]{},",
 					"\t\t()->new Feature[]{}",
 				"\t);",
-				"\tprivate ApplicationRole(Supplier<Permission[]>p,Supplier<Feature[]>f){SwingUtilities.invokeLater(()->Registrator.register(this,f.get(),p.get()));}",
+				"\tprivate AppRole(Supplier<Permission[]>p,Supplier<Feature[]>f){SwingUtilities.invokeLater(()->Registrator.register(this,f.get(),p.get()));}",
 			"}",
-			"public enum ApplicationPermission implements Permission{",
+			"public enum AppPermission implements Permission{",
 				"\t$2;",
-				"\tprivate ApplicationPermission(){Registrator.register(this);}",
+				"\tprivate AppPermission(){Registrator.register(this);}",
 			"}"
 		],
 		"description":"Create Role and Permission enum-implementations"
@@ -55,9 +55,9 @@
 		"scope":"java",
 		"prefix":"_group",
 		"body":[
-			"EditableGroup<$1>group=new EditableGroup<$1>(",
-				"\tnew PathIcon(\"ui/$2.png\",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),",
+			"EditableGroup<$1>${2:group}=new EditableGroup<$1>(",
 				"\tnew PathIcon(\"ui/$3.png\",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),",
+				"\tnew PathIcon(\"ui/$4.png\",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),",
 				"\t$1.class",
 			");"
 		],

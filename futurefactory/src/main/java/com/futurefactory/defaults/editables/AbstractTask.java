@@ -2,7 +2,7 @@ package com.futurefactory.defaults.editables;
 
 import java.time.LocalDate;
 
-import com.futurefactory.Data.Editable;
+import com.futurefactory.core.Data.Editable;
 import com.futurefactory.editor.EditorEntry;
 
 /**

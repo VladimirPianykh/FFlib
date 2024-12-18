@@ -16,11 +16,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
-import com.futurefactory.Data.Editable;
+import com.futurefactory.defaults.table.FieldCellValue;
+import com.futurefactory.defaults.table.FormCellEditor;
 import com.futurefactory.editor.EditorEntry;
-import com.futurefactory.FieldCellValue;
-import com.futurefactory.FormCellEditor;
 import com.futurefactory.HButton;
+import com.futurefactory.core.Data.Editable;
+
 import java.awt.Graphics;
 
 /**

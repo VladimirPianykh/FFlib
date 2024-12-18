@@ -26,13 +26,13 @@ import javax.swing.JScrollPane;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-import com.futurefactory.Data;
 import com.futurefactory.HButton;
-import com.futurefactory.ProgramStarter;
 import com.futurefactory.Wrapper;
-import com.futurefactory.Data.Editable;
+import com.futurefactory.core.Data;
+import com.futurefactory.core.ProgramStarter;
+import com.futurefactory.core.Data.Editable;
+import com.futurefactory.core.User.Feature;
 import com.futurefactory.Dater;
-import com.futurefactory.User.Feature;
 import com.futurefactory.editor.EditorEntry;
 import com.futurefactory.editor.EditorEntryBase;
 import com.futurefactory.editor.modules.FormModule;
@@ -129,7 +129,7 @@ public class DatedList<T extends Editable>implements Feature{
 	/**
 	 * <br>Sets the date provider - {@link Dater} supplier.</br>
 	 * <br>
-	 * Dater is a function that takes a {@link T} object and a {@link LocalDate}, 
+	 * Dater is a function that takes a {@code T} object and a {@link LocalDate}, 
 	 * and returns {@link JComponent} to represent the given day for the given object.
 	 * </br>
 	 * <br>Date provider can have fields with {@link com.futurefactory.editor.EditorEntry EditorEntry} to let the user configure it</br>

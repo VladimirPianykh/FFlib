@@ -1,6 +1,6 @@
 package com.futurefactory.editor;
 
-import com.futurefactory.Data.Editable;
+import com.futurefactory.core.Data.Editable;
 
 /**
  * Should be implemented to provide opportunity to edit {@link Editable}s.

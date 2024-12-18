@@ -16,13 +16,13 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import com.futurefactory.Data;
 import com.futurefactory.HButton;
-import com.futurefactory.ProgramStarter;
-import com.futurefactory.Registrator;
-import com.futurefactory.Data.Editable;
-import com.futurefactory.Data.EditableGroup;
-import com.futurefactory.User.Feature;
+import com.futurefactory.core.Data;
+import com.futurefactory.core.ProgramStarter;
+import com.futurefactory.core.Registrator;
+import com.futurefactory.core.Data.Editable;
+import com.futurefactory.core.Data.EditableGroup;
+import com.futurefactory.core.User.Feature;
 
 /**
  * A feature that shows a list of {@link Editable}s of the given group.
@@ -54,7 +54,7 @@ public class EditableList<T extends Editable>implements Feature{
 	/**
 	 * <br>Sets the component provider</br>
 	 * <br>
-	 * Component provider is a function that takes {@link T} and returns a component to represent the given element in the list.
+	 * Component provider is a function that takes {@code T} and returns a component to represent the given element in the list.
 	 * </br>
 	 * @param provider - provider to use
 	 */

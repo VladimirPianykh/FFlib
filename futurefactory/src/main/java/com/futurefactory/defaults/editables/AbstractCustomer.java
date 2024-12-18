@@ -1,6 +1,6 @@
 package com.futurefactory.defaults.editables;
 
-import com.futurefactory.Data.Editable;
+import com.futurefactory.core.Data.Editable;
 
 public class AbstractCustomer extends Editable{
     public AbstractCustomer(){

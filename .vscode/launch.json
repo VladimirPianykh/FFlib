@@ -8,7 +8,7 @@
             "type": "java",
             "name": "Main",
             "request": "launch",
-            "mainClass": "com.usersystem.Main",
+            "mainClass": "com.futurefactory.FullTester",
             "projectName": "futurefactory"
         },
         {

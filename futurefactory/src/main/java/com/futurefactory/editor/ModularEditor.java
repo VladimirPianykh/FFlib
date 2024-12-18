@@ -11,13 +11,14 @@ import java.util.Arrays;
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
-import com.futurefactory.Data.Editable;
+
 import com.futurefactory.editor.modules.FormModule;
 import com.futurefactory.editor.modules.EditorModule;
 import com.futurefactory.HButton;
 import com.futurefactory.PathIcon;
-import com.futurefactory.ProgramStarter;
-import com.futurefactory.Root;
+import com.futurefactory.core.ProgramStarter;
+import com.futurefactory.core.Root;
+import com.futurefactory.core.Data.Editable;
 
 public class ModularEditor implements IEditor{
 	public ArrayList<EditorModule>modules=new ArrayList<>();

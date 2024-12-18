@@ -40,13 +40,13 @@ import javax.swing.Timer;
 import javax.swing.plaf.LayerUI;
 import javax.swing.table.AbstractTableModel;
 
-import com.futurefactory.Data;
-import com.futurefactory.EditableDemo;
-import com.futurefactory.Data.Editable;
 import com.futurefactory.HButton;
 import com.futurefactory.Message;
-import com.futurefactory.ProgramStarter;
 import com.futurefactory.Wrapper;
+import com.futurefactory.core.Data;
+import com.futurefactory.core.EditableDemo;
+import com.futurefactory.core.ProgramStarter;
+import com.futurefactory.core.Data.Editable;
 import com.futurefactory.editor.EditorEntry;
 import com.futurefactory.editor.EditorEntryBase;
 import com.futurefactory.editor.InfoProvider;
@@ -139,7 +139,6 @@ public class FormModule implements EditorModule{
 			}
 			form.add(String.valueOf(k),entry);
 			results.add(a.translation());
-			//TODO: put something more interesting in the results
 			++k;
 		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 		EditableDemo demo=new EditableDemo(editable.getClass(),savers);
@@ -147,8 +146,15 @@ public class FormModule implements EditorModule{
 		form.add(String.valueOf(k),l);
 		ok.setText(savers.size()<=1?"Готово":"Далее");
 		ok.setBackground(savers.size()<=1?Color.GREEN:Color.GRAY);
+		JProgressBar p=new JProgressBar(0,savers.size());
+		p.setBounds(editor.getWidth()/8,editor.getHeight()/6,editor.getWidth()*3/4,editor.getHeight()/20);
+		p.setBackground(Color.WHITE);
+		p.setForeground(Color.GREEN);
+		tab.add(p);
+		Wrapper<Integer>w=new Wrapper<Integer>(0);
+		HButton cancel=null;
 		if(!isNew){
-			HButton cancel=new HButton(15,5){
+			HButton c=new HButton(15,5){
 				public void paint(Graphics g){
 					g.setClip(new RoundRectangle2D.Double(0,0,getWidth(),getHeight(),getHeight(),getHeight()));
 					g.setColor(new Color(71+scale*5,16+scale*2,1+scale));
@@ -158,19 +164,24 @@ public class FormModule implements EditorModule{
 					g.drawString(getText(),(getWidth()-fm.stringWidth(getText()))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
 				}
 			};
-			cancel.addActionListener(e->editor.dispose());
-			cancel.setBounds(editor.getWidth()*2/5,editor.getHeight()*12/15,editor.getWidth()/5,editor.getHeight()/20);
-			cancel.setText("Отмена");
-			cancel.setOpaque(false);
-			cancel.setFont(ok.getFont());
-			tab.add(cancel);
+			c.addActionListener(e->{
+				if(w.var==0)editor.dispose();
+				else{
+					p.setValue(--w.var);
+					layout.show(form,String.valueOf(w.var));
+					if(w.var==0)c.setText("Отмена");
+					ok.setText("Далее");
+					ok.setBackground(Color.GRAY);
+				}
+			});
+			c.setBounds(editor.getWidth()*2/5,editor.getHeight()*12/15,editor.getWidth()/5,editor.getHeight()/20);
+			c.setText("Отмена");
+			c.setOpaque(false);
+			c.setFont(ok.getFont());
+			tab.add(c);
+			cancel=c;
 		}
-		JProgressBar p=new JProgressBar(0,savers.size());
-		p.setBounds(editor.getWidth()/8,editor.getHeight()/6,editor.getWidth()*3/4,editor.getHeight()/20);
-		p.setBackground(Color.WHITE);
-		p.setForeground(Color.GREEN);
-		tab.add(p);
-		Wrapper<Integer>w=new Wrapper<Integer>(0);
+		final HButton fCancel=cancel;
 		JComponent info=null;
 		if(infoProvider.var!=null){
 			info=infoProvider.var.provideInfo(demo);
@@ -216,6 +227,7 @@ public class FormModule implements EditorModule{
 						ok.setBackground(Color.GREEN);
 						if(nameProvider.var!=null)nameField.setText(nameProvider.var.provideName(demo.get()));
 					}
+					if(fCancel!=null)fCancel.setText("Назад");
 				}
 			}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 		});
@@ -248,7 +260,9 @@ public class FormModule implements EditorModule{
 			}else if(f.getType()==LocalDate.class){
 				JDateChooser d=new JDateChooser();
 				d.setDateFormatString("yyyy-MM-dd");
-				d.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+				try{
+					d.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+				}catch(NullPointerException ex){throw new NullPointerException("LocalDate fields must be non-null");}
 				saver.var=()->Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
 				return d;
 			}else if(Editable.class.isAssignableFrom(f.getType())){

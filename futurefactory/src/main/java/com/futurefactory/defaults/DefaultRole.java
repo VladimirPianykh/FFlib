@@ -1,6 +1,6 @@
 package com.futurefactory.defaults;
 
-import com.futurefactory.User.Role;
+import com.futurefactory.core.User.Role;
 
 public enum DefaultRole implements Role{
 	EMPTY{

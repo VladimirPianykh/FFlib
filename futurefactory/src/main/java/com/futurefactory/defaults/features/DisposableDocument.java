@@ -12,11 +12,11 @@ import java.util.function.Consumer;
 
 import javax.swing.JPanel;
 
-import com.futurefactory.Data.Editable;
 import com.futurefactory.HButton;
-import com.futurefactory.ProgramStarter;
-import com.futurefactory.User.Feature;
 import com.futurefactory.Wrapper;
+import com.futurefactory.core.ProgramStarter;
+import com.futurefactory.core.Data.Editable;
+import com.futurefactory.core.User.Feature;
 
 public class DisposableDocument<T extends Editable>implements Feature{
 	private static HashMap<String,DisposableDocument<?>>documents=new HashMap<>();

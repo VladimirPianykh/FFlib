@@ -1,83 +1,128 @@
-// package com.futurefactory.defaults.features;
+package com.futurefactory.defaults.features;
 
-// import java.awt.BasicStroke;
-// import java.awt.Color;
-// import java.awt.Font;
-// import java.awt.Graphics;
-// import java.awt.Graphics2D;
-// import java.awt.GridLayout;
-// import java.awt.image.BufferedImage;
-// import java.time.YearMonth;
-// import java.time.temporal.ChronoUnit;
-// import java.util.HashMap;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridLayout;
+import java.awt.image.BufferedImage;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
-// import javax.swing.JPanel;
+import com.futurefactory.Dater;
+import com.futurefactory.HButton;
+import com.futurefactory.PathIcon;
+import com.futurefactory.Wrapper;
+import com.futurefactory.core.Data;
+import com.futurefactory.core.User.Feature;
 
-// import com.futurefactory.Data;
-// import com.futurefactory.Data.Task;
-// import com.futurefactory.HButton;
-// import com.futurefactory.PathIcon;
-// import com.futurefactory.Wrapper;
-// import com.futurefactory.User.Feature;
-
-// public class Calendar implements Feature{
-// 	static{
-// 		if(!Data.getInstance().ftrInstances.containsKey(Calendar.class.getName()))Data.getInstance().ftrInstances.put(Calendar.class.getName(),new HashMap<>());
-// 	}
-// 	public static<T extends Task>Calendar<T>getBoard(String name){
-// 		if(((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).containsKey(name))return (Calendar<T>)((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).get(name);
-// 		else throw new IllegalArgumentException("Board \""+name+"\" does not exist.");
-// 	}
-// 	public static<T extends Task>Calendar<T>registerBoard(String name,Class<T>type){
-// 		if(((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).containsKey(name)&&((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).get(name).type.equals(type))return(Calendar<T>)((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).get(name);
-// 		Calendar<T>b=new Calendar<T>(name,type);
-// 		((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).put(name,b);
-// 		return b;
-// 	}
-// 	private void fillForMonth(JPanel panel,YearMonth m){
-// 		panel.removeAll();
-// 		for(int i=1;i<=m.lengthOfMonth();++i){
-			
-// 		}
-// 	}
-// 	public void paint(Graphics2D g2,BufferedImage image,int h){g2.setStroke(new BasicStroke(h/20));g2.drawRoundRect(h/20,h/5,h*9/10,h*4/5,h,h);}
-// 	public void fillTab(JPanel content,JPanel tab,Font font){
-// 		JPanel panel=new JPanel();
-// 		panel.setLayout(new GridLayout(0,7));
-// 		Wrapper<YearMonth>w=new Wrapper<>(YearMonth.now());
-// 		HButton left=new HButton(){
-// 			private PathIcon icon=new PathIcon("ui/left.png");
-// 			public void paint(Graphics g){
-// 				int c=50-scale*4;
-// 				if(getModel().isPressed())c-=25;
-// 				g.setColor(new Color(c,c,c));
-// 				g.fillRect(0,0,getWidth(),getHeight());
-// 				icon.paintIcon(this,g,0,(getHeight()-icon.getIconHeight())/2);
-// 			}
-// 		},right=new HButton(){
-// 			private PathIcon icon=new PathIcon("ui/right.png");
-// 			public void paint(Graphics g){
-// 				int c=50-scale*4;
-// 				if(getModel().isPressed())c-=25;
-// 				g.setColor(new Color(c,c,c));
-// 				g.fillRect(0,0,getWidth(),getHeight());
-// 				icon.paintIcon(this,g,0,(getHeight()-icon.getIconHeight())/2);
-// 			}
-// 		};
-// 		left.addActionListener(e->{
-// 			w.var=w.var.minus(1,ChronoUnit.MONTHS);
-// 			fillForMonth(panel,w.var);
-// 		});
-// 		right.addActionListener(e->{
-// 			w.var=w.var.plus(1,ChronoUnit.MONTHS);
-// 			fillForMonth(panel,w.var);
-// 		});
-// 		left.setSize(tab.getWidth()/10,tab.getHeight());
-// 		panel.setBounds(tab.getWidth()/10,0,tab.getWidth()*4/5,tab.getHeight());
-// 		right.setBounds(tab.getWidth()*9/10,0,tab.getWidth()/10,tab.getHeight());
-// 		tab.add(left);
-// 		tab.add(panel);
-// 		tab.add(right);
-// 		fillForMonth(panel,w.var);
-// 	}
-// }
+public class Calendar<T extends Calendar.Event>implements Feature{
+	public static interface Event{}
+	static{
+		if(!Data.getInstance().ftrInstances.containsKey(Calendar.class.getName()))Data.getInstance().ftrInstances.put(Calendar.class.getName(),new HashMap<>());
+	}
+	private String name;
+	private Class<T>type;
+	//TODO: create events
+	private HashMap<LocalDate,ArrayList<T>>events=new HashMap<>();
+	private transient Dater<ArrayList<T>>dater;
+	private Calendar(String name,Class<T>type){this.name=name;this.type=type;}
+	@SuppressWarnings("unchecked")
+	public static<T extends Event>Calendar<T>getCalendar(String name){
+		if(((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).containsKey(name))return(Calendar<T>)((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).get(name);
+		else throw new IllegalArgumentException("Calendar \""+name+"\" does not exist.");
+	}
+	@SuppressWarnings("unchecked")
+	public static<T extends Event>Calendar<T>registerCalendar(String name,Class<T>type){
+		if(((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).containsKey(name)&&((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).get(name).type.equals(type))return(Calendar<T>)((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).get(name);
+		Calendar<T>b=new Calendar<>(name,type);
+		((HashMap<String,Calendar<?>>)Data.getInstance().ftrInstances.get(Calendar.class.getName())).put(name,b);
+		return b;
+	}
+	private void fillForMonth(JPanel panel,YearMonth m){
+		panel.removeAll();
+		for(int i=1;i<m.atDay(1).getDayOfWeek().getValue();++i)panel.add(new JComponent(){
+			public void paint(Graphics g){
+				g.setColor(Color.DARK_GRAY);
+				g.fillRect(0,0,getWidth(),getHeight());
+			}
+		});
+		for(int i=1;i<=m.lengthOfMonth();++i){
+			LocalDate d=m.atDay(i);
+			panel.add(dater.apply(getEventList(d),d));
+		}
+		for(int i=0;i<7-m.atEndOfMonth().getDayOfWeek().getValue();++i)panel.add(new JComponent(){
+			public void paint(Graphics g){
+				g.setColor(Color.DARK_GRAY);
+				g.fillRect(0,0,getWidth(),getHeight());
+			}
+		});
+	}
+	/**
+	 * Sets the dater for this calendar.
+	 * @apiNote Unlike {@link DatedList}, you don't have to transfer {@link java.util.function.Supplier Supplier}.
+	 * A {@link Dater} is enough.
+	 */
+	public Calendar<T>setDater(Dater<ArrayList<T>>dater){this.dater=dater;return this;}
+	public ArrayList<T>getEventList(LocalDate date){
+		if(!events.containsKey(date))events.put(date,new ArrayList<T>());
+		return events.get(date);
+	}
+	public void paint(Graphics2D g2,BufferedImage image,int h){g2.setStroke(new BasicStroke(h/20));g2.drawRoundRect(h/20,h/5,h*9/10,h*4/5,h,h);}
+	public void fillTab(JPanel content,JPanel tab,Font font){
+		JPanel panel=new JPanel(new GridLayout(0,7));
+		Wrapper<YearMonth>w=new Wrapper<>(YearMonth.now());
+		JPanel weekDays=new JPanel(new GridLayout(1,7));
+		for(String s:new String[]{"Пн","Вт","Ср","Чт","Пт","Сб","Вс"}){
+			JLabel l=new JLabel(s);
+			l.setHorizontalAlignment(JLabel.CENTER);
+			weekDays.add(l);
+		}
+		HButton left=new HButton(){
+			private PathIcon icon=new PathIcon("ui/left.png");
+			public void paint(Graphics g){
+				int c=50-scale*4;
+				if(getModel().isPressed())c-=25;
+				g.setColor(new Color(c,c,c));
+				g.fillRect(0,0,getWidth(),getHeight());
+				icon.paintIcon(this,g,0,(getHeight()-icon.getIconHeight())/2);
+			}
+		},right=new HButton(){
+			private PathIcon icon=new PathIcon("ui/right.png");
+			public void paint(Graphics g){
+				int c=50-scale*4;
+				if(getModel().isPressed())c-=25;
+				g.setColor(new Color(c,c,c));
+				g.fillRect(0,0,getWidth(),getHeight());
+				icon.paintIcon(this,g,0,(getHeight()-icon.getIconHeight())/2);
+			}
+		};
+		left.addActionListener(e->{
+			w.var=w.var.minus(1,ChronoUnit.MONTHS);
+			fillForMonth(panel,w.var);
+			panel.revalidate();
+		});
+		right.addActionListener(e->{
+			w.var=w.var.plus(1,ChronoUnit.MONTHS);
+			fillForMonth(panel,w.var);
+			panel.revalidate();
+		});
+		weekDays.setBounds(tab.getWidth()/10,0,tab.getWidth()*4/5,tab.getHeight()/10);
+		left.setSize(tab.getWidth()/10,tab.getHeight());
+		panel.setBounds(tab.getWidth()/10,tab.getHeight()/10,tab.getWidth()*4/5,tab.getHeight()*9/10);
+		right.setBounds(tab.getWidth()*9/10,0,tab.getWidth()/10,tab.getHeight());
+		tab.add(weekDays);
+		tab.add(left);
+		tab.add(panel);
+		tab.add(right);
+		fillForMonth(panel,w.var);
+	}
+	public String toString(){return name;}
+}

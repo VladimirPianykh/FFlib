@@ -21,15 +21,16 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import com.futurefactory.Data;
-import com.futurefactory.ProgramStarter;
-import com.futurefactory.User;
-import com.futurefactory.WorkFrame;
-import com.futurefactory.Data.Editable;
-import com.futurefactory.Data.EditableGroup;
-import com.futurefactory.User.Feature;
-import com.futurefactory.User.Role;
-import com.futurefactory.WorkFrame.WorkTabButton;
+import com.futurefactory.core.Data;
+import com.futurefactory.core.ProgramStarter;
+import com.futurefactory.core.User;
+import com.futurefactory.core.WorkFrame;
+import com.futurefactory.core.Data.Editable;
+import com.futurefactory.core.Data.EditableGroup;
+import com.futurefactory.core.User.Feature;
+import com.futurefactory.core.User.Role;
+import com.futurefactory.core.WorkFrame.WorkTabButton;
+
 import java.util.NoSuchElementException;
 
 public enum DefaultFeature implements Feature{

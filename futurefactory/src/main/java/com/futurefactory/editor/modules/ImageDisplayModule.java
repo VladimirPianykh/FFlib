@@ -16,8 +16,8 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 
-import com.futurefactory.Root;
-import com.futurefactory.Data.Editable;
+import com.futurefactory.core.Root;
+import com.futurefactory.core.Data.Editable;
 import com.futurefactory.HButton;
 
 public class ImageDisplayModule implements EditorModule{

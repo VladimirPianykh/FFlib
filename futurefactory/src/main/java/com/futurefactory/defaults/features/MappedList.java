@@ -23,16 +23,16 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
-import com.futurefactory.Data;
-import com.futurefactory.Data.Editable;
-import com.futurefactory.Data.EditableGroup;
-import com.futurefactory.FieldCellRenderer;
-import com.futurefactory.FieldCellValue;
-import com.futurefactory.FormCellEditor;
 import com.futurefactory.HButton;
-import com.futurefactory.ProgramStarter;
-import com.futurefactory.Registrator;
-import com.futurefactory.User.Feature;
+import com.futurefactory.core.Data;
+import com.futurefactory.core.ProgramStarter;
+import com.futurefactory.core.Registrator;
+import com.futurefactory.core.Data.Editable;
+import com.futurefactory.core.Data.EditableGroup;
+import com.futurefactory.core.User.Feature;
+import com.futurefactory.defaults.table.FieldCellRenderer;
+import com.futurefactory.defaults.table.FieldCellValue;
+import com.futurefactory.defaults.table.FormCellEditor;
 import com.futurefactory.editor.EditorEntry;
 
 @SuppressWarnings("unchecked")

@@ -25,7 +25,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import com.futurefactory.User.Feature;
+import com.futurefactory.core.ProgramStarter;
+import com.futurefactory.core.Root;
+import com.futurefactory.core.User;
+import com.futurefactory.core.User.Feature;
 
 /**
  * <br>Displays step-by step guide for reaching some functions.</br>
