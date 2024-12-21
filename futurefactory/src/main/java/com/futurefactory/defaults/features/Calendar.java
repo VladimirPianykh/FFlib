@@ -6,12 +6,14 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.JComponent;
@@ -29,9 +31,9 @@ public class Calendar<T extends Calendar.Event>implements Feature{
 	public static HashMap<String,Calendar<?>>calendars=new HashMap<>();
 	private String name;
 	private Class<T>type;
-	private HashMap<LocalDate,ArrayList<T>>events=new HashMap<>();
-	private Dater<ArrayList<T>>dater;
-	private Consumer<HashMap<LocalDate,ArrayList<T>>>eventFiller;
+	private HashMap<LocalDate,List<T>>events=new HashMap<>();
+	private Dater<List<T>>dater;
+	private Consumer<HashMap<LocalDate,List<T>>>eventFiller;
 	private Calendar(String name,Class<T>type){this.name=name;this.type=type;}
 	@SuppressWarnings("unchecked")
 	public static<T extends Event>Calendar<T>getCalendar(String name){
@@ -68,18 +70,32 @@ public class Calendar<T extends Calendar.Event>implements Feature{
 	 * <br>Sets the event filler for this calendar.</br>
 	 * <br>Event filler is a consumer that fills the given {@link HashMap} with events.</br>
 	 */
-	public Calendar<T>setEventFiller(Consumer<HashMap<LocalDate,ArrayList<T>>>eventFiller){this.eventFiller=eventFiller;return this;}
-	/**w
+	public Calendar<T>setEventFiller(Consumer<HashMap<LocalDate,List<T>>>eventFiller){this.eventFiller=eventFiller;return this;}
+	/**
 	 * Sets the dater for this calendar.
 	 * @apiNote Unlike {@link DatedList}, you don't have to transfer {@link java.util.function.Supplier Supplier}.
 	 * A {@link Dater} is enough.
 	 */
-	public Calendar<T>setDater(Dater<ArrayList<T>>dater){this.dater=dater;return this;}
-	public ArrayList<T>getEventList(LocalDate date){
+	public Calendar<T>setDater(Dater<List<T>>dater){this.dater=dater;return this;}
+	public List<T>getEventList(LocalDate date){
 		if(!events.containsKey(date))events.put(date,new ArrayList<T>());
 		return events.get(date);
 	}
-	public void paint(Graphics2D g2,BufferedImage image,int h){g2.setStroke(new BasicStroke(h/20));g2.drawRoundRect(h/20,h/5,h*9/10,h*4/5,h,h);}
+	public void paint(Graphics2D g2,BufferedImage image,int h){
+		g2.setStroke(new BasicStroke(h/20));
+		g2.drawRoundRect(h/20,h/5,h*9/10,h*3/5,h/10,h/10);
+		g2.setClip(new RoundRectangle2D.Double(h/20,h/5,h*9/10,h*3/5,h/10,h/10));
+		g2.drawLine(0,h/3,h,h/3);
+		g2.setStroke(new BasicStroke(h/30));
+		for(int i=1;i<=6;++i){
+			int x=h/20+i*h*9/70;
+			g2.drawLine(x,h/3,x,h);
+		}
+		for(int i=1;i<=3;++i){
+			int y=h/3+i*h*7/60;
+			g2.drawLine(0,y,h,y);
+		}
+	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
 		if(eventFiller!=null){
 			events.clear();

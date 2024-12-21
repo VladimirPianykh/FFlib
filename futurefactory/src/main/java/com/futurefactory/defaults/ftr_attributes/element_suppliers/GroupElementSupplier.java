@@ -1,4 +1,4 @@
-package com.futurefactory.defaults.ftr_attributes;
+package com.futurefactory.defaults.ftr_attributes.element_suppliers;
 
 import java.util.ArrayList;
 import java.util.function.Supplier;

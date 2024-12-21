@@ -135,6 +135,7 @@ public class User implements Serializable{
 		userMap.put(login,this);
 	}
 	public boolean hasPermission(Permission p){
+		if(p==null)return false;
 		for(Permission m:permissions.get(role))if(m==p)return true;
 		return false;
 	}

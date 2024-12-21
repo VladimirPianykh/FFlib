@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import com.futurefactory.HButton;
+import com.futurefactory.Message;
 import com.futurefactory.core.User.Feature;
 import com.futurefactory.core.User.Role;
 import com.futurefactory.defaults.DefaultRole;
@@ -138,6 +139,10 @@ public class WorkFrame extends JFrame{
 		exit.setForeground(new Color(54,23,13));
 		exit.setBorder(null);
 		add(exit);
+		if(ftrMap.get(user.role).length==0){
+			new Message("Ошибка! Возможно, у вас есть устаревшее сохранение и его надо удалить (см. записку).",Color.RED);
+			System.exit(1);
+		}
 		for(Feature f:ftrMap.get(user.role)){
 			WorkTabButton t=new WorkTabButton(f,content,sidebar.getComponentCount());
 			sidebar.add(t);

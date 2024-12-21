@@ -147,7 +147,7 @@ public class Data implements Serializable{
 				Files.walkFileTree(Path.of(Root.folder),del);
 			}catch(IOException exception){throw new RuntimeException(exception);}
 			new Message("Обнаружено устаревшее сохранение. Удалите его и перезапустите программу.",Color.RED);
-			Runtime.getRuntime().halt(0);
+			Runtime.getRuntime().halt(1);
 		}catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Data corrupted");}
 		return instance;
 	}

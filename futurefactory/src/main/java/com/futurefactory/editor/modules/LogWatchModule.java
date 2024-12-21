@@ -68,8 +68,9 @@ public class LogWatchModule implements EditorModule{
 							g2.setColor(t.equals("CREATED")?new Color(81,122,40):new Color(148,55,9));
 							g2.setFont(new Font(Font.DIALOG,Font.PLAIN,getHeight()/2));
 							FontMetrics fm=g2.getFontMetrics();
-							g2.drawString("CREATED",(getWidth()-fm.stringWidth("CREATED"))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
-							Shape s=g2.getFont().createGlyphVector(g2.getFontRenderContext(),"CREATED").getOutline((getWidth()-fm.stringWidth("CREATED"))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
+							String str=t.equals("CREATED")?"СОЗДАНО":"УДАЛЕНО";
+							g2.drawString(str,(getWidth()-fm.stringWidth(str))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
+							Shape s=g2.getFont().createGlyphVector(g2.getFontRenderContext(),str).getOutline((getWidth()-fm.stringWidth(str))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
 							g2.setStroke(new BasicStroke(getHeight()/50));
 							g2.setColor(new Color(255,255,255,100));
 							g2.draw(s);
@@ -82,9 +83,21 @@ public class LogWatchModule implements EditorModule{
 							// g2.drawString(t,(getWidth()-fm.stringWidth(t))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
 						break;
 					}
+				}else if(s.text.charAt(0)=='+'){
+					g2.setFont(new Font(Font.DIALOG,Font.PLAIN,getHeight()/4));
+					FontMetrics fm=g2.getFontMetrics();
+					g2.setColor(Color.GREEN);
+					String str="Стадия "+s.text.substring(1)+" успешно завершена";
+					g2.drawString(str,(getWidth()-fm.stringWidth(str))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
+				}else if(s.text.charAt(0)=='-'){
+					g2.setFont(new Font(Font.DIALOG,Font.PLAIN,getHeight()/4));
+					FontMetrics fm=g2.getFontMetrics();
+					g2.setColor(Color.RED);
+					String str="Откачено до стадии "+s.text.substring(1);
+					g2.drawString(str,(getWidth()-fm.stringWidth(str))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
 				}else if(s.text.charAt(0)=='>'){
 					g2.setColor(new Color(87,31,14));
-					g2.setFont(new Font(Font.DIALOG,Font.PLAIN,getHeight()/(4)));
+					g2.setFont(new Font(Font.DIALOG,Font.PLAIN,getHeight()/4));
 					g2.drawString(s.text.split(":")[0],getWidth()/100,getHeight()-getHeight()/100);
 					g2.setColor(Color.BLACK);
 					String[]t=s.text.substring(s.text.split(":")[0].length()+1,s.text.length()).split("\n");

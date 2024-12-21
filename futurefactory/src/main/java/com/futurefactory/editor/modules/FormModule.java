@@ -18,10 +18,10 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Vector;
 import java.util.function.Supplier;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -108,7 +108,6 @@ public class FormModule implements EditorModule{
 		ArrayList<Supplier<?>>savers=new ArrayList<>();
 		Wrapper<Supplier<?>>currentSaver=new Wrapper<Supplier<?>>(null);
 		int k=0;
-		Vector<String>results=new Vector<>();
 		for(Field f:editableFields)try{
 			EditorEntry a=(EditorEntry)f.getAnnotation(EditorEntry.class);
 			JPanel entry=new JPanel(new GridLayout(1,2));
@@ -138,10 +137,10 @@ public class FormModule implements EditorModule{
 				}else entry.add(c);
 			}
 			form.add(String.valueOf(k),entry);
-			results.add(a.translation());
 			++k;
 		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 		EditableDemo demo=new EditableDemo(editable.getClass(),savers);
+		DefaultListModel<String>results=new DefaultListModel<>();
 		JList<String>l=new JList<>(results);
 		form.add(String.valueOf(k),l);
 		ok.setText(savers.size()<=1?"Готово":"Далее");
@@ -226,6 +225,8 @@ public class FormModule implements EditorModule{
 						ok.setText("Готово");
 						ok.setBackground(Color.GREEN);
 						if(nameProvider.var!=null)nameField.setText(nameProvider.var.provideName(demo.get()));
+						results.removeAllElements();
+						for(int i=0;i<editableFields.size();++i)results.addElement(editableFields.get(i).getAnnotation(EditorEntry.class).translation()+": "+String.valueOf(savers.get(i).get()));
 					}
 					if(fCancel!=null)fCancel.setText("Назад");
 				}

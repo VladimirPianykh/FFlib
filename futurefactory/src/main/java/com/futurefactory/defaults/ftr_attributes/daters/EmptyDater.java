@@ -1,4 +1,4 @@
-package com.futurefactory.defaults.ftr_attributes;
+package com.futurefactory.defaults.ftr_attributes.daters;
 
 import java.awt.Color;
 import java.time.LocalDate;

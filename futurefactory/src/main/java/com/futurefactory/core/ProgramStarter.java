@@ -12,6 +12,7 @@ import java.awt.RadialGradientPaint;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.JComboBox;
@@ -20,6 +21,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 
 import com.futurefactory.HButton;
@@ -153,14 +155,18 @@ public class ProgramStarter{
 			c.setForeground(Color.WHITE);
 			c.setFont(confirm.getFont());
 			User.forEachUser(u->c.addItem(u));
-			f.add(c);
-			confirm.addActionListener(new ActionListener(){
+			AbstractAction action=new AbstractAction(){
 				public void actionPerformed(ActionEvent e){
 					((User)c.getSelectedItem()).login(((User)c.getSelectedItem()).password);
 					frame=new WorkFrame(User.getActiveUser());
 					f.dispose();
 				}
-			});
+			};
+			c.addActionListener(action);
+			c.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0),"confirm");
+			c.getActionMap().put("confirm",action);
+			f.add(c);
+			confirm.addActionListener(action);
 		}
 		f.add(confirm);
 		f.setVisible(true);
