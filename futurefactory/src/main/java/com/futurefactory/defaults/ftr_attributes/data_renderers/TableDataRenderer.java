@@ -1,18 +1,28 @@
 package com.futurefactory.defaults.ftr_attributes.data_renderers;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 
+import com.futurefactory.HButton;
+import com.futurefactory.Message;
 import com.futurefactory.defaults.table.EmptyCellEditor;
 import com.futurefactory.editor.EditorEntry;
+import java.awt.Graphics;
 
 /**
  * <br>Returns a table, rendering all editable fields of the component given.</br>
@@ -21,8 +31,10 @@ import com.futurefactory.editor.EditorEntry;
 public class TableDataRenderer<T>implements Supplier<JComponent>{
 	private Supplier<ArrayList<T>>elementSupplier;
 	private String title;
+	private boolean allowExport;
 	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier){this.elementSupplier=elementSupplier;}
 	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier,String title){this(elementSupplier);this.title=title;}
+	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier,String title,boolean allowExport){this(elementSupplier,title);this.allowExport=allowExport;}
 	public JComponent get(){
 		ArrayList<T>a=elementSupplier.get();
 		if(a.isEmpty())return new JTable();
@@ -42,6 +54,41 @@ public class TableDataRenderer<T>implements Supplier<JComponent>{
 		}
 		JScrollPane s=new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);;
 		if(title!=null)s.setBorder(BorderFactory.createTitledBorder(title));
-		return s;
+		if(allowExport){
+			GridBagLayout l=new GridBagLayout();
+			l.rowWeights=l.columnWeights=new double[]{0.2,0.2,0.2,0.2,0.2};
+			JPanel p=new JPanel(l);
+			GridBagConstraints c1=new GridBagConstraints(),c2=new GridBagConstraints();
+			HButton export=new HButton(){
+				public void paint(Graphics g){
+					Graphics2D g2=(Graphics2D)g;
+					g2.setColor(new Color(12,54,3));
+					g2.fillRect(0,0,getWidth(),getHeight());
+					g2.setStroke(new BasicStroke(getHeight()/30));
+					g2.setColor(Color.BLACK);
+					g2.drawRect(0,0,getWidth(),getHeight());
+					g2.setColor(new Color(0,0,0,(getModel().isPressed()?50:10)+scale*4));
+					g2.fillRect(0,0,getWidth(),getHeight());
+					FontMetrics fm=g2.getFontMetrics();
+					g2.setColor(Color.WHITE);
+					g2.drawString("Экспорт",(getWidth()-fm.stringWidth("Экспорт"))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
+				}
+			};
+			export.addActionListener(e->{
+				//TODO @borisaushev: write table contents to excel and complete the message below
+				new Message("Файл экспортирован в загрузки. Проверьте папку "/*+path*/,Color.GREEN);
+			});
+			c1.gridx=c1.gridy=4;
+			c1.gridwidth=c1.gridheight=1;
+			c1.weightx=c1.weighty=0.2;
+			c1.fill=GridBagConstraints.BOTH;
+			p.add(export,c1);
+			c2.gridx=c2.gridy=0;
+			c2.gridwidth=c2.gridheight=GridBagConstraints.REMAINDER;
+			c2.weightx=c2.weighty=1;
+			c2.fill=GridBagConstraints.BOTH;
+			p.add(s,c2);
+			return p;
+		}else return s;
 	}
 }

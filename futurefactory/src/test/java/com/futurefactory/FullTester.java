@@ -202,6 +202,6 @@ public class FullTester{
 				()->"Паника: есть",
 				()->"Кровь: "+((int)s.getValue()>50?"есть "+((int)s.getValue()-50)+" литров":"нет (но это временно)")
 			))
-			.addDataRenderer(new TableDataRenderer<>(groupES));
+			.addDataRenderer(new TableDataRenderer<>(groupES,"Данные о жертвах НТО",true));
 	}
 }
