@@ -3,13 +3,14 @@ package com.futurefactory.util;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Class for parsing an Excel (xls/xlsx) file into a list of Java objects.
@@ -22,6 +23,7 @@ import java.util.Iterator;
  * </pre>
  */
 public class ExcelUtils{
+	static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	/**
      * Uses reflection to create a list of objects of the specified class from the given file.
      * </p>
@@ -47,6 +49,7 @@ public class ExcelUtils{
 			if(rowIterator.hasNext())rowIterator.next();
 			while(rowIterator.hasNext()){
 				Row row=rowIterator.next();
+				type.getDeclaredConstructor().setAccessible(true);
 				T instance=type.getDeclaredConstructor().newInstance();
 				Field[]fields=type.getDeclaredFields();
 				for(int i=0;i<fields.length;i++){
@@ -63,7 +66,18 @@ public class ExcelUtils{
 	}
 	private static Object parseCellValue(Cell cell,Class<?>targetType){
 		switch(cell.getCellType()){
-			case Cell.CELL_TYPE_STRING->{return cell.getStringCellValue();}
+			case Cell.CELL_TYPE_STRING->{
+				String stringValue = cell.getStringCellValue();
+				if(targetType.isEnum()) {
+					for(var constant : targetType.getEnumConstants())
+						if(constant.toString().equalsIgnoreCase(stringValue))
+							return constant;
+				}
+				else if(targetType == LocalDate.class) {
+					return LocalDate.parse(cell.getStringCellValue(), dateFormatter);
+				}
+				return stringValue;
+			}
 			case Cell.CELL_TYPE_NUMERIC->{
 				if(DateUtil.isCellDateFormatted(cell)&&targetType==LocalDate.class){
 					return LocalDate.ofInstant(cell.getDateCellValue().toInstant(),ZoneId.systemDefault());
@@ -78,4 +92,73 @@ public class ExcelUtils{
 		}
 		throw new UnsupportedOperationException("Failed to parse data");
     }
+
+    /**
+     * Uses reflection to save a list of objects to the given file.
+     * </p>
+     * Example:
+     * <pre>
+     * {@code
+	 * List<TestClass> vals = List.of(new TestClass("inst 1"), new TestClass("inst 2"));
+     * File resultFile = ExcelUtils.saveInstances(new File(outputPath), vals, TestClass.class);
+     * }
+     * </pre>
+     *
+     * @param file - excel file
+     * @param instances - list of instances to save
+     * @param classType - type of list objects
+     * @param <T> the same class type (needed for creating the list)
+     * @return saved file
+     */
+	public static <T> File saveInstances(File file, List<T> instances, Class<T> classType) throws IllegalAccessException {
+        Workbook workbook = new XSSFWorkbook();
+		Sheet sheet = workbook.createSheet("Data");
+
+		// Получаем поля класса
+		Field[] fields = classType.getDeclaredFields();
+
+		// Создаем заголовки
+		Row headerRow = sheet.createRow(0);
+		for (int i = 0; i < fields.length; i++) {
+			fields[i].setAccessible(true);
+			headerRow.createCell(i).setCellValue(fields[i].getName());
+		}
+
+		// Записываем данные
+		int rowIndex = 1;
+		for (T instance : instances) {
+			Row row = sheet.createRow(rowIndex++);
+			for (int i = 0; i < fields.length; i++) {
+				Cell cell = row.createCell(i);
+				fields[i].setAccessible(true);
+				Object value = fields[i].get(instance);
+
+				if (value instanceof String) {
+					cell.setCellValue((String) value);
+				} else if (value instanceof Number) {
+					cell.setCellValue(((Number) value).doubleValue());
+				} else if (value instanceof LocalDate) {
+					cell.setCellValue(((LocalDate) value).format(dateFormatter));
+				} else if (value instanceof Enum<?>) {
+					cell.setCellValue(value.toString());
+				} else if (value != null) {
+					cell.setCellValue(value.toString());
+				}
+			}
+		}
+
+		// Автоматическая настройка ширины колонок
+		for (int i = 0; i < fields.length; i++) {
+			sheet.autoSizeColumn(i);
+		}
+
+		// Сохраняем файл
+		try (FileOutputStream fileOut = new FileOutputStream(file)) {
+			workbook.write(fileOut);
+		} catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+		return file;
+	}
 }
