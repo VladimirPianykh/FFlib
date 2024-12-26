@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ExcelUtilsTest {
 
-    @Disabled
     @Test
     void test() throws IOException, InterruptedException, IllegalAccessException {
         ArrayList<TestClass> vals = new ArrayList<>();
@@ -27,7 +26,7 @@ class ExcelUtilsTest {
         String outputPath = home + "\\Downloads\\" + "ExcelDataFFLib.xlsx";
         Desktop desktop = Desktop.getDesktop();
 
-        File result = ExcelUtils.saveInstances(new File(outputPath), vals, TestClass.class);
+        File result = ExcelUtils.saveInstances(new File(outputPath), vals);
         desktop.open(result);
 
         var resultList = ExcelUtils.createInstancesOf(result.getPath(), TestClass.class);

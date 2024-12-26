@@ -100,19 +100,18 @@ public class ExcelUtils{
      * <pre>
      * {@code
 	 * List<TestClass> vals = List.of(new TestClass("inst 1"), new TestClass("inst 2"));
-     * File resultFile = ExcelUtils.saveInstances(new File(outputPath), vals, TestClass.class);
+     * File resultFile = ExcelUtils.saveInstances(new File(outputPath), vals);
      * }
      * </pre>
      *
      * @param file - excel file
      * @param instances - list of instances to save
-     * @param classType - type of list objects
-     * @param <T> the same class type (needed for creating the list)
      * @return saved file
      */
-	public static <T> File saveInstances(File file, List<T> instances, Class<T> classType) throws IllegalAccessException {
-        Workbook workbook = new XSSFWorkbook();
+	public static File saveInstances(File file, List<?> instances) throws IllegalAccessException {
+		Workbook workbook = new XSSFWorkbook();
 		Sheet sheet = workbook.createSheet("Data");
+		Class<?> classType = instances.getFirst().getClass();
 
 		// Получаем поля класса
 		Field[] fields = classType.getDeclaredFields();
@@ -126,7 +125,7 @@ public class ExcelUtils{
 
 		// Записываем данные
 		int rowIndex = 1;
-		for (T instance : instances) {
+		for (var instance : instances) {
 			Row row = sheet.createRow(rowIndex++);
 			for (int i = 0; i < fields.length; i++) {
 				Cell cell = row.createCell(i);

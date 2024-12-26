@@ -1,11 +1,7 @@
 package com.futurefactory.defaults.ftr_attributes.data_renderers;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.function.Supplier;
@@ -22,7 +18,7 @@ import com.futurefactory.HButton;
 import com.futurefactory.Message;
 import com.futurefactory.defaults.table.EmptyCellEditor;
 import com.futurefactory.editor.EditorEntry;
-import java.awt.Graphics;
+import com.futurefactory.util.ExcelUtils;
 
 /**
  * <br>Returns a table, rendering all editable fields of the component given.</br>
@@ -75,8 +71,14 @@ public class TableDataRenderer<T>implements Supplier<JComponent>{
 				}
 			};
 			export.addActionListener(e->{
-				//TODO @borisaushev: write table contents to excel and complete the message below
-				new Message("Файл экспортирован в загрузки. Проверьте папку "/*+path*/,Color.GREEN);
+				String home = System.getProperty("user.home");
+				String outputPath = home + "\\Downloads\\" + title + ".xlsx";
+                try {
+                    ExcelUtils.saveInstances(new File(outputPath), a);
+                } catch (IllegalAccessException ex) {
+					new Message("Не удалось экспортировать таблицу", Color.RED);
+				}
+				new Message("Файл экспортирован. Проверьте папку Загрузки", Color.GREEN);
 			});
 			c1.gridx=c1.gridy=4;
 			c1.gridwidth=c1.gridheight=1;
