@@ -1,5 +1,6 @@
 package com.futurefactory.util;
 
+import com.futurefactory.editor.EditorEntry;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -120,7 +121,12 @@ public class ExcelUtils{
 		Row headerRow = sheet.createRow(0);
 		for (int i = 0; i < fields.length; i++) {
 			fields[i].setAccessible(true);
-			headerRow.createCell(i).setCellValue(fields[i].getName());
+			if(fields[i].isAnnotationPresent(EditorEntry.class)) {
+				headerRow.createCell(i).setCellValue(fields[i].getAnnotation(EditorEntry.class).translation());
+			}
+			else {
+				headerRow.createCell(i).setCellValue(fields[i].getName());
+			}
 		}
 
 		// Записываем данные
