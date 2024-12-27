@@ -1,12 +1,18 @@
 package com.futurefactory.util;
 
+import com.futurefactory.editor.EditorEntry;
+
 import java.time.LocalDate;
 import java.util.Objects;
 
 public class TestClass {
+    @EditorEntry(translation = "перечисление")
     public TestEnum enumField;
+    @EditorEntry(translation = "дата")
     public LocalDate date;
+    @EditorEntry(translation = "текст")
     public String text;
+    @EditorEntry(translation = "действительное число")
     public float floatVal;
 
     public TestClass(TestEnum enumField, LocalDate date, String text, float floatVal) {

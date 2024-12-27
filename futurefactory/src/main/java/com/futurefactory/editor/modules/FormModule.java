@@ -258,6 +258,32 @@ public class FormModule implements EditorModule{
 				JSpinner a=new JSpinner(new SpinnerNumberModel((int)f.get(o),0,10000000,1));
 				saver.var=()->a.getValue();
 				return a;
+			}else if(f.getType()==double.class){
+				JTextArea a=new JTextArea(f.get(o).toString());
+				a.setLineWrap(true);
+				a.setWrapStyleWord(true);
+				saver.var=()->{
+					try {return (double) Double.parseDouble(a.getText());}
+					catch (Exception exc) {
+						a.setText("0");
+						new Message("Неправильный формат числа, выбрано значение по умолчанию", Color.RED);
+						return (double) 0;
+					}
+				};
+				return a;
+			}else if(f.getType()==float.class){
+				JTextArea a=new JTextArea(f.get(o).toString());
+				a.setLineWrap(true);
+				a.setWrapStyleWord(true);
+				saver.var=()->{
+					try {return (float) Float.parseFloat(a.getText());}
+					catch (Exception exc) {
+						a.setText("0");
+						new Message("Неправильный формат числа, выбрано значение по умолчанию", Color.RED);
+						return (float) 0;
+					}
+				};
+				return a;
 			}else if(f.getType()==LocalDate.class){
 				JDateChooser d=new JDateChooser();
 				d.setDateFormatString("yyyy-MM-dd");
@@ -286,8 +312,10 @@ public class FormModule implements EditorModule{
 			}else if(f.getType().isEnum()){
 				JComboBox<Object>a=new JComboBox<>();
 				Object en=f.get(o);
-				if(en==null)throw new NullPointerException("Enum value of field \""+f.getName()+"\" is null.");
-			for(Object obj:(Object[])en.getClass().getMethod("values").invoke(o))a.addItem(obj);
+				if(en==null)
+					throw new NullPointerException("Enum value of field \""+f.getName()+"\" is null.");
+				for(Object obj:(Object[])en.getClass().getMethod("values").invoke(o))
+					a.addItem(obj);
 				a.setSelectedItem(f.get(o));
 				saver.var=()->a.getSelectedItem();
 				return a;

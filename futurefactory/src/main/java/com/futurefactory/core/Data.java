@@ -32,7 +32,7 @@ import com.futurefactory.PathIcon;
 import com.futurefactory.core.User.Feature;
 
 /**
- * A singletone that represents all editable data.
+ * A singleton that represents all editable data.
  */
 public class Data implements Serializable{
 	private static Data instance;
@@ -163,7 +163,7 @@ public class Data implements Serializable{
 		}catch(IOException ex){throw new RuntimeException(ex);}
 	}
 	/**
-	 * Tries to aqquire an {@link EditableGroup}.
+	 * Tries to acquire an {@link EditableGroup}.
 	 * @return a group with the given type, if any.
 	 * @throws IllegalArgumentException if there is no group of such type.
 	 */
