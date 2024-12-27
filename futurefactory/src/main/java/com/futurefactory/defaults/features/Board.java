@@ -210,6 +210,8 @@ public class Board<T extends Serializable>implements Feature{
 						T o=type.getDeclaredConstructor().newInstance();
 						objects.add(o);
 						if(o instanceof Editable)ProgramStarter.editor.constructEditor((Editable)o,true,()->objects.remove(o));
+						m.setRowCount(0);
+						fillTable(m);
 						tab.revalidate();
 					}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 				});

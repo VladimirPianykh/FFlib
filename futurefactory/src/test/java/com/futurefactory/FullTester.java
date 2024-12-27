@@ -85,6 +85,8 @@ public class FullTester{
 		public String strField;
 		@EditorEntry(translation="Число")
 		public int intField;
+		@EditorEntry(translation="Дробное число")
+		public double doubleField;
 		@EditorEntry(translation="Дата")
 		public LocalDate dateField=LocalDate.now();
 		@EditorEntry(translation="Редактируемый объект")
