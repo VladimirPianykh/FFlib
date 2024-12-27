@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
@@ -36,7 +35,6 @@ public class HButton extends JButton{
 		}
 		public void mouseExited(MouseEvent e){resetScale();}
 	};
-	public ImageIcon toolTipIcon;
 	public HButton(){
 		this(5,10);
 	}

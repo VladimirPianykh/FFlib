@@ -100,7 +100,7 @@ public class EditableList<T extends Editable>implements Feature{
 					group.elementIcon.paintIcon(this,g,getWidth()*9/10-group.elementIcon.getIconWidth(),(getHeight()-group.elementIcon.getIconHeight())/2);
 				}
 			};
-			b.addActionListener(e->ProgramStarter.editor.constructEditor(t,false));
+			b.addActionListener(e->ProgramStarter.editor.constructEditor(t,false,()->{group.remove(t);b.getParent().remove(b);}));
 			return b;
 		};
 		for(T t:group){
@@ -118,11 +118,13 @@ public class EditableList<T extends Editable>implements Feature{
 			};
 			add.addActionListener(e->{
 				T t=createObject();
-				ProgramStarter.editor.constructEditor(t,true);
-				panel.add(componentProvider.apply(t),panel.getComponentCount()-1);
-				panel.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*panel.getComponentCount()/10));
-				panel.setLayout(new GridLayout(Math.max(10,group.size()+1),1));
-				panel.revalidate();
+				ProgramStarter.editor.constructEditor(t,true,()->group.remove(t));
+				if(group.contains(t)){
+					panel.add(componentProvider.apply(t),panel.getComponentCount()-1);
+					panel.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*panel.getComponentCount()/10));
+					panel.setLayout(new GridLayout(Math.max(10,group.size()+1),1));
+					panel.revalidate();
+				}
 			});
 			panel.add(add);
 		}

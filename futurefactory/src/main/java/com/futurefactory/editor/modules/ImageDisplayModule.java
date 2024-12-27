@@ -27,7 +27,7 @@ public class ImageDisplayModule implements EditorModule{
 	 * @param f - field to display
 	 */
 	public ImageDisplayModule(Field f){this.f=f;}
-	public JPanel createTab(JDialog editor,Editable editable,boolean isNew){
+	public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){
 		JPanel tab=new JPanel(null);
 		tab.setBackground(Color.DARK_GRAY);
 		tab.setSize(Root.SCREEN_SIZE);

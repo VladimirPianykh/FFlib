@@ -24,7 +24,7 @@ public class ModularEditor implements IEditor{
 	public ArrayList<EditorModule>modules=new ArrayList<>();
 	public ModularEditor(){modules.add(new FormModule());}
 	public ModularEditor(EditorModule...modules){this.modules.addAll(Arrays.asList(modules));}
-	public void constructEditor(Editable editable,boolean isNew){
+	public void constructEditor(Editable editable,boolean isNew,Runnable deleter){
 		JDialog editor=new JDialog(ProgramStarter.frame,true);
 		editor.setSize(Root.SCREEN_SIZE);
 		editor.setUndecorated(true);
@@ -64,7 +64,7 @@ public class ModularEditor implements IEditor{
 		editor.add(mainPanel);
 		int k=1;
 		for(EditorModule m:modules){
-			JPanel tab=m.createTab(editor,editable,isNew);
+			JPanel tab=m.createTab(editor,editable,isNew,deleter);
 			if(tab!=null){
 				mainPanel.add(tab,"tab"+k);
 				++k;

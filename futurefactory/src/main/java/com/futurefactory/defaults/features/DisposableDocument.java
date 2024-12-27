@@ -60,7 +60,7 @@ public class DisposableDocument<T extends Editable>implements Feature{
 		b.addActionListener(e->{
 			if(doc.var==null)try{
 				doc.var=type.getDeclaredConstructor().newInstance();
-				ProgramStarter.editor.constructEditor(doc.var,true);
+				ProgramStarter.editor.constructEditor(doc.var,true,()->doc.var=null);
 			}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 		});
 		int s=tab.getHeight()/2;

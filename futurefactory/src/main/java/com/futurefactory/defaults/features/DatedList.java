@@ -84,8 +84,8 @@ public class DatedList<T extends Editable>implements Feature{
 			}
 		};
 		b.addActionListener(e->{
-			ProgramStarter.editor.constructEditor(t,false);
-			tab.repaint();
+			ProgramStarter.editor.constructEditor(t,false,()->objects.remove(t));
+			tab.revalidate();
 		});
 		b.setSize(tab.getWidth()/3,tab.getHeight()/10);
 		b.setFont(new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/20));
@@ -174,7 +174,7 @@ public class DatedList<T extends Editable>implements Feature{
 		add.addActionListener(e->{
 			T t=createObject();
 			panel.add(createTableEntry(t,tab,font),panel.getComponentCount()-1);
-			ProgramStarter.editor.constructEditor(t,true);
+			ProgramStarter.editor.constructEditor(t,true,()->objects.remove(t));
 			panel.revalidate();
 		});
 		add.setFont(font);

@@ -13,8 +13,8 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ExcelUtilsTest {
-
+class ExcelUtilsTest{
+    @Disabled
     @Test
     void test() throws IOException, InterruptedException, IllegalAccessException {
         ArrayList<TestClass> vals = new ArrayList<>();

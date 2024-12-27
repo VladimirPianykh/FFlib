@@ -5,6 +5,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
@@ -30,7 +32,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
+import com.futurefactory.HButton;
 import com.futurefactory.core.Data;
+import com.futurefactory.core.Data.Editable;
+import com.futurefactory.core.ProgramStarter;
 import com.futurefactory.core.User.Feature;
 import com.futurefactory.defaults.table.FieldCellValue;
 import com.futurefactory.defaults.table.FormCellEditor;
@@ -76,6 +81,7 @@ public class Board<T extends Serializable>implements Feature{
 	private transient Sorter<T>sorter;
 	private transient Filter<T>filter;
 	private transient Supplier<ArrayList<T>>elementSupplier;
+	private transient boolean allowCreation;
 	private Board(String name,Class<T>type){this.name=name;this.type=type;}
 	public static<T extends Serializable>Board<T>getBoard(String name){
 		if(((HashMap<String,Board<?>>)Data.getInstance().ftrInstances.get(Board.class.getName())).containsKey(name))return(Board<T>)((HashMap<String,Board<?>>)Data.getInstance().ftrInstances.get(Board.class.getName())).get(name);
@@ -152,6 +158,10 @@ public class Board<T extends Serializable>implements Feature{
 		elementSupplier=supplier;
 		return this;
 	}
+	/**
+	 * Permits creation of new elements if {@code allow} is true.
+	 */
+	public Board<T>setAllowCreation(boolean allow){allowCreation=allow;return this;}
 	public ArrayList<T>getObjects(){return objects;}
 	public T createObject(){
 		try{
@@ -180,11 +190,31 @@ public class Board<T extends Serializable>implements Feature{
 		DefaultTableModel m=new DefaultTableModel(s.toArray(new String[0]),0);
 		if(filter!=null)filterConfig=filter.getConfigurator(()->{m.setRowCount(0);fillTable(m);},objects);
 		if(sorter!=null)sorterConfig=sorter.getConfigurator(()->{m.setRowCount(0);fillTable(m);},objects);
-		if(filterConfig!=null||sorterConfig!=null){
+		if(allowCreation||filterConfig!=null||sorterConfig!=null){
 			config=new JPanel(new GridLayout());
 			config.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/9));
 			if(filterConfig!=null)config.add(filterConfig);
 			if(sorterConfig!=null)config.add(sorterConfig);
+			if(allowCreation){
+				HButton create=new HButton(){
+					public void paint(Graphics g){
+						g.setColor(Color.DARK_GRAY);
+						g.fillRect(0,0,getWidth(),getHeight());
+						FontMetrics fm=g.getFontMetrics();
+						g.setColor(Color.WHITE);
+						g.drawString("Добавить",(getWidth()-fm.stringWidth("Добавить"))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
+					}
+				};
+				create.addActionListener(e->{
+					try{
+						T o=type.getDeclaredConstructor().newInstance();
+						objects.add(o);
+						if(o instanceof Editable)ProgramStarter.editor.constructEditor((Editable)o,true,()->objects.remove(o));
+						tab.revalidate();
+					}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
+				});
+				config.add(create);
+			}
 		}
 		fillTable(m);
 		sPane.setPreferredSize(new Dimension(tab.getWidth(),config==null?tab.getHeight():tab.getHeight()*8/9));
@@ -192,7 +222,6 @@ public class Board<T extends Serializable>implements Feature{
 		if(tableDecorators!=null)for(Consumer<JTable>c:tableDecorators)c.accept(t);
 		tab.add(sPane,BorderLayout.SOUTH);
 		if(config!=null)tab.add(config,BorderLayout.NORTH);
-		//TODO: allow adding elements
 	}
 	public void paint(Graphics2D g2,BufferedImage image,int s){
 		g2.setStroke(new BasicStroke(s/10));

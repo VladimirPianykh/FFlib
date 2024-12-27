@@ -48,7 +48,7 @@ public class TableDataRenderer<T>implements Supplier<JComponent>{
 			}catch(IllegalAccessException ex){throw new RuntimeException(ex);}
 			m.addRow(o);
 		}
-		JScrollPane s=new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);;
+		JScrollPane s=new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		if(title!=null)s.setBorder(BorderFactory.createTitledBorder(title));
 		if(allowExport){
 			GridBagLayout l=new GridBagLayout();
@@ -73,9 +73,9 @@ public class TableDataRenderer<T>implements Supplier<JComponent>{
 			export.addActionListener(e->{
 				String home = System.getProperty("user.home");
 				String outputPath = home + "\\Downloads\\" + title + ".xlsx";
-                try {
-                    ExcelUtils.saveInstances(new File(outputPath), a);
-                } catch (IllegalAccessException ex) {
+				try {
+					ExcelUtils.saveInstances(new File(outputPath), a);
+				} catch (IllegalAccessException ex) {
 					new Message("Не удалось экспортировать таблицу", Color.RED);
 				}
 				new Message("Файл экспортирован. Проверьте папку Загрузки", Color.GREEN);

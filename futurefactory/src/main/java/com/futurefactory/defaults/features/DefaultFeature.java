@@ -131,7 +131,7 @@ public enum DefaultFeature implements Feature{
 					b.addActionListener(new ActionListener(){
 						public void actionPerformed(ActionEvent e){
 							if(ProgramStarter.editor==null)throw new RuntimeException("Editor has not been set.");
-							ProgramStarter.editor.constructEditor(r,false);
+							ProgramStarter.editor.constructEditor(r,false,()->{group.remove(r);p.remove(b);p.revalidate();});
 						}
 					});
 					p.add(b);
@@ -142,10 +142,9 @@ public enum DefaultFeature implements Feature{
 						public void actionPerformed(ActionEvent e){
 							try{
 								if(ProgramStarter.editor==null)throw new NullPointerException("Editor cannot be null.");
-								Editable nEditable=null;
-								nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
+								Editable nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
 								group.add(nEditable);
-								ProgramStarter.editor.constructEditor(nEditable,true);
+								ProgramStarter.editor.constructEditor(nEditable,true,()->{group.remove(nEditable);p.revalidate();});
 								SwingUtilities.getWindowAncestor(content).dispose();
 								ProgramStarter.frame=new WorkFrame(User.getActiveUser());
 							}catch(ReflectiveOperationException ex){throw new RuntimeException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}

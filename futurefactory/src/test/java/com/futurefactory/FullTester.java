@@ -21,6 +21,7 @@ import com.futurefactory.core.Data.EditableGroup;
 import com.futurefactory.core.User.Feature;
 import com.futurefactory.core.User.Permission;
 import com.futurefactory.core.User.Role;
+import com.futurefactory.defaults.editables.AbstractCustomer;
 import com.futurefactory.defaults.editables.Processable;
 import com.futurefactory.defaults.features.Board;
 import com.futurefactory.defaults.features.Calendar;
@@ -35,6 +36,10 @@ import com.futurefactory.defaults.ftr_attributes.element_suppliers.ChartDataConv
 import com.futurefactory.defaults.ftr_attributes.element_suppliers.GroupElementSupplier;
 import com.futurefactory.editor.EditorEntry;
 import com.futurefactory.editor.ModularEditor;
+import com.futurefactory.editor.modules.CustomerModule;
+import com.futurefactory.editor.modules.ExcludeModule;
+import com.futurefactory.editor.modules.FormModule;
+import com.futurefactory.editor.modules.LimitToModule;
 import com.futurefactory.editor.modules.LogWatchModule;
 import com.futurefactory.editor.modules.StageModule;
 
@@ -58,6 +63,7 @@ public class FullTester{
 		public int value2=(int)(Math.random()*100);
 		public MyThirdEditable(){super("Новый объект");}
 	}
+	public static class MyCustomer extends AbstractCustomer{}
 	public static class MySecondEditable extends Editable{
 		public static enum Status{
 			S1("Состояние 1"),
@@ -116,10 +122,12 @@ public class FullTester{
 	public enum AppPermission implements Permission{
 		READ_MYPROCESSABLE,
 		CREATE_MYPROCESSABLE,
-		READ_THIRDEDITABLE,
-		CREATE_THIRDEDITABLE,
+		READ_MYTHIRDEDITABLE,
+		CREATE_MYTHIRDEDITABLE,
 		READ_MYFOURTHEDITABLE,
 		CREATE_MYFOURTHEDITABLE,
+		READ_MYCUSTOMER,
+		CREATE_MYCUSTOMER,
 		MANAGE_PROCESSABLE;
 		private AppPermission(){Registrator.register(this);}
 	}
@@ -128,8 +136,10 @@ public class FullTester{
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;
 		ProgramStarter.editor=new ModularEditor(
-			new StageModule(),
-			new LogWatchModule()
+			new LimitToModule(new StageModule(),MyProcessable.class),
+			new LimitToModule(new LogWatchModule(),MyProcessable.class),
+			new LimitToModule(new CustomerModule(),MyCustomer.class),
+			new ExcludeModule(new FormModule(),MyProcessable.class,MyCustomer.class)
 		);
 		if(ProgramStarter.isFirstLaunch()){
 			User.register("Пользователь 1","",AppRole.MYROLE);
@@ -148,9 +158,15 @@ public class FullTester{
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				MyFourthEditable.class
 			);
+			EditableGroup<MyCustomer>customers=new EditableGroup<MyCustomer>(
+				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
+				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
+				MyCustomer.class
+			);
 			Registrator.register(myEditables);
-			Registrator.register(myThirdEditables);
-			Registrator.register(myFourthEditables);
+			Registrator.register(myThirdEditables.hide());
+			Registrator.register(myFourthEditables.hide());
+			Registrator.register(customers);
 			ProgramStarter.runProgram();
 			myEditables.add(new MyProcessable());
 			for(int i=0;i<50;++i)myThirdEditables.add(new MyThirdEditable());
@@ -169,7 +185,7 @@ public class FullTester{
 			public int compare(MyProcessable o1,MyProcessable o2){
 				return(c.getSelectedItem()==null?true:(boolean)c.getSelectedItem())?o1.name.length()-o2.name.length():o1.strField.length()-o2.strField.length();
 			}
-		}).setElementSupplier(groupES);
+		}).setElementSupplier(groupES).setAllowCreation(true);
 		Calendar.<MyEvent>getCalendar("calendar")
 			.setEventFiller(m->{
 				for(int i=0;i<10;++i){

@@ -90,7 +90,7 @@
 		"prefix":"_module",
 		"body":[
 			"public class ${TM_FILENAME_BASE} implements EditorModule{",
-				"\tpublic JPanel createTab(JDialog editor,Editable editable,boolean isNew){",
+				"\tpublic JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){",
 					"\t\tJPanel tab=new JPanel();",
 					"\t\t$0",
 					"\t\treturn tab;",

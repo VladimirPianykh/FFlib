@@ -56,7 +56,7 @@ import com.futurefactory.editor.Verifier;
 import com.toedter.calendar.JDateChooser;
 
 public class FormModule implements EditorModule{
-	public JPanel createTab(JDialog editor,Editable editable,boolean isNew){
+	public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){
 		JPanel tab=new JPanel(null);
 		tab.setBackground(Color.BLACK);
 		JButton ok=new JButton(){
@@ -152,6 +152,28 @@ public class FormModule implements EditorModule{
 		tab.add(p);
 		Wrapper<Integer>w=new Wrapper<Integer>(0);
 		HButton cancel=null;
+		if(deleter!=null){
+			HButton delete=new HButton(10,5){
+				public void paint(Graphics g){
+					g.setColor(new Color(255-scale*8,20,20));
+					g.fillRoundRect(0,0,getWidth(),getHeight(),getHeight()*2/3,getHeight()*2/3);
+					((Graphics2D)g).setStroke(new BasicStroke(getHeight()/20));
+					g.setColor(Color.DARK_GRAY);
+					g.drawRoundRect(0,0,getWidth(),getHeight(),getHeight()*2/3,getHeight()*2/3);
+					g.setColor(Color.BLACK);
+					g.drawLine(getWidth()/3,getHeight()/3,getWidth()*2/3,getHeight()*2/3);
+					g.drawLine(getWidth()*2/3,getHeight()/3,getWidth()/3,getHeight()*2/3);
+					if(getModel().isPressed()){
+						g.setColor(new Color(0,0,0,100));
+						g.fillRoundRect(0,0,getWidth(),getHeight(),getHeight()*2/3,getHeight()*2/3);
+					}
+				}
+			};
+			delete.addActionListener(e->{deleter.run();editor.dispose();});
+			delete.setBounds(editor.getWidth()*3/10,editor.getHeight()*9/10,editor.getHeight()/20,editor.getHeight()/20);
+			delete.setOpaque(false);
+			tab.add(delete);
+		}
 		if(!isNew){
 			HButton c=new HButton(15,5){
 				public void paint(Graphics g){

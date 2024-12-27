@@ -49,7 +49,7 @@ public class TableModule implements EditorModule{
 		tableDecorators.add(decorator);
 		return this;
 	}
-	public JPanel createTab(JDialog editor,Editable editable,boolean isNew){
+	public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){
 		try{
 			@SuppressWarnings("unchecked")
 			ArrayList<Object>a=(ArrayList<Object>)f.get(editable);
