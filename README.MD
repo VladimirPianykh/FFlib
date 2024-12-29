@@ -24,3 +24,8 @@ The author does not give any warranties.
 ## 4) Create and fill in the `helppath.cfg` file.
 Call `Navigator.init()` and add all the mechanics implemented to the helppath.cfg list.
 See the `HelpView` documentation for details.
+
+# Troubleshooting
+
+## Jar file does not connect
+- Do not forget about `dependencies` block.
