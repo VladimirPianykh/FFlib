@@ -18,7 +18,9 @@ The author does not give any warranties.
 ## 2) Use `_init` snippet in the `Main` class and `_start` snippet inside of the `main` method.
 
 ## 3) Fill in the application.
+* Add all necessary users.
 * Create editable objects required with `_editable` snippet.
+* Register groups.
 * Add new screens (`Feature`s) by calling `registerList()`, `registerBoard()`, etc on classes in the `com.futurefactory.defaults.features` package.
 * 
 ## 4) Create and fill in the `helppath.cfg` file.
