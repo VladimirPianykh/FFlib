@@ -1,0 +1,13 @@
+com.bpa4j
+com.bpa4j.core
+com.bpa4j.defaults
+com.bpa4j.defaults.editables
+com.bpa4j.defaults.features
+com.bpa4j.defaults.ftr_attributes.data_renderers
+com.bpa4j.defaults.ftr_attributes.daters
+com.bpa4j.defaults.ftr_attributes.element_suppliers
+com.bpa4j.defaults.input
+com.bpa4j.defaults.table
+com.bpa4j.editor
+com.bpa4j.editor.modules
+com.bpa4j.util

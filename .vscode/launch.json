@@ -8,15 +8,15 @@
             "type": "java",
             "name": "Main",
             "request": "launch",
-            "mainClass": "com.futurefactory.FullTester",
-            "projectName": "futurefactory"
+            "mainClass": "com.bpa4j.FullTester",
+            "projectName": "bpa4j"
         },
         {
             "type": "java",
             "name": "Main",
             "request": "launch",
             "mainClass": "com.c1_factory.Main",
-            "projectName": "futurefactory"
+            "projectName": "bpa4j"
         },
         {
             "name": "Java",
