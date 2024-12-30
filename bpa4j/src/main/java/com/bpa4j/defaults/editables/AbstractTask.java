@@ -6,7 +6,7 @@ import com.bpa4j.core.Data.Editable;
 import com.bpa4j.editor.EditorEntry;
 
 /**
- * A {@link Task} with creation date, deadline and additional info fields provided.
+ * An {@link Editable} with creation date, deadline and additional info fields provided.
  */
 public abstract class AbstractTask extends Editable{
     @EditorEntry(translation="Время создания")

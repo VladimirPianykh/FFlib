@@ -18,7 +18,7 @@ import com.bpa4j.HButton;
 import com.bpa4j.Message;
 import com.bpa4j.defaults.table.EmptyCellEditor;
 import com.bpa4j.editor.EditorEntry;
-import com.bpa4j.util.ExcelUtils;
+import com.bpa4j.util.excel.ExcelUtils;
 
 /**
  * <p>Returns a table, rendering all editable fields of the component given.</p>
@@ -31,6 +31,7 @@ public class TableDataRenderer<T>implements Supplier<JComponent>{
 	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier){this.elementSupplier=elementSupplier;}
 	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier,String title){this(elementSupplier);this.title=title;}
 	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier,String title,boolean allowExport){this(elementSupplier,title);this.allowExport=allowExport;}
+	@SuppressWarnings("PMD.UseArraysAsList")
 	public JComponent get(){
 		ArrayList<T>a=elementSupplier.get();
 		if(a.isEmpty())return new JTable();
@@ -45,7 +46,7 @@ public class TableDataRenderer<T>implements Supplier<JComponent>{
 			Object[]o=new Object[fields.size()];
 			for(int i=0;i<o.length;++i)try{
 				o[i]=fields.get(i).get(t);
-			}catch(IllegalAccessException ex){throw new RuntimeException(ex);}
+			}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
 			m.addRow(o);
 		}
 		JScrollPane s=new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);

@@ -73,7 +73,8 @@ public class Calendar<T extends Calendar.Event>implements Feature{
 	public Calendar<T>setEventFiller(Consumer<HashMap<LocalDate,List<T>>>eventFiller){this.eventFiller=eventFiller;return this;}
 	/**
 	 * Sets the dater for this calendar.
-	 * @apiNote Unlike {@link DatedList}, you don't have to transfer {@link java.util.function.Supplier Supplier}.
+	 * <p>
+	 * Unlike {@link DatedList}, you don't have to transfer {@link java.util.function.Supplier Supplier}.
 	 * A {@link Dater} is enough.
 	 */
 	public Calendar<T>setDater(Dater<List<T>>dater){this.dater=dater;return this;}

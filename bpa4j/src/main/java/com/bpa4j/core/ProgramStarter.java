@@ -39,7 +39,7 @@ import com.bpa4j.editor.ModularEditor;
  * 	<ul>
  *    <li>{@code editor}</li>
  * 	  <li>{@code welcomeMessage}</li>
- * 	<ul>
+ * 	</ul>
  */
 public class ProgramStarter{
 	private static boolean firstLaunch=!new File(Root.folder).exists();
