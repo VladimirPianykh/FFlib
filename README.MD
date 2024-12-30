@@ -7,11 +7,9 @@ The author does not give any warranties.
 ## 1) Plug the library in.
 ```xml
 <dependency>
-	<groupId>com.futurefactory</groupId>
-	<artifactId>futurefactory</artifactId>
-	<version>1.0</version>
-	<scope>system</scope>
-	<systemPath>${project.basedir}/FutureFactory.jar</systemPath>
+	<groupId>io.github.vladimirpianykh</groupId>
+	<artifactId>bpa4j</artifactId>
+	<version>1.0.0</version>
 </dependency>
 ```
 
