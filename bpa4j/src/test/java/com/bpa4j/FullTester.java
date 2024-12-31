@@ -41,7 +41,8 @@ import com.bpa4j.editor.modules.ExcludeModule;
 import com.bpa4j.editor.modules.FormModule;
 import com.bpa4j.editor.modules.LimitToModule;
 import com.bpa4j.editor.modules.LogWatchModule;
-import com.bpa4j.editor.modules.StageModule;
+import com.bpa4j.editor.modules.StageApprovalModule;
+import com.bpa4j.editor.modules.StageMapModule;
 
 public class FullTester{
 	public static class MyFourthEditable extends Editable{
@@ -75,7 +76,7 @@ public class FullTester{
 			public String toString(){return translation;}
 		}
 		@EditorEntry(translation="Перечисление")
-		public Status a;
+		public Status a=Status.S1;
 		public MySecondEditable(){
 			super("Новый объект");
 		}
@@ -94,7 +95,11 @@ public class FullTester{
 		public MyProcessable(){	
 			super(
 				"Новый объект",
-				new Stage("Отрицание",AppPermission.MANAGE_PROCESSABLE),
+				new Stage("Отрицание",AppPermission.MANAGE_PROCESSABLE,()->{
+					Wrapper<Boolean>w=new Wrapper<Boolean>(true);
+					ProgramStarter.editor.constructEditor(new MySecondEditable(),true,()->w.var=false);
+					return w.var;
+				}),
 				new Stage("Гнев",AppPermission.MANAGE_PROCESSABLE,AppPermission.MANAGE_PROCESSABLE,0),
 				new Stage("Торг",AppPermission.MANAGE_PROCESSABLE,AppPermission.MANAGE_PROCESSABLE,0),
 				new Stage("Депрессия",AppPermission.MANAGE_PROCESSABLE,AppPermission.MANAGE_PROCESSABLE,0),
@@ -138,7 +143,7 @@ public class FullTester{
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;
 		ProgramStarter.editor=new ModularEditor(
-			new LimitToModule(new StageModule(),MyProcessable.class),
+			new LimitToModule(new StageMapModule(),MyProcessable.class),
 			new LimitToModule(new LogWatchModule(),MyProcessable.class),
 			new LimitToModule(new CustomerModule(),MyCustomer.class),
 			new ExcludeModule(new FormModule(),MyProcessable.class,MyCustomer.class)
@@ -176,7 +181,7 @@ public class FullTester{
 		}else ProgramStarter.runProgram();
 		GroupElementSupplier<MyProcessable>groupES=new GroupElementSupplier<>(MyProcessable.class);
 		Board.<MyProcessable>getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){
-			private JComboBox<Boolean>c=new JComboBox<>();
+			private final JComboBox<Boolean>c=new JComboBox<>();
 			public JComponent getConfigurator(Runnable saver,ArrayList<MyProcessable>objects){
 				c.removeAllItems();
 				c.addItem(true);
@@ -185,7 +190,7 @@ public class FullTester{
 				return c;
 			}
 			public int compare(MyProcessable o1,MyProcessable o2){
-				return(c.getSelectedItem()==null?true:(boolean)c.getSelectedItem())?o1.name.length()-o2.name.length():o1.strField.length()-o2.strField.length();
+				return(c.getSelectedItem()==null||(boolean)c.getSelectedItem())?o1.name.length()-o2.name.length():o1.strField.length()-o2.strField.length();
 			}
 		}).setElementSupplier(groupES).setAllowCreation(true);
 		Calendar.<MyEvent>getCalendar("calendar")

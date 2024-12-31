@@ -15,6 +15,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
@@ -313,6 +314,14 @@ public class FormModule implements EditorModule{
 					d.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));
 				}catch(NullPointerException ex){throw new NullPointerException("LocalDate fields must be non-null");}
 				saver.var=()->Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+				return d;
+			}else if(f.getType()==LocalDateTime.class){
+				JDateChooser d=new JDateChooser();
+				d.setDateFormatString("yyyy-MM-dd в HH:mm:ss");
+				try{
+					d.setDate(Date.from(((LocalDateTime)f.get(o)).atZone(ZoneId.systemDefault()).toInstant()));
+				}catch(NullPointerException ex){throw new NullPointerException("LocalDateTime fields must be non-null");}
+				saver.var=()->Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
 				return d;
 			}else if(Editable.class.isAssignableFrom(f.getType())){
 				try{

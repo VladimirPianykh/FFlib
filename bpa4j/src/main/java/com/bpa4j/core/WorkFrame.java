@@ -139,7 +139,7 @@ public class WorkFrame extends JFrame{
 		exit.setForeground(new Color(54,23,13));
 		exit.setBorder(null);
 		add(exit);
-		if(ftrMap.get(user.role).length==0){
+		if(ftrMap.get(user.role)==null||ftrMap.get(user.role).length==0){
 			new Message("Ошибка! Возможно, у вас есть устаревшее сохранение и его надо удалить (см. записку).",Color.RED);
 			System.exit(1);
 		}

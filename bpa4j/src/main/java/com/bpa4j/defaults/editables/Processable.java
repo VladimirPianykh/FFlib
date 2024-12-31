@@ -3,6 +3,7 @@ package com.bpa4j.defaults.editables;
 import java.io.Serializable;
 
 import com.bpa4j.core.User;
+import com.bpa4j.SerializableBooleanSupplier;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.User.Permission;
 
@@ -11,20 +12,21 @@ public abstract class Processable extends Editable{
 		public String name;
 		public Permission approver,rejecter;
 		public int rejectionIndex;
-		public Stage(String name,Permission approver){
+		public SerializableBooleanSupplier checker;
+		public Stage(String name,Permission approver,SerializableBooleanSupplier checker,Permission rejecter,int rejectionIndex){
 			this.name=name;
 			this.approver=approver;
-		}
-		public Stage(String name,Permission approver,Permission rejecter,int rejectionIndex){
-			this.name=name;
-			this.approver=approver;
+			this.checker=checker;
 			this.rejecter=rejecter;
 			this.rejectionIndex=rejectionIndex;
 		}
+		public Stage(String name,Permission approver,Permission rejecter,int rejectionIndex){this(name,approver,null,rejecter,rejectionIndex);}
+		public Stage(String name,Permission approver,SerializableBooleanSupplier checker){this(name,approver,checker,null,0);}
+		public Stage(String name,Permission approver){this(name,approver,null,0);}
 	}
 	public Stage[]stages;
 	public int currentStage;
-	public Processable(String name,Stage...stages){super(name);this.stages=stages;}
+	public Processable(String name,Stage...stages){super(name);this.stages=stages.clone();}
 	public Stage getStage(){return stages[currentStage];}
 	public boolean isLastStage(){return currentStage==stages.length-1;}
 	public void approve(String comment){

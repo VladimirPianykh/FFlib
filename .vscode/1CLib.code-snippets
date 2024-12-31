@@ -113,5 +113,15 @@
 			"}"
 		],
 		"description":""
+	},
+	"Add read and create permissions":{
+		"scope":"java",
+		"prefix":"_permissions",
+		"body":[
+			"READ_$1,",
+			"CREATE_$1,",
+			"$0"
+		],
+		"description":""
 	}
 }

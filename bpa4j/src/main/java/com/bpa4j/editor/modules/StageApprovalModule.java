@@ -26,7 +26,7 @@ import com.bpa4j.defaults.editables.Processable;
 /**
  * A module for handling {@link Processable}s.
  */
-public class StageModule extends FormModule{
+public class StageApprovalModule extends FormModule{
 	public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){
 		Processable p=(Processable)editable;
 		JPanel tab=super.createTab(editor,editable,isNew,deleter);

@@ -32,8 +32,8 @@ public class EditableList<T extends Editable>implements Feature{
 	static{
 		if(!Data.getInstance().ftrInstances.containsKey(EditableList.class.getName()))Data.getInstance().ftrInstances.put(EditableList.class.getName(),new HashMap<>());
 	}
-	private Class<T>type;
-	private String name;
+	private final Class<T>type;
+	private final String name;
 	private transient Function<T,JComponent>componentProvider;
 	private transient boolean canCreate;
 	private EditableList(String name,EditableGroup<T>group){
@@ -97,7 +97,7 @@ public class EditableList<T extends Editable>implements Feature{
 					g.setColor(Color.WHITE);
 					FontMetrics fm=g.getFontMetrics();
 					g.drawString(t.name,(getWidth()-fm.stringWidth(t.name))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
-					group.elementIcon.paintIcon(this,g,getWidth()*9/10-group.elementIcon.getIconWidth(),(getHeight()-group.elementIcon.getIconHeight())/2);
+					if(group.elementIcon!=null)group.elementIcon.paintIcon(this,g,getWidth()*9/10-group.elementIcon.getIconWidth(),(getHeight()-group.elementIcon.getIconHeight())/2);
 				}
 			};
 			b.addActionListener(e->ProgramStarter.editor.constructEditor(t,false,()->{group.remove(t);b.getParent().remove(b);}));
@@ -113,7 +113,7 @@ public class EditableList<T extends Editable>implements Feature{
 					if(getModel().isPressed())c-=25;
 					g.setColor(new Color(c,c,c));
 					g.fillRect(0,0,getWidth(),getHeight());
-					group.addIcon.paintIcon(this,g,(getWidth()-group.addIcon.getIconWidth())/2,(getHeight()-group.addIcon.getIconHeight())/2);
+					if(group.addIcon!=null)group.addIcon.paintIcon(this,g,(getWidth()-group.addIcon.getIconWidth())/2,(getHeight()-group.addIcon.getIconHeight())/2);
 				}
 			};
 			add.addActionListener(e->{
