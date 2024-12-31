@@ -27,5 +27,8 @@ See the `HelpView` documentation for details.
 
 # Troubleshooting
 
-## Jar file does not connect
-- Do not forget about `dependencies` block.
+## Jar file does not connect.
+* Do not forget about `dependencies` block.
+
+## The library tells, that permissions are not defined, but they surely are.
+* Make sure that you've used at least one permission (that `YourPermission` class has been loaded).
