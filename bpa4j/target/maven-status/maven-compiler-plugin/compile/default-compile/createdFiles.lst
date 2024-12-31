@@ -5,7 +5,6 @@ com\bpa4j\editor\modules\CustomerModule.class
 com\bpa4j\editor\modules\EditorModule.class
 com\bpa4j\core\ProgramStarter$1.class
 com\bpa4j\defaults\input\SelectionListEditor$1.class
-com\bpa4j\editor\modules\StageModule.class
 com\bpa4j\core\Data$Editable.class
 com\bpa4j\defaults\features\DatedList.class
 com\bpa4j\HelpView$HelpDialog$1L.class
@@ -46,7 +45,6 @@ com\bpa4j\defaults\table\FieldCellRenderer.class
 com\bpa4j\defaults\input\Selectable.class
 com\bpa4j\core\Navigator$1.class
 com\bpa4j\core\ProgramStarter$2.class
-com\bpa4j\editor\modules\StageModule$2.class
 com\bpa4j\core\Registrator.class
 com\bpa4j\editor\modules\TableModule$1.class
 com\bpa4j\defaults\features\MappedList$3.class
@@ -70,7 +68,6 @@ com\bpa4j\defaults\DefaultRole$2.class
 com\bpa4j\defaults\features\Board$Filter.class
 com\bpa4j\core\User$1.class
 com\bpa4j\defaults\features\DefaultFeature$3$2.class
-com\bpa4j\editor\modules\StageModule$1.class
 com\bpa4j\core\EditableDemo.class
 com\bpa4j\core\Root.class
 com\bpa4j\defaults\features\DisposableDocument$1.class
@@ -97,7 +94,6 @@ com\bpa4j\defaults\features\Board.class
 com\bpa4j\defaults\input\SelectionListEditor.class
 com\bpa4j\defaults\table\DynamicCellRenderer.class
 com\bpa4j\editor\modules\FormModule$1.class
-com\bpa4j\util\ExcelUtils.class
 com\bpa4j\core\Data$Editable$ActionRecord.class
 com\bpa4j\core\ProgramStarter$5.class
 com\bpa4j\core\WorkFrame$WorkTabButton.class
@@ -131,7 +127,6 @@ com\bpa4j\defaults\input\NullVerifier.class
 com\bpa4j\defaults\features\DefaultFeature$2$1.class
 com\bpa4j\editor\NameProvider.class
 com\bpa4j\defaults\ftr_attributes\data_renderers\ChartDataRenderer$ChartMode.class
-com\bpa4j\editor\modules\StageModule$1B.class
 com\bpa4j\editor\ModularEditor$4.class
 com\bpa4j\defaults\features\Calendar$2.class
 com\bpa4j\defaults\features\DatedList$1.class

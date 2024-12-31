@@ -27,6 +27,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JLayer;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -144,8 +145,8 @@ public class FormModule implements EditorModule{
 		DefaultListModel<String>results=new DefaultListModel<>();
 		JList<String>l=new JList<>(results);
 		form.add(String.valueOf(k),l);
-		ok.setText(savers.size()<=1?"Готово":"Далее");
-		ok.setBackground(savers.size()<=1?Color.GREEN:Color.GRAY);
+		ok.setText(savers.size()==0?"Готово":"Далее");
+		ok.setBackground(savers.size()==0?Color.GREEN:Color.GRAY);
 		JProgressBar p=new JProgressBar(0,savers.size());
 		p.setBounds(editor.getWidth()/8,editor.getHeight()/6,editor.getWidth()*3/4,editor.getHeight()/20);
 		p.setBackground(Color.WHITE);
@@ -323,6 +324,13 @@ public class FormModule implements EditorModule{
 				}catch(NullPointerException ex){throw new NullPointerException("LocalDateTime fields must be non-null");}
 				saver.var=()->Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
 				return d;
+			}else if(f.getType()==Supplier.class){
+				saver.var=()->{try{return f.get(o);}catch(IllegalAccessException ex){throw new RuntimeException(ex);}};
+				JLabel l=new JLabel(){
+					public String getText(){try{return String.valueOf(((Supplier<?>)f.get(o)).get());}catch(IllegalAccessException ex){throw new RuntimeException(ex);}}
+				};
+				l.setOpaque(true);
+				return l;
 			}else if(Editable.class.isAssignableFrom(f.getType())){
 				try{
 					JComboBox<Editable>a=new JComboBox<>();
@@ -343,10 +351,8 @@ public class FormModule implements EditorModule{
 			}else if(f.getType().isEnum()){
 				JComboBox<Object>a=new JComboBox<>();
 				Object en=f.get(o);
-				if(en==null)
-					throw new NullPointerException("Enum value of field \""+f.getName()+"\" is null.");
-				for(Object obj:(Object[])en.getClass().getMethod("values").invoke(o))
-					a.addItem(obj);
+				if(en==null)throw new NullPointerException("Enum value of field \""+f.getName()+"\" is null.");
+				for(Object obj:(Object[])en.getClass().getMethod("values").invoke(o))a.addItem(obj);
 				a.setSelectedItem(f.get(o));
 				saver.var=()->a.getSelectedItem();
 				return a;

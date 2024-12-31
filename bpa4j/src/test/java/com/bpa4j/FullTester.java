@@ -42,7 +42,7 @@ import com.bpa4j.editor.modules.FormModule;
 import com.bpa4j.editor.modules.LimitToModule;
 import com.bpa4j.editor.modules.LogWatchModule;
 import com.bpa4j.editor.modules.StageApprovalModule;
-import com.bpa4j.editor.modules.StageMapModule;
+import com.bpa4j.util.TestGen;
 
 public class FullTester{
 	public static class MyFourthEditable extends Editable{
@@ -92,7 +92,9 @@ public class FullTester{
 		public LocalDate dateField=LocalDate.now();
 		@EditorEntry(translation="Редактируемый объект")
 		public MySecondEditable editableField;
-		public MyProcessable(){	
+		@EditorEntry(translation="Supplier")
+		public static Supplier<String>s=()->Stream.generate(()->(char)('a'+Math.random()*25)).limit(20).map(c->String.valueOf(c)).reduce((c1,c2)->c1+c2).get();
+		public MyProcessable(){
 			super(
 				"Новый объект",
 				new Stage("Отрицание",AppPermission.MANAGE_PROCESSABLE,()->{
@@ -143,14 +145,14 @@ public class FullTester{
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;
 		ProgramStarter.editor=new ModularEditor(
-			new LimitToModule(new StageMapModule(),MyProcessable.class),
+			new LimitToModule(new StageApprovalModule(),MyProcessable.class),
 			new LimitToModule(new LogWatchModule(),MyProcessable.class),
 			new LimitToModule(new CustomerModule(),MyCustomer.class),
 			new ExcludeModule(new FormModule(),MyProcessable.class,MyCustomer.class)
 		);
 		if(ProgramStarter.isFirstLaunch()){
 			User.register("Пользователь 1","",AppRole.MYROLE);
-			EditableGroup<MyProcessable>myEditables=new EditableGroup<MyProcessable>(
+			EditableGroup<MyProcessable>myProcessables=new EditableGroup<MyProcessable>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				MyProcessable.class
@@ -170,14 +172,13 @@ public class FullTester{
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				MyCustomer.class
 			);
-			Registrator.register(myEditables);
+			Registrator.register(myProcessables);
 			Registrator.register(myThirdEditables.hide());
 			Registrator.register(myFourthEditables.hide());
 			Registrator.register(customers);
 			ProgramStarter.runProgram();
-			myEditables.add(new MyProcessable());
-			for(int i=0;i<50;++i)myThirdEditables.add(new MyThirdEditable());
-			for(int i=0;i<10;++i)myFourthEditables.add(new MyFourthEditable());
+			TestGen.generate(4,myProcessables);
+			TestGen.generate(50,myThirdEditables,myFourthEditables);
 		}else ProgramStarter.runProgram();
 		GroupElementSupplier<MyProcessable>groupES=new GroupElementSupplier<>(MyProcessable.class);
 		Board.<MyProcessable>getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){

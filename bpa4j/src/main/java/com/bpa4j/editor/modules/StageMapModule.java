@@ -35,7 +35,7 @@ public class StageMapModule implements EditorModule{
 		Dimension size=new Dimension(h,h);
 		for(int i=0;i<p.stages.length;++i){
 			final int ii=i;
-			boolean canPress=User.getActiveUser().hasPermission(p.getStage().approver);
+			boolean canPress=User.getActiveUser().hasPermission(p.getStage().approver)&&!p.isLastStage();
 			HButton b=new HButton(10,5){
 				public void paint(Graphics g){
 					g.setClip(new Ellipse2D.Double(0,0,getWidth(),getHeight()));
