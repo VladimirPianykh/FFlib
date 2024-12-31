@@ -9,7 +9,7 @@ The author does not give any warranties.
 <dependency>
 	<groupId>io.github.vladimirpianykh</groupId>
 	<artifactId>bpa4j</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.3</version>
 </dependency>
 ```
 
@@ -27,8 +27,8 @@ See the `HelpView` documentation for details.
 
 # Troubleshooting
 
-## Jar file does not connect.
-* Do not forget about `dependencies` block.
+## Failed to connect Maven dependency.
+* Do not forget about `dependencies` block outside of `dependency`.
 
 ## The library tells, that permissions are not defined, but they surely are.
 * Make sure that you've used at least one permission (that `YourPermission` class has been loaded).
