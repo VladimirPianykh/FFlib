@@ -16,7 +16,7 @@ import com.bpa4j.editor.Verifier;
  */
 public final class TestGen{
 	private TestGen(){}
-	public static String[]names={"Алиса","Вася","Саша","Петя","Елена","Женя","Коля","Гена","Полина","Лёша"};
+	public static String[]names={"Алиса","Вася","Саша","Петя","Лена","Женя","Коля","Гена","Полина","Лёша"};
 	/**
 	 * Generates objects for the given groups randomly.
 	 * <p>Groups are processed in the order of passing.</p>

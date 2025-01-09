@@ -2,6 +2,7 @@ com\bpa4j\defaults\features\DefaultFeature$1.class
 com\bpa4j\core\ProgramStarter$4.class
 com\bpa4j\defaults\ftr_attributes\data_renderers\TableDataRenderer.class
 com\bpa4j\editor\modules\CustomerModule.class
+com\bpa4j\editor\modules\StageMapModule$2.class
 com\bpa4j\editor\modules\EditorModule.class
 com\bpa4j\core\ProgramStarter$1.class
 com\bpa4j\defaults\input\SelectionListEditor$1.class
@@ -11,6 +12,7 @@ com\bpa4j\HelpView$HelpDialog$1L.class
 com\bpa4j\core\Data$EditableGroup.class
 com\bpa4j\editor\IEditor.class
 com\bpa4j\defaults\ftr_attributes\daters\EventDater.class
+com\bpa4j\util\excel\ExcelUtils.class
 com\bpa4j\editor\modules\FormModule$3.class
 com\bpa4j\editor\modules\LogWatchModule$1LocalComment$1.class
 com\bpa4j\defaults\features\DatedList$3.class
@@ -41,6 +43,7 @@ com\bpa4j\defaults\features\DisposableDocument$2.class
 com\bpa4j\editor\modules\LogWatchModule.class
 com\bpa4j\core\WorkFrame$1.class
 com\bpa4j\defaults\editables\Processable.class
+com\bpa4j\editor\modules\StageApprovalModule.class
 com\bpa4j\defaults\table\FieldCellRenderer.class
 com\bpa4j\defaults\input\Selectable.class
 com\bpa4j\core\Navigator$1.class
@@ -69,6 +72,7 @@ com\bpa4j\defaults\features\Board$Filter.class
 com\bpa4j\core\User$1.class
 com\bpa4j\defaults\features\DefaultFeature$3$2.class
 com\bpa4j\core\EditableDemo.class
+com\bpa4j\editor\modules\StageMapModule$1.class
 com\bpa4j\core\Root.class
 com\bpa4j\defaults\features\DisposableDocument$1.class
 com\bpa4j\core\ProgramStarter$3.class
@@ -81,6 +85,7 @@ com\bpa4j\defaults\features\Calendar.class
 com\bpa4j\editor\modules\FormModule$4.class
 com\bpa4j\editor\ModularEditor$1.class
 com\bpa4j\editor\modules\ImageDisplayModule.class
+com\bpa4j\util\excel\Parseable.class
 com\bpa4j\defaults\features\Calendar$3.class
 com\bpa4j\defaults\DefaultRole$1.class
 com\bpa4j\editor\InfoProvider.class
@@ -90,6 +95,7 @@ com\bpa4j\defaults\table\EmptyCellEditor.class
 com\bpa4j\HButton$1.class
 com\bpa4j\defaults\features\DefaultFeature$2.class
 com\bpa4j\defaults\features\Board$1.class
+com\bpa4j\editor\modules\StageMapModule$3.class
 com\bpa4j\defaults\features\Board.class
 com\bpa4j\defaults\input\SelectionListEditor.class
 com\bpa4j\defaults\table\DynamicCellRenderer.class
@@ -102,7 +108,9 @@ com\bpa4j\Switcher.class
 com\bpa4j\editor\EditorEntry.class
 com\bpa4j\defaults\ftr_attributes\data_renderers\AnswerDataRenderer.class
 com\bpa4j\editor\modules\LogWatchModule$1LocalComment.class
+com\bpa4j\util\TestGen.class
 com\bpa4j\defaults\editables\AbstractTask.class
+com\bpa4j\editor\modules\StageApprovalModule$1B.class
 com\bpa4j\defaults\features\EditableList.class
 com\bpa4j\editor\EditorEntryBase.class
 com\bpa4j\Switcher$1.class
@@ -114,6 +122,7 @@ com\bpa4j\defaults\features\DefaultFeature$3.class
 com\bpa4j\core\WorkFrame$WorkTabButton$3.class
 com\bpa4j\util\Painter.class
 com\bpa4j\core\Data.class
+com\bpa4j\editor\modules\StageMapModule.class
 com\bpa4j\core\Navigator$2.class
 com\bpa4j\core\User$Permission.class
 com\bpa4j\defaults\features\Calendar$1.class
@@ -122,6 +131,8 @@ com\bpa4j\PathIcon.class
 com\bpa4j\core\User$Authorization.class
 com\bpa4j\defaults\DefaultRole.class
 com\bpa4j\editor\modules\CustomerModule$1.class
+com\bpa4j\editor\modules\StageApprovalModule$1.class
+com\bpa4j\SerializableBooleanSupplier.class
 com\bpa4j\editor\ModularEditor$3.class
 com\bpa4j\defaults\input\NullVerifier.class
 com\bpa4j\defaults\features\DefaultFeature$2$1.class
@@ -130,10 +141,12 @@ com\bpa4j\defaults\ftr_attributes\data_renderers\ChartDataRenderer$ChartMode.cla
 com\bpa4j\editor\ModularEditor$4.class
 com\bpa4j\defaults\features\Calendar$2.class
 com\bpa4j\defaults\features\DatedList$1.class
+com\bpa4j\editor\modules\FormModule$5.class
 com\bpa4j\defaults\ftr_attributes\element_suppliers\ChartDataConverter.class
 com\bpa4j\core\WorkFrame.class
 com\bpa4j\editor\Input.class
 com\bpa4j\HButton$1$1.class
+com\bpa4j\editor\modules\StageApprovalModule$2.class
 com\bpa4j\core\User$Role.class
 com\bpa4j\Switcher$1$1.class
 com\bpa4j\core\User.class
