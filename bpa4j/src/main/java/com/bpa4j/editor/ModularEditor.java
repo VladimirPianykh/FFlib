@@ -7,22 +7,30 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 
 import com.bpa4j.editor.modules.FormModule;
+import com.bpa4j.editor.modules.MapModule;
+import com.bpa4j.editor.modules.CustomerModule;
 import com.bpa4j.editor.modules.EditorModule;
 import com.bpa4j.HButton;
 import com.bpa4j.PathIcon;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Root;
+import com.bpa4j.defaults.editables.AbstractCustomer;
 import com.bpa4j.core.Data.Editable;
 
 public class ModularEditor implements IEditor{
 	public ArrayList<EditorModule>modules=new ArrayList<>();
-	public ModularEditor(){modules.add(new FormModule());}
+	public ModularEditor(){
+		HashMap<Class<?>,EditorModule>map=new HashMap<>();
+		map.put(AbstractCustomer.class,new CustomerModule());
+		modules.add(new MapModule(new FormModule(),map));
+	}
 	public ModularEditor(EditorModule...modules){this.modules.addAll(Arrays.asList(modules));}
 	public void constructEditor(Editable editable,boolean isNew,Runnable deleter){
 		JDialog editor=new JDialog(ProgramStarter.frame,true);
