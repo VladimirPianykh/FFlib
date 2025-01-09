@@ -27,7 +27,6 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JLayer;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -48,6 +47,7 @@ import com.bpa4j.Wrapper;
 import com.bpa4j.core.Data;
 import com.bpa4j.core.EditableDemo;
 import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.defaults.input.EmptySaver;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
@@ -92,7 +92,7 @@ public class FormModule implements EditorModule{
 			if(v.verifier()!=Verifier.class)verifier.var=v.verifier().getDeclaredConstructor().newInstance();
 			if(v.nameProvider()!=NameProvider.class)nameProvider.var=v.nameProvider().getDeclaredConstructor().newInstance();
 			if(v.infoProvider()!=InfoProvider.class)infoProvider.var=v.infoProvider().getDeclaredConstructor().newInstance();
-		}catch(Exception ex){throw new RuntimeException(ex);}
+		}catch(ReflectiveOperationException ex){throw new IllegalStateException("Verifiers, name providers and info providers must have default constructors.",ex);}
 		tab.add(nameField);
 		tab.add(ok);
 		ArrayList<Field>editableFields=new ArrayList<>();
@@ -110,6 +110,7 @@ public class FormModule implements EditorModule{
 		ArrayList<Supplier<?>>savers=new ArrayList<>();
 		Wrapper<Supplier<?>>currentSaver=new Wrapper<Supplier<?>>(null);
 		int k=0;
+		Wrapper<EditableDemo>demo=new Wrapper<>(null);
 		for(Field f:editableFields)try{
 			EditorEntry a=(EditorEntry)f.getAnnotation(EditorEntry.class);
 			JPanel entry=new JPanel(new GridLayout(1,2));
@@ -122,8 +123,26 @@ public class FormModule implements EditorModule{
 			name.setForeground(Color.WHITE);
 			name.setBorder(BorderFactory.createTitledBorder(null,"Параметр",0,0,font.deriveFont(font.getSize2D()/2),Color.LIGHT_GRAY));
 			entry.add(name);
-			JComponent c=null;
-			if(a.editorBaseSource()==EditorEntryBase.class)c=wrapEditorComponent(createEditorBase(editable,f,currentSaver),font);
+			JComponent c;
+			if(Supplier.class.isAssignableFrom(f.getType())){
+				currentSaver.var=new com.bpa4j.defaults.input.EmptySaver();
+				c=wrapEditorComponent(new JTextArea(){
+					public String getText(){
+						try{
+							if(demo.var==null)return "Ошибка!";
+							if(f.get(demo.var.get())==null)throw new NullPointerException("Supplier fields must be non-null.");
+							return String.valueOf(((Supplier<?>)f.get(demo.var.get())).get());
+						}catch(IllegalAccessException ex){throw new IllegalStateException("Supplier fields can only be non-static.",ex);}
+					}
+					public void paint(Graphics g){
+						setText(getText());
+						super.paint(g);
+					}
+				},font);
+				((JTextArea)c).setEditable(false);
+				((JTextArea)c).setLineWrap(false);
+				((JTextArea)c).setWrapStyleWord(false);
+			}else if(a.editorBaseSource()==EditorEntryBase.class)c=wrapEditorComponent(createEditorBase(editable,f,currentSaver),font);
 			else c=a.editorBaseSource().getDeclaredConstructor().newInstance().createEditorBase(editable,f,currentSaver);
 			savers.add(currentSaver.var);
 			if(c!=null){
@@ -141,12 +160,12 @@ public class FormModule implements EditorModule{
 			form.add(String.valueOf(k),entry);
 			++k;
 		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
-		EditableDemo demo=new EditableDemo(editable.getClass(),savers);
+		demo.var=new EditableDemo(editable.getClass(),savers);
 		DefaultListModel<String>results=new DefaultListModel<>();
 		JList<String>l=new JList<>(results);
 		form.add(String.valueOf(k),l);
-		ok.setText(savers.size()==0?"Готово":"Далее");
-		ok.setBackground(savers.size()==0?Color.GREEN:Color.GRAY);
+		ok.setText(savers.isEmpty()?"Готово":"Далее");
+		ok.setBackground(savers.isEmpty()?Color.GREEN:Color.GRAY);
 		JProgressBar p=new JProgressBar(0,savers.size());
 		p.setBounds(editor.getWidth()/8,editor.getHeight()/6,editor.getWidth()*3/4,editor.getHeight()/20);
 		p.setBackground(Color.WHITE);
@@ -207,7 +226,7 @@ public class FormModule implements EditorModule{
 		final HButton fCancel=cancel;
 		JComponent info=null;
 		if(infoProvider.var!=null){
-			info=infoProvider.var.provideInfo(demo);
+			info=infoProvider.var.provideInfo(demo.var);
 			info.setBounds(editor.getWidth()*5/6,editor.getHeight()/4,editor.getWidth()/6,editor.getHeight()/2);
 			tab.add(info);
 		}
@@ -220,8 +239,8 @@ public class FormModule implements EditorModule{
 					return;
 				}
 				if(w.var==savers.size()){
-					if(verifier.var==null||verifier.var.verify(editable,demo.get(),isNew).isEmpty()){
-						for(int i=0;i<editableFields.size();++i)editableFields.get(i).set(editable,savers.get(i).get());
+					if(verifier.var==null||verifier.var.verify(editable,demo.var.get(),isNew).isEmpty()){
+						for(int i=0;i<editableFields.size();++i)if(!(savers.get(i)instanceof EmptySaver))editableFields.get(i).set(editable,savers.get(i).get());
 						editor.dispose();
 						editable.name=nameField.getText();
 					}else{
@@ -231,7 +250,7 @@ public class FormModule implements EditorModule{
 						t.start();
 						layout.show(form,String.valueOf(w.var=0));
 						p.setValue(0);
-						new Message(verifier.var.verify(editable,demo.get(),isNew),Color.RED);
+						new Message(verifier.var.verify(editable,demo.var.get(),isNew),Color.RED);
 					}
 				}else{
 					p.setValue(++w.var);
@@ -248,9 +267,9 @@ public class FormModule implements EditorModule{
 					if(w.var==savers.size()){
 						ok.setText("Готово");
 						ok.setBackground(Color.GREEN);
-						if(nameProvider.var!=null)nameField.setText(nameProvider.var.provideName(demo.get()));
+						if(nameProvider.var!=null)nameField.setText(nameProvider.var.provideName(demo.var.get()));
 						results.removeAllElements();
-						for(int i=0;i<editableFields.size();++i)results.addElement(editableFields.get(i).getAnnotation(EditorEntry.class).translation()+": "+String.valueOf(savers.get(i).get()));
+						for(int i=0;i<editableFields.size();++i)if(!(savers.get(i)instanceof EmptySaver))results.addElement(editableFields.get(i).getAnnotation(EditorEntry.class).translation()+": "+savers.get(i).get());
 					}
 					if(fCancel!=null)fCancel.setText("Назад");
 				}
@@ -267,6 +286,7 @@ public class FormModule implements EditorModule{
 		a.setFont(font);
 		a.setBackground(Color.DARK_GRAY);
 		a.setForeground(Color.WHITE);
+		a.setOpaque(true);
 		return a;
 	}
 	@SuppressWarnings("unchecked")
@@ -287,11 +307,11 @@ public class FormModule implements EditorModule{
 				a.setLineWrap(true);
 				a.setWrapStyleWord(true);
 				saver.var=()->{
-					try {return (double) Double.parseDouble(a.getText());}
-					catch (Exception exc) {
+					try{return(double)Double.parseDouble(a.getText());}
+					catch(Exception exc){
 						a.setText("0");
-						new Message("Неправильный формат числа, выбрано значение по умолчанию", Color.RED);
-						return (double) 0;
+						new Message("Неправильный формат числа, выбрано значение по умолчанию",Color.RED);
+						return(double)0;
 					}
 				};
 				return a;
@@ -300,37 +320,26 @@ public class FormModule implements EditorModule{
 				a.setLineWrap(true);
 				a.setWrapStyleWord(true);
 				saver.var=()->{
-					try {return (float) Float.parseFloat(a.getText());}
-					catch (Exception exc) {
+					try{return(float)Float.parseFloat(a.getText());}
+					catch(Exception exc){
 						a.setText("0");
-						new Message("Неправильный формат числа, выбрано значение по умолчанию", Color.RED);
-						return (float) 0;
+						new Message("Неправильный формат числа, выбрано значение по умолчанию",Color.RED);
+						return(float)0;
 					}
 				};
 				return a;
 			}else if(f.getType()==LocalDate.class){
 				JDateChooser d=new JDateChooser();
 				d.setDateFormatString("yyyy-MM-dd");
-				try{
-					d.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));
-				}catch(NullPointerException ex){throw new NullPointerException("LocalDate fields must be non-null");}
+				try{d.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));}catch(NullPointerException ex){throw new NullPointerException("LocalDate fields must be non-null");}
 				saver.var=()->Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
 				return d;
 			}else if(f.getType()==LocalDateTime.class){
 				JDateChooser d=new JDateChooser();
 				d.setDateFormatString("yyyy-MM-dd в HH:mm:ss");
-				try{
-					d.setDate(Date.from(((LocalDateTime)f.get(o)).atZone(ZoneId.systemDefault()).toInstant()));
-				}catch(NullPointerException ex){throw new NullPointerException("LocalDateTime fields must be non-null");}
+				try{d.setDate(Date.from(((LocalDateTime)f.get(o)).atZone(ZoneId.systemDefault()).toInstant()));}catch(NullPointerException ex){throw new NullPointerException("LocalDateTime fields must be non-null");}
 				saver.var=()->Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
 				return d;
-			}else if(f.getType()==Supplier.class){
-				saver.var=()->{try{return f.get(o);}catch(IllegalAccessException ex){throw new RuntimeException(ex);}};
-				JLabel l=new JLabel(){
-					public String getText(){try{return String.valueOf(((Supplier<?>)f.get(o)).get());}catch(IllegalAccessException ex){throw new RuntimeException(ex);}}
-				};
-				l.setOpaque(true);
-				return l;
 			}else if(Editable.class.isAssignableFrom(f.getType())){
 				try{
 					JComboBox<Editable>a=new JComboBox<>();
@@ -341,9 +350,7 @@ public class FormModule implements EditorModule{
 				}catch(IllegalArgumentException ex){
 					JButton a=new JButton(f.get(o)==null?"":((Editable)f.get(o)).name);
 					if(f.get(o)!=null)a.addActionListener(e->{
-						try{
-							ProgramStarter.editor.constructEditor((Editable)f.get(o),false);
-						}catch(IllegalAccessException ex2){throw new RuntimeException(ex2);}
+						try{ProgramStarter.editor.constructEditor((Editable)f.get(o),false);}catch(IllegalAccessException ex2){throw new RuntimeException(ex2);}
 					});
 					saver.var=()->{try{return f.get(o);}catch(IllegalAccessException ex2){throw new RuntimeException(ex2);}};
 					return a;

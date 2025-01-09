@@ -41,7 +41,7 @@ import com.bpa4j.editor.ModularEditor;
  * 	  <li>{@code welcomeMessage}</li>
  * 	</ul>
  */
-public class ProgramStarter{
+public final class ProgramStarter{
 	private static boolean firstLaunch=!new File(Root.folder).exists();
 	public static WorkFrame frame;
 	public static IEditor editor=new ModularEditor();
@@ -50,6 +50,7 @@ public class ProgramStarter{
 	 * Indicates whether to require password ({@code true}) or just ask to choose the role.
 	 */
 	public static boolean authRequired=true;
+	private ProgramStarter(){}
 	public static boolean isFirstLaunch(){
 		return firstLaunch;
 	}

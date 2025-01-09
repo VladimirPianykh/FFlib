@@ -45,7 +45,7 @@ import com.bpa4j.editor.modules.StageApprovalModule;
 import com.bpa4j.util.TestGen;
 
 public class FullTester{
-	public static class MyFourthEditable extends Editable{
+	public static class MyEditable4 extends Editable{
 		static int index=2024;
 		@EditorEntry(translation="Группа")
 		public String group=new String[]{"С баллом <100","С баллом <200"}[(int)(Math.random()*2)];
@@ -53,19 +53,19 @@ public class FullTester{
 		public String value1=String.valueOf(index--);
 		@EditorEntry(translation="Значение")
 		public int value2=(int)(Math.random()*100);
-		public MyFourthEditable(){super("Новый объект");}
+		public MyEditable4(){super("Новый объект");}
 	}
-	public static class MyThirdEditable extends Editable{
+	public static class MyEditable3 extends Editable{
 		@EditorEntry(translation="Группа")
 		public String group=new String[]{"С баллом <100","С баллом <200"}[(int)(Math.random()*2)];
 		@EditorEntry(translation="Величина 1")
 		public int value1=(int)(Math.random()*100);
 		@EditorEntry(translation="Величина 2")
 		public int value2=(int)(Math.random()*100);
-		public MyThirdEditable(){super("Новый объект");}
+		public MyEditable3(){super("Новый объект");}
 	}
 	public static class MyCustomer extends AbstractCustomer{}
-	public static class MySecondEditable extends Editable{
+	public static class MyEditable2 extends Editable{
 		public static enum Status{
 			S1("Состояние 1"),
 			S2("Состояние 2"),
@@ -77,7 +77,7 @@ public class FullTester{
 		}
 		@EditorEntry(translation="Перечисление")
 		public Status a=Status.S1;
-		public MySecondEditable(){
+		public MyEditable2(){
 			super("Новый объект");
 		}
 	}
@@ -91,15 +91,17 @@ public class FullTester{
 		@EditorEntry(translation="Дата")
 		public LocalDate dateField=LocalDate.now();
 		@EditorEntry(translation="Редактируемый объект")
-		public MySecondEditable editableField;
+		public MyEditable2 editableField;
 		@EditorEntry(translation="Supplier")
-		public static Supplier<String>s=()->Stream.generate(()->(char)('a'+Math.random()*25)).limit(20).map(c->String.valueOf(c)).reduce((c1,c2)->c1+c2).get();
+		public SerializableSupplier<String>s=()->{
+			return Stream.generate(()->(char)('a'+Math.random()*25)).limit(20).map(c->String.valueOf(c)).reduce((c1,c2)->c1+c2).get();
+		};
 		public MyProcessable(){
 			super(
 				"Новый объект",
 				new Stage("Отрицание",AppPermission.MANAGE_PROCESSABLE,()->{
 					Wrapper<Boolean>w=new Wrapper<Boolean>(true);
-					ProgramStarter.editor.constructEditor(new MySecondEditable(),true,()->w.var=false);
+					ProgramStarter.editor.constructEditor(new MyEditable2(),true,()->w.var=false);
 					return w.var;
 				}),
 				new Stage("Гнев",AppPermission.MANAGE_PROCESSABLE,AppPermission.MANAGE_PROCESSABLE,0),
@@ -140,6 +142,7 @@ public class FullTester{
 		MANAGE_PROCESSABLE;
 		private AppPermission(){Registrator.register(this);}
 	}
+	private FullTester(){}
 	public static void main(String[]args){
 		Navigator.init();
 		ProgramStarter.welcomeMessage="";
@@ -157,15 +160,15 @@ public class FullTester{
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				MyProcessable.class
 			);
-			EditableGroup<MyThirdEditable>myThirdEditables=new EditableGroup<MyThirdEditable>(
+			EditableGroup<MyEditable3>myThirdEditables=new EditableGroup<MyEditable3>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
-				MyThirdEditable.class
+				MyEditable3.class
 			);
-			EditableGroup<MyFourthEditable>myFourthEditables=new EditableGroup<MyFourthEditable>(
+			EditableGroup<MyEditable4>myFourthEditables=new EditableGroup<MyEditable4>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
-				MyFourthEditable.class
+				MyEditable4.class
 			);
 			EditableGroup<MyCustomer>customers=new EditableGroup<MyCustomer>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
@@ -210,13 +213,13 @@ public class FullTester{
 				return s;
 			}).addDataRenderer(new ChartDataRenderer(
 				ChartMode.LINEAR_COMPARE,
-				new ChartDataConverter<>(()->new ArrayList<>(new GroupElementSupplier<>(MyThirdEditable.class).get().stream().filter(e->e.value1<(int)s.getValue()).toList())),
+				new ChartDataConverter<>(()->new ArrayList<>(new GroupElementSupplier<>(MyEditable3.class).get().stream().filter(e->e.value1<(int)s.getValue()).toList())),
 				"Координаты смертей после резов",
 				"x",
 				"y"
 			)).addDataRenderer(new ChartDataRenderer(
 				ChartMode.BAR,
-				new ChartDataConverter<>(new GroupElementSupplier<>(MyFourthEditable.class)),
+				new ChartDataConverter<>(new GroupElementSupplier<>(MyEditable4.class)),
 				"Смерти после резов",
 				"Год",
 				"Количество, млн. чел"
