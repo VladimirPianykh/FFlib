@@ -19,7 +19,11 @@ public class MapModule implements EditorModule {
     }
 
     public EditorModule getModule(Class<?> clazz) {
-        return moduleClassMap.getOrDefault(clazz, defaultModule);
+        for(var pair : moduleClassMap.entrySet())
+            if(pair.getKey().isAssignableFrom(clazz))
+                return pair.getValue();
+
+        return defaultModule;
     }
 
     @Override
