@@ -9,7 +9,7 @@ import javax.swing.JPanel;
 import com.bpa4j.core.Data.Editable;
 
 public class LimitToModule implements EditorModule{
-	private EditorModule module;
+	private final EditorModule module;
 	List<Class<? extends Editable>>types;
 	@SafeVarargs
 	public LimitToModule(EditorModule module,Class<? extends Editable>...types){this.types=Arrays.asList(types);this.module=module;}
