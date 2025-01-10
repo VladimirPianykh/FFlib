@@ -55,8 +55,7 @@ public final class ExcelUtils{
 				T instance=type.getDeclaredConstructor().newInstance();
 				Field[]fields=type.getDeclaredFields();
 				for(int i=0;i<fields.length;i++){
-					if(!fields[i].isAnnotationPresent(EditorEntry.class))
-						continue;
+					if(!fields[i].isAnnotationPresent(EditorEntry.class))continue;
 					Parseable a=fields[i].getAnnotation(Parseable.class);
 					Field field=fields[i];
 					field.setAccessible(true);
@@ -66,7 +65,8 @@ public final class ExcelUtils{
 				}
 				instances.add(instance);
 			}
-		}catch(IOException|ReflectiveOperationException e){e.printStackTrace();}
+		}catch(IOException ex){throw new UncheckedIOException(ex);}
+		catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 		return instances;
 	}
 	private static Object parseCellValue(Cell cell,Class<?>targetType){
