@@ -1,5 +1,6 @@
 package com.bpa4j.util.excel;
 
+import com.bpa4j.core.Data.Editable;
 import com.bpa4j.editor.EditorEntry;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -27,7 +28,14 @@ public final class ExcelUtils{
 	private ExcelUtils(){}
 	static final DateTimeFormatter dateFormatter=DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	/**
-     * Uses reflection to create a list of objects of the specified class from the given file.
+	 * Parses a list of objects from the given file.
+	 * <p>
+	 * The "name" is ignored
+	 * @see #createInstancesOf(String,Class,boolean)
+	 */
+	public static<T>ArrayList<T>createInstancesOf(String path,Class<T>type){return createInstancesOf(path,type,false);}
+	/**
+     * Parses a list of objects from the given file.
      * <p>
      * Example:
      * <pre>
@@ -38,10 +46,11 @@ public final class ExcelUtils{
      *
      * @param path - path to the file
      * @param type - class whose objects will be created
+     * @param parseName - whether to parse the "name" field if object is instanceof {@link Editable}
      * @param <T> the same class type (needed for creating the list)
      * @return list of created objects
      */
-	public static<T>ArrayList<T>createInstancesOf(String path,Class<T>type){
+	public static<T>ArrayList<T>createInstancesOf(String path,Class<T>type,boolean parseName){
 		ArrayList<T>instances=new ArrayList<>();
 		try(FileInputStream fis=new FileInputStream(path)){
 			Workbook workbook=new XSSFWorkbook(fis);
@@ -51,15 +60,18 @@ public final class ExcelUtils{
 			if(rowIterator.hasNext())rowIterator.next();
 			while(rowIterator.hasNext()){
 				Row row=rowIterator.next();
+				Iterator<Cell>cellIterator=row.cellIterator();
 				type.getDeclaredConstructor().setAccessible(true);
 				T instance=type.getDeclaredConstructor().newInstance();
-				Field[]fields=type.getDeclaredFields();
-				for(int i=0;i<fields.length;i++){
-					if(!fields[i].isAnnotationPresent(EditorEntry.class))continue;
-					Parseable a=fields[i].getAnnotation(Parseable.class);
-					Field field=fields[i];
+				if(instance instanceof Editable)((Editable)instance).name=cellIterator.next().getStringCellValue();
+				r:for(Field f:type.getDeclaredFields()){
+					EditorEntry ee=f.getAnnotation(EditorEntry.class);
+					if(ee==null)continue;
+					for(String p:ee.properties())if(p.equals("nexcel"))continue r;
+					Parseable a=f.getAnnotation(Parseable.class);
+					Field field=f;
 					field.setAccessible(true);
-					Cell cell=row.getCell(i,Row.CREATE_NULL_AS_BLANK);
+					Cell cell=cellIterator.next();
 					Object value=a==null?parseCellValue(cell,field.getType()):a.parser().getConstructor().newInstance().apply(cell.getStringCellValue());
 					field.set(instance,value);
 				}
