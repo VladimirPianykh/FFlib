@@ -6,24 +6,28 @@ import javax.swing.*;
 import java.util.Map;
 
 public class MapModule implements EditorModule {
-	private final EditorModule defaultModule;
-	private final Map<Class<?>, EditorModule> moduleClassMap;
+    private final EditorModule defaultModule;
+    private final Map<Class<?>, EditorModule> moduleClassMap;
 
-	public MapModule(EditorModule defaultModule, Map<Class<?>, EditorModule> moduleClassMap) {
-		this.defaultModule = defaultModule;
-		this.moduleClassMap = moduleClassMap;
-	}
+    public MapModule(EditorModule defaultModule, Map<Class<?>, EditorModule> moduleClassMap) {
+        this.defaultModule = defaultModule;
+        this.moduleClassMap = moduleClassMap;
+    }
 
-	public EditorModule getDefaultModule() {
-		return defaultModule;
-	}
+    public EditorModule getDefaultModule() {
+        return defaultModule;
+    }
 
-	public EditorModule getModule(Class<?> clazz) {
-		return moduleClassMap.getOrDefault(clazz, defaultModule);
-	}
+    public EditorModule getModule(Class<?> clazz) {
+        for(var pair : moduleClassMap.entrySet())
+            if(pair.getKey().isAssignableFrom(clazz))
+                return pair.getValue();
 
-	@Override
-	public JPanel createTab(JDialog editor, Data.Editable editable, boolean isNew, Runnable deleter) {
-		return getModule(editable.getClass()).createTab(editor, editable, isNew, deleter);
-	}
+        return defaultModule;
+    }
+
+    @Override
+    public JPanel createTab(JDialog editor, Data.Editable editable, boolean isNew, Runnable deleter) {
+        return getModule(editable.getClass()).createTab(editor, editable, isNew, deleter);
+    }
 }

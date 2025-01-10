@@ -23,6 +23,8 @@ public class MapModuleTest {
         assertEquals(defaultModule, mapModule.getDefaultModule());
         //specified
         assertEquals(notDefMod, mapModule.getModule(TestClass.class));
+        //inherited behavior
+        assertEquals(notDefMod, mapModule.getModule(Inheritor.class));
         //not specified
         assertEquals(defaultModule, mapModule.getModule(MapModuleTest.class));
     }
@@ -30,6 +32,8 @@ public class MapModuleTest {
 
 class TestClass {
 }
+
+class Inheritor extends TestClass {}
 
 class DefaultModule implements EditorModule {
     @Override
@@ -44,3 +48,4 @@ class NotDefaultModule implements EditorModule {
         return null;
     }
 }
+

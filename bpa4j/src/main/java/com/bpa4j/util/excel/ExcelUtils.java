@@ -55,6 +55,8 @@ public final class ExcelUtils{
 				T instance=type.getDeclaredConstructor().newInstance();
 				Field[]fields=type.getDeclaredFields();
 				for(int i=0;i<fields.length;i++){
+					if(!fields[i].isAnnotationPresent(EditorEntry.class))
+						continue;
 					Parseable a=fields[i].getAnnotation(Parseable.class);
 					Field field=fields[i];
 					field.setAccessible(true);
