@@ -46,7 +46,7 @@ public final class ExcelUtils{
      *
      * @param path - path to the file
      * @param type - class whose objects will be created
-     * @param parseName - whether to parse the "name" field if object is instanceof {@link Editable}
+     * @param parseName - whether to parse the "name" field if object is instanceof {@link com.bpa4j.core.Data.Editable Editable}
      * @param <T> the same class type (needed for creating the list)
      * @return list of created objects
      */
@@ -54,18 +54,19 @@ public final class ExcelUtils{
 		ArrayList<T>instances=new ArrayList<>();
 		try(FileInputStream fis=new FileInputStream(path)){
 			Workbook workbook=new XSSFWorkbook(fis);
-			Sheet sheet=workbook.getSheetAt(0); //Reads the first Excel sheet
+			Sheet sheet=workbook.getSheetAt(0); //Reading the first Excel sheet
 			Iterator<Row>rowIterator=sheet.iterator();
 			//Skipping the header row if present
 			if(rowIterator.hasNext())rowIterator.next();
 			while(rowIterator.hasNext()){
 				Row row=rowIterator.next();
-				Iterator<Cell>cellIterator=row.cellIterator();
 				type.getDeclaredConstructor().setAccessible(true);
 				T instance=type.getDeclaredConstructor().newInstance();
+				int i=0;
 				if(parseName&&instance instanceof Editable){
-					Cell cell=cellIterator.next();
+					Cell cell=row.getCell(0);
 					((Editable)instance).name=cell.getCellType()==Cell.CELL_TYPE_NUMERIC?String.valueOf(cell.getNumericCellValue()):cell.getStringCellValue();
+					++i;
 				}
 				r:for(Field f:type.getDeclaredFields()){
 					EditorEntry ee=f.getAnnotation(EditorEntry.class);
@@ -74,9 +75,12 @@ public final class ExcelUtils{
 					Parseable a=f.getAnnotation(Parseable.class);
 					Field field=f;
 					field.setAccessible(true);
-					Cell cell=cellIterator.next();
-					Object value=a==null?parseCellValue(cell,field.getType()):a.parser().getConstructor().newInstance().apply(cell.getStringCellValue());
-					field.set(instance,value);
+					Cell cell=row.getCell(i,Row.CREATE_NULL_AS_BLANK);
+					try{
+						Object value=a==null?parseCellValue(cell,field.getType()):a.parser().getConstructor().newInstance().apply(cell.getStringCellValue());
+						field.set(instance,value);
+					}catch(IllegalStateException ex){throw new IllegalStateException("Cannot parse field "+field.getName()+" from column "+i+" (counting from 0).",ex);}
+					++i;
 				}
 				instances.add(instance);
 			}
@@ -92,11 +96,17 @@ public final class ExcelUtils{
 					for(var constant:targetType.getEnumConstants())
 						if(constant.toString().equalsIgnoreCase(stringValue))return constant;
 				}
-				else if(targetType==LocalDate.class){return LocalDate.parse(cell.getStringCellValue(),dateFormatter);}
+				else if(targetType==LocalDate.class)return LocalDate.parse(cell.getStringCellValue(),dateFormatter);
+				if(targetType!=String.class)throw new IllegalStateException("Value \""+cell.getStringCellValue()+"\" cannot be treated as "+targetType.getName());
 				return stringValue;
 			}
 			case Cell.CELL_TYPE_NUMERIC->{
-				if(DateUtil.isCellDateFormatted(cell)&&targetType==LocalDate.class){return LocalDate.ofInstant(cell.getDateCellValue().toInstant(),ZoneId.systemDefault());}else if(targetType==int.class||targetType==Integer.class)return(int)cell.getNumericCellValue();else if(targetType==long.class||targetType==Long.class)return(long)cell.getNumericCellValue();else if(targetType==double.class||targetType==Double.class)return cell.getNumericCellValue();else if(targetType==float.class||targetType==Float.class)return(float)cell.getNumericCellValue();else if(targetType==String.class)return String.valueOf(cell.getNumericCellValue());
+				if(DateUtil.isCellDateFormatted(cell)&&targetType==LocalDate.class)return LocalDate.ofInstant(cell.getDateCellValue().toInstant(),ZoneId.systemDefault());
+				else if(targetType==int.class||targetType==Integer.class)return(int)cell.getNumericCellValue();
+				else if(targetType==long.class||targetType==Long.class)return(long)cell.getNumericCellValue();
+				else if(targetType==double.class||targetType==Double.class)return cell.getNumericCellValue();
+				else if(targetType==float.class||targetType==Float.class)return(float)cell.getNumericCellValue();
+				else if(targetType==String.class)return String.valueOf(cell.getNumericCellValue());
 			}
 			case Cell.CELL_TYPE_BOOLEAN->{
 				boolean booleanValue=cell.getBooleanCellValue();
