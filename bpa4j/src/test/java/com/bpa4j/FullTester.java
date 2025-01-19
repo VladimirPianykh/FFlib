@@ -26,6 +26,7 @@ import com.bpa4j.defaults.editables.Processable;
 import com.bpa4j.defaults.features.Board;
 import com.bpa4j.defaults.features.Calendar;
 import com.bpa4j.defaults.features.DefaultFeature;
+import com.bpa4j.defaults.features.ItemList;
 import com.bpa4j.defaults.features.Report;
 import com.bpa4j.defaults.ftr_attributes.data_renderers.AnswerDataRenderer;
 import com.bpa4j.defaults.ftr_attributes.data_renderers.ChartDataRenderer;
@@ -34,6 +35,7 @@ import com.bpa4j.defaults.ftr_attributes.data_renderers.ChartDataRenderer.ChartM
 import com.bpa4j.defaults.ftr_attributes.daters.EventDater;
 import com.bpa4j.defaults.ftr_attributes.element_suppliers.ChartDataConverter;
 import com.bpa4j.defaults.ftr_attributes.element_suppliers.GroupElementSupplier;
+import com.bpa4j.defaults.input.FlagWEditor;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.ModularEditor;
 import com.bpa4j.editor.modules.CustomerModule;
@@ -42,13 +44,16 @@ import com.bpa4j.editor.modules.FormModule;
 import com.bpa4j.editor.modules.LimitToModule;
 import com.bpa4j.editor.modules.LogWatchModule;
 import com.bpa4j.editor.modules.StageApprovalModule;
+import com.bpa4j.ui.PathIcon;
+import com.bpa4j.util.TaskAnalyzer;
 import com.bpa4j.util.TestGen;
 
-public class FullTester{
+public final class FullTester{
 	public static class MyEditable4 extends Editable{
 		static int index=2024;
 		@EditorEntry(translation="Группа")
 		public String group=new String[]{"С баллом <100","С баллом <200"}[(int)(Math.random()*2)];
+		@SuppressWarnings("PMD.UnusedAssignment")
 		@EditorEntry(translation="Категория")
 		public String value1=String.valueOf(index--);
 		@EditorEntry(translation="Значение")
@@ -71,12 +76,18 @@ public class FullTester{
 			S2("Состояние 2"),
 			S3("Состояние 3"),
 			S4("Состояние 4");
-			private String translation;
+			private final String translation;
 			private Status(String translation){this.translation=translation;}
 			public String toString(){return translation;}
 		}
-		@EditorEntry(translation="Перечисление")
+		@EditorEntry(translation="Перечисление",editorBaseSource=FlagWEditor.class)
 		public Status a=Status.S1;
+		@EditorEntry(translation="Группа")
+		public EditableGroup<MyEditable2>group=new EditableGroup<MyEditable2>(
+			new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
+			new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
+			MyEditable2.class
+		);;
 		public MyEditable2(){
 			super("Новый объект");
 		}
@@ -125,7 +136,8 @@ public class FullTester{
 				DefaultFeature.MODEL_EDITING,
 				Board.registerBoard("board",MyProcessable.class),
 				Calendar.registerCalendar("calendar",MyEvent.class),
-				Report.registerReport("report")
+				Report.registerReport("report"),
+				ItemList.registerList("list",MyProcessable.class)
 			}
 		);
 		private AppRole(Supplier<Permission[]>p,Supplier<Feature[]>f){SwingUtilities.invokeLater(()->Registrator.register(this,f.get(),p.get()));}
@@ -143,7 +155,59 @@ public class FullTester{
 		private AppPermission(){Registrator.register(this);}
 	}
 	private FullTester(){}
-	public static void main(String[]args){
+	public static void main(String[]args)throws ReflectiveOperationException{
+		new TaskAnalyzer("""
+			Описание задачи
+			Культурный центр организует большое количество самых разнообразных мероприятий для взрослых и детей — концерты, спектакли, лекции, выставки и т. д. Это
+			так называемые типы мероприятий.
+			Мероприятия бывают как бесплатными (свободный вход для всех желающих),
+			так и платными (вход по билетам). Стоимость билетов для каждого мероприятия
+			может различаться — все зависит от локации места. Места с лучшим обзором стоят
+			дороже, места на отдалении от сцены — дешевле.
+			В пространствах Культурного центра могут быть следующие варианты локаций:
+			партер, амфитеатр, балкон. Все три локации имеет лишь одно пространство — Большой зал. Схема Большого зала:
+			• Партер (9 рядов и 35 мест в каждом ряду).
+			• Амфитеатр (8 рядов и 30 мест в каждом ряду).
+			• Балкон (9 рядов и 40 мест в каждом ряду).
+			Пространства Малый зал, Зал-конструктор, Лекторий имеют только одну локацию — партер, вместимостью 50, 120 и 250 мест соответственно. У остальных пространств локаций нет. Весь функционал, который будет разработан в процессе выполнения задания, должен относиться к разделу \"Развлекательная деятельность\".
+			Техническое задание
+			1. Доработать объект \"Пространства\" так, чтобы в нем хранилась информация
+			о локациях:
+			a. Добавить признак \"Локации\" (булево).
+			b. Если установлен признак \"Локации\", необходимо указать локации, которые есть в этом пространстве (список локаций фиксированный, можно
+			найти в описании задачи).
+			c. Для каждой локации необходимо указать количество рядов и количество
+			мест в ряду.
+			2. Создать объект \"Типы мероприятий\", в нем необходимо хранить название мероприятия (строка).
+			3. Создать объект, регистрирующий событие в жизни культурного центра — \"Мероприятие\". Объект должен содержать следующую информацию:
+			a. Дата проведения (дата).
+			b. Название мероприятия (строка).
+			c. Тип мероприятия (выбирается из списка типов мероприятий).
+			d. Время начала и окончания мероприятия (дата и время).
+			e. Количество посетителей (целое число).
+			f. Пространство (выбирается из списка пространств).
+			g. Признак того, что мероприятие будет платным (булево).
+			h. Описание (многострочный текст).
+			4. Реализовать возможность выбора пространства в зависимости от планируемого
+			количества посетителей. Т. е. система позволяет выбрать только те помещения,
+			вместимость которых больше или равна заявленного в мероприятии количества
+			посетителей.
+			5. Если мероприятие платное, то должна появиться возможность установить цены
+			на билеты. Установка цены — тоже событие. Объект \"Установка цен на билеты\"
+			должен содержать в себе следующую информацию:
+			a. Мероприятие, для которого мы устанавливаем цены на билеты (выбирается из списка мероприятий).
+			b. Стоимость билета на каждое место в зале (число).
+			6. Поскольку места, принадлежащие одной локации, имеют одинаковую стоимость, необходимо реализовать установку цен так, чтобы можно было быстро
+			установить цену сразу на группу мест, а не на каждое место отдельно. Установка мест должна быть интерактивной, операционист должен видеть цены на
+			все места в зале. Например, организатор выделяет мышкой определенные места, вводит стоимость билета, и эта стоимость устанавливается на каждое из
+			выделенных мест.
+			Заполнение тестовыми данными
+			1. Поставить признак \"Локации\" у пространства \"Большой зал\" и выбрать локации: партер, амфитеатр, балкон.
+			2. Создать 4 типа мероприятия: Концерт, Спектакль, Лекция, Выставка.
+			3. Создать одно бесплатное мероприятие.
+			4. Создать мероприятие в Большом зале, вход на которое будет платным.
+			5. Выполнить установку цен на билеты на созданное платное мероприятие.
+		""").analyze();
 		Navigator.init();
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;
@@ -230,5 +294,11 @@ public class FullTester{
 				()->"Кровь: "+((int)s.getValue()>50?"есть "+((int)s.getValue()-50)+" литров":"нет (но это временно)")
 			))
 			.addDataRenderer(new TableDataRenderer<>(groupES,"Данные о жертвах НТО",true));
+		ItemList.<MyProcessable>getList("list")
+			.setElementSupplier(new GroupElementSupplier<>(MyProcessable.class))
+			.addCollectiveAction(a->{
+				for(MyProcessable p:a)p.toString(); //Does nothing
+			});
+		FlagWEditor.configure(MyEditable2.class.getField("a"),null,null,MyEditable2.Status.S1);
 	}
 }

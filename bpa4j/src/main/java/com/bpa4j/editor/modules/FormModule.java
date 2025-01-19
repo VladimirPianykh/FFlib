@@ -9,6 +9,8 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
@@ -41,20 +43,21 @@ import javax.swing.Timer;
 import javax.swing.plaf.LayerUI;
 import javax.swing.table.AbstractTableModel;
 
-import com.bpa4j.HButton;
-import com.bpa4j.Message;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Data;
 import com.bpa4j.core.EditableDemo;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.defaults.input.EmptySaver;
 import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.InfoProvider;
 import com.bpa4j.editor.Input;
 import com.bpa4j.editor.NameProvider;
 import com.bpa4j.editor.Verifier;
+import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.Message;
 import com.toedter.calendar.JDateChooser;
 
 public class FormModule implements EditorModule{
@@ -96,12 +99,10 @@ public class FormModule implements EditorModule{
 		tab.add(nameField);
 		tab.add(ok);
 		ArrayList<Field>editableFields=new ArrayList<>();
-		r:for(Field f:editable.getClass().getFields()){
+		for(Field f:editable.getClass().getFields()){
 			EditorEntry a=(EditorEntry)f.getAnnotation(EditorEntry.class);
 			if(a==null)continue;
-			for(String p:a.properties())switch(p){
-				case "hide"->{continue r;}
-			};
+			for(String p:a.properties())if(p.equals("hide"))continue;
 			editableFields.add(f);
 		}
 		CardLayout layout=new CardLayout();
@@ -143,12 +144,12 @@ public class FormModule implements EditorModule{
 				((JTextArea)c).setLineWrap(false);
 				((JTextArea)c).setWrapStyleWord(false);
 			}else if(a.editorBaseSource()==EditorEntryBase.class)c=wrapEditorComponent(createEditorBase(editable,f,currentSaver),font);
-			else c=a.editorBaseSource().getDeclaredConstructor().newInstance().createEditorBase(editable,f,currentSaver);
+			else c=a.editorBaseSource().getDeclaredConstructor().newInstance().createEditorBase(editable,f,currentSaver,demo);
 			savers.add(currentSaver.var);
 			if(c!=null){
 				c.setBorder(BorderFactory.createTitledBorder(null,"Значение",0,0,font.deriveFont(font.getSize2D()/2),Color.LIGHT_GRAY));
 				boolean flag=false;
-				for(String s:a.properties())if(s.equals("readonly")){flag=true;break;}
+				for(String s:a.properties())if(s.equals("readonly")||(!isNew&&s.equals("initonly"))){flag=true;break;}
 				if(flag){
 					c.setFocusable(false);
 					entry.add(new JLayer<JComponent>(c,new LayerUI<>(){
@@ -233,7 +234,7 @@ public class FormModule implements EditorModule{
 		final JComponent fInfo=info;
 		ok.addActionListener(e->{
 			try{
-				if(savers.size()==0){
+				if(savers.isEmpty()){
 					editor.dispose();
 					editable.name=nameField.getText();
 					return;
@@ -329,11 +330,11 @@ public class FormModule implements EditorModule{
 				};
 				return a;
 			}else if(f.getType()==LocalDate.class){
-				JDateChooser d=new JDateChooser();
-				d.setDateFormatString("yyyy-MM-dd");
-				try{d.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));}catch(NullPointerException ex){throw new NullPointerException("LocalDate fields must be non-null");}
-				saver.var=()->Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-				return d;
+				JDateChooser a=new JDateChooser();
+				a.setDateFormatString("yyyy-MM-dd");
+				try{a.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));}catch(NullPointerException ex){throw new NullPointerException("LocalDate fields must be non-null");}
+				saver.var=()->Instant.ofEpochMilli(a.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+				return a;
 			}else if(f.getType()==LocalDateTime.class){
 				JDateChooser d=new JDateChooser();
 				d.setDateFormatString("yyyy-MM-dd в HH:mm:ss");
@@ -347,14 +348,60 @@ public class FormModule implements EditorModule{
 					a.setSelectedItem(f.get(o));
 					saver.var=()->a.getSelectedItem();
 					return a;
-				}catch(IllegalArgumentException ex){
+				}catch(IllegalArgumentException exception){
 					JButton a=new JButton(f.get(o)==null?"":((Editable)f.get(o)).name);
-					if(f.get(o)!=null)a.addActionListener(e->{
-						try{ProgramStarter.editor.constructEditor((Editable)f.get(o),false);}catch(IllegalAccessException ex2){throw new RuntimeException(ex2);}
-					});
-					saver.var=()->{try{return f.get(o);}catch(IllegalAccessException ex2){throw new RuntimeException(ex2);}};
+					ActionListener edit=e->{
+						try{ProgramStarter.editor.constructEditor((Editable)f.get(o),false);}catch(IllegalAccessException ex2){throw new IllegalStateException(ex2);}
+					};
+					a.addActionListener(f.get(o)==null?new ActionListener(){
+						public void actionPerformed(ActionEvent e){
+							try{
+								f.set(o,f.getType().getDeclaredConstructor().newInstance());
+								ProgramStarter.editor.constructEditor((Editable)f.get(o),true,()->{
+									try{f.set(o,null);}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
+								});
+								a.removeActionListener(this);
+								a.addActionListener(edit);
+							}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
+						}
+					}:edit);
+					saver.var=()->{try{return f.get(o);}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}};
 					return a;
 				}
+			}else if(EditableGroup.class.isAssignableFrom(f.getType())){
+				JPanel a=new JPanel(new GridLayout(0,1));
+				EditableGroup<?>group=(EditableGroup<?>)f.get(o);
+				for(Editable editable:group){
+					JButton b=group.createElementButton(editable,null);
+					b.addActionListener(e->{
+						ProgramStarter.editor.constructEditor(editable,false,()->{
+							group.remove(editable);
+							a.remove(b);
+							a.revalidate();
+						});
+					});
+					a.add(b);
+				}
+				JButton create=group.createAddButton(null);
+				create.addActionListener(e->{
+					try{
+						Editable nEditable=group.type.getDeclaredConstructor().newInstance();
+						group.add(nEditable);
+						JButton b=group.createElementButton(nEditable,null);
+						Runnable deleter=()->{
+							group.remove(nEditable);
+							a.remove(b);
+							a.revalidate();
+						};
+						b.addActionListener(evt->ProgramStarter.editor.constructEditor(nEditable,false,deleter));
+						a.add(b,a.getComponentCount()-1);
+						ProgramStarter.editor.constructEditor(nEditable,true,deleter);
+						a.revalidate();
+					}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
+				});
+				a.add(create);
+				saver.var=()->{try{return f.get(o);}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}};
+				return a;
 			}else if(f.getType().isEnum()){
 				JComboBox<Object>a=new JComboBox<>();
 				Object en=f.get(o);
@@ -364,7 +411,7 @@ public class FormModule implements EditorModule{
 				saver.var=()->a.getSelectedItem();
 				return a;
 			}
-		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
+		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 		throw new UnsupportedOperationException("Component for "+f.getType()+" is not defined.");
 	}
 }

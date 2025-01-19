@@ -30,6 +30,7 @@ import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Root;
 import com.bpa4j.core.User;
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.ui.HButton;
 
 /**
  * <p>Displays step-by step guide for reaching some functions.</p>
@@ -53,7 +54,7 @@ public final class HelpView{
 	private HelpView(){}
 	public static HashMap<String,String>paths=new HashMap<>();
 	static{
-		try(Scanner sc=new Scanner(Root.CL.getResourceAsStream("resources/helppath.cfg"))){
+		try(Scanner sc=new Scanner(Root.getResourceAsStream("resources/helppath.cfg"))){
 			while(sc.hasNextLine()){
 				String[]s=sc.nextLine().split(" ",2);
 				paths.put(s[1],s[0]);

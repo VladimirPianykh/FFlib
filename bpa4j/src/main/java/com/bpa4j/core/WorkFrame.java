@@ -24,11 +24,11 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import com.bpa4j.HButton;
-import com.bpa4j.Message;
 import com.bpa4j.core.User.Feature;
 import com.bpa4j.core.User.Role;
 import com.bpa4j.defaults.DefaultRole;
+import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.Message;
 
 public class WorkFrame extends JFrame{
 	public static class WorkTabButton extends HButton{

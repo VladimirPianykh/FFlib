@@ -12,11 +12,11 @@ import java.util.function.Consumer;
 
 import javax.swing.JPanel;
 
-import com.bpa4j.HButton;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.ui.HButton;
 
 public class DisposableDocument<T extends Editable>implements Feature{
 	private static HashMap<String,DisposableDocument<?>>documents=new HashMap<>();

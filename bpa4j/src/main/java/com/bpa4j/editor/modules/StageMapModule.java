@@ -15,10 +15,10 @@ import java.awt.geom.RoundRectangle2D;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 
-import com.bpa4j.HButton;
 import com.bpa4j.core.User;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.defaults.editables.Processable;
+import com.bpa4j.ui.HButton;
 
 public class StageMapModule implements EditorModule{
 	public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){

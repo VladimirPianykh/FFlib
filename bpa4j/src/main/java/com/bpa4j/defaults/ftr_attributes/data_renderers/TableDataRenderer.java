@@ -14,10 +14,10 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 
-import com.bpa4j.HButton;
-import com.bpa4j.Message;
 import com.bpa4j.defaults.table.EmptyCellEditor;
 import com.bpa4j.editor.EditorEntry;
+import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.Message;
 import com.bpa4j.util.excel.ExcelUtils;
 
 /**

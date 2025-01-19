@@ -1,4 +1,4 @@
-package com.bpa4j;
+package com.bpa4j.ui;
 
 import java.awt.AWTEvent;
 import java.awt.Color;
@@ -9,6 +9,8 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowListener;
 
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -30,6 +32,8 @@ public class Message extends JDialog{
 			}
 		});
 		JTextArea l=new JTextArea(text);
+		l.setEditable(false);
+		l.setFocusable(false);
 		l.setLineWrap(true);
 		l.setWrapStyleWord(true);
 		l.setFont(new Font(Font.DIALOG,Font.PLAIN,getHeight()/5));
@@ -37,13 +41,10 @@ public class Message extends JDialog{
 		l.setForeground(c);
 		add(l);
 		setVisible(true);
-		Wrapper<AWTEventListener>s=new Wrapper<AWTEventListener>(null);
-		s.var=e->{
-			if(e.getID()==501){
-				dispose();
-				Toolkit.getDefaultToolkit().removeAWTEventListener(s.var);
-			}
-		};
-		Toolkit.getDefaultToolkit().addAWTEventListener(s.var,AWTEvent.MOUSE_EVENT_MASK);
+		AWTEventListener s=e->{if(e.getID()==501)dispose();};
+		Toolkit.getDefaultToolkit().addAWTEventListener(s,AWTEvent.MOUSE_EVENT_MASK);
+		addWindowListener(new WindowAdapter(){
+			public void windowClosed(java.awt.event.WindowEvent e){Toolkit.getDefaultToolkit().removeAWTEventListener(s);}
+		});
 	}
 }

@@ -1,4 +1,4 @@
-package com.bpa4j;
+package com.bpa4j.ui;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

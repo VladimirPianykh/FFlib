@@ -16,13 +16,13 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import com.bpa4j.HButton;
 import com.bpa4j.core.Data;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Registrator;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.ui.HButton;
 
 /**
  * A feature that shows a list of {@link Editable}s of the given group.

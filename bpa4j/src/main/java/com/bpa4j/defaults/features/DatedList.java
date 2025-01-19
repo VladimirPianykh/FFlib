@@ -26,7 +26,6 @@ import javax.swing.JScrollPane;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-import com.bpa4j.HButton;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Data;
 import com.bpa4j.core.ProgramStarter;
@@ -36,6 +35,7 @@ import com.bpa4j.Dater;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.modules.FormModule;
+import com.bpa4j.ui.HButton;
 
 @SuppressWarnings("unchecked")
 public class DatedList<T extends Editable>implements Feature{
@@ -103,7 +103,7 @@ public class DatedList<T extends Editable>implements Feature{
 				c.setPreferredSize(new Dimension(tab.getWidth()/6,tab.getHeight()/15));
 				c.setBorder(BorderFactory.createTitledBorder(fields[i].getAnnotation(EditorEntry.class).translation()));
 				if(editors.get(i)==EditorEntryBase.class)c.add(FormModule.createEditorBase(objects.get(t),fields[i],saver));
-				else c.add(editors.get(i).getDeclaredConstructor().newInstance().createEditorBase(objects.get(t),fields[i],saver));
+				else c.add(editors.get(i).getDeclaredConstructor().newInstance().createEditorBase(objects.get(t),fields[i],saver,new Wrapper<>(null)));
 				menu.add(c);
 				savers.add(saver.var);
 			}

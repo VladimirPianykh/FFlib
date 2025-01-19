@@ -19,7 +19,7 @@ import javax.swing.table.DefaultTableModel;
 import com.bpa4j.defaults.table.FieldCellValue;
 import com.bpa4j.defaults.table.FormCellEditor;
 import com.bpa4j.editor.EditorEntry;
-import com.bpa4j.HButton;
+import com.bpa4j.ui.HButton;
 import com.bpa4j.core.Data.Editable;
 
 import java.awt.Graphics;

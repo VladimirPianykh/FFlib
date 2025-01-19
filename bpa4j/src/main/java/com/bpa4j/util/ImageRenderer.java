@@ -1,13 +1,15 @@
 package com.bpa4j.util;
 
-import com.bpa4j.PathIcon;
-
 import javax.imageio.ImageIO;
+
+import com.bpa4j.ui.PathIcon;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * Класс для генерации изображений с заданным текстом
@@ -22,8 +24,10 @@ import java.io.IOException;
  * }
  * </pre>
  */
-public class ImageRenderer {
+public final class ImageRenderer{
     public static final ClassLoader CL = ClassLoader.getSystemClassLoader();
+    
+    private ImageRenderer(){}
 
     /**
      * Генерирует картинку с нуля с заданными размерами и текстом
@@ -37,7 +41,7 @@ public class ImageRenderer {
      * }
      * </pre>
      *
-     * @param text   текст, который нужно отобразить на картинке
+     * @param name   текст, который нужно отобразить на картинке
      * @param width  ширина
      * @param height высота
      * @return созданный файл
@@ -64,7 +68,7 @@ public class ImageRenderer {
      * }
      * </pre>
      *
-     * @param text     текст, который нужно отобразить на картинке
+     * @param name     текст, который нужно отобразить на картинке
      * @param pathIcon объект {@link PathIcon} на который будет накладываться текст
      * @return созданный файл
      */
@@ -72,12 +76,11 @@ public class ImageRenderer {
         String path = pathIcon.path;
 
         File file = new File(CL.getResource("resources/" + path).getPath());
-        BufferedImage image = null;
+        BufferedImage image;
         try {
             image = ImageIO.read(file);
-        } catch (IOException e) {
-            System.out.println("Unable to reach pathIcon " + pathIcon.path);
-            throw new RuntimeException(e);
+        } catch (IOException ex) {
+            throw new UncheckedIOException("Unable to reach pathIcon " + pathIcon.path,ex);
         }
 
         int width = image.getWidth();
@@ -101,9 +104,8 @@ public class ImageRenderer {
             ImageIO.write((RenderedImage) image, "png", file);
             System.out.println("Saved generated image to: " + outputPath);
             return file;
-        } catch (IOException e) {
-            System.out.println("Unable to save generated image");
-            throw new RuntimeException(e);
+        } catch (IOException ex) {
+            throw new UncheckedIOException("Unable to save generated image",ex);
         }
     }
 

@@ -23,7 +23,6 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
-import com.bpa4j.HButton;
 import com.bpa4j.core.Data;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Registrator;
@@ -34,6 +33,7 @@ import com.bpa4j.defaults.table.FieldCellRenderer;
 import com.bpa4j.defaults.table.FieldCellValue;
 import com.bpa4j.defaults.table.FormCellEditor;
 import com.bpa4j.editor.EditorEntry;
+import com.bpa4j.ui.HButton;
 
 @SuppressWarnings("unchecked")
 public class MappedList<T extends Editable,V extends Serializable>implements Feature{

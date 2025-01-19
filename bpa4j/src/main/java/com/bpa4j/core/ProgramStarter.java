@@ -23,12 +23,15 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
-import com.bpa4j.HButton;
-import com.bpa4j.Message;
-import com.bpa4j.Switcher;
+import com.bpa4j.ui.Switcher;
 import com.bpa4j.editor.IEditor;
 import com.bpa4j.editor.ModularEditor;
+import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.Message;
 
 /**
  * Entry point of the program.
@@ -51,11 +54,12 @@ public final class ProgramStarter{
 	 */
 	public static boolean authRequired=true;
 	private ProgramStarter(){}
-	public static boolean isFirstLaunch(){
-		return firstLaunch;
-	}
+	public static boolean isFirstLaunch(){return firstLaunch;}
 	public static void runProgram(){
 		new File(Root.folder).mkdirs();
+		try{
+			UIManager.setLookAndFeel(new NimbusLookAndFeel());
+		}catch(UnsupportedLookAndFeelException ex){throw new AssertionError("The BPALookAndFeel must be supported.",ex);}
 		ToolTipManager.sharedInstance().setInitialDelay(0);
 		Dimension d=Root.SCREEN_SIZE;
 		Color[]c1={new Color(114,130,46),new Color(79,79,29)},c2={new Color(102,102,77),new Color(69,63,48)};
@@ -75,7 +79,6 @@ public final class ProgramStarter{
 		});
 		f.setUndecorated(true);
 		f.setSize(d);
-		f.setExtendedState(3);
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		f.setLayout(null);
 		HButton confirm=new HButton(){

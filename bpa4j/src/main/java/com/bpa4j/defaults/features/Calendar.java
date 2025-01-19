@@ -21,10 +21,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import com.bpa4j.Dater;
-import com.bpa4j.HButton;
-import com.bpa4j.PathIcon;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.PathIcon;
 
 public class Calendar<T extends Calendar.Event>implements Feature{
 	public static interface Event{}

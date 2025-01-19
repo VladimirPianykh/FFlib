@@ -26,15 +26,15 @@ import java.util.HashSet;
 
 import javax.swing.JButton;
 
-import com.bpa4j.HButton;
-import com.bpa4j.Message;
-import com.bpa4j.PathIcon;
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.Message;
+import com.bpa4j.ui.PathIcon;
 
 /**
  * A singleton that represents all editable data.
  */
-public class Data implements Serializable{
+public final class Data implements Serializable{
 	private static Data instance;
 	/**
 	 * An array with icons (icons are optional).

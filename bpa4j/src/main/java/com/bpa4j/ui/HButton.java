@@ -1,10 +1,8 @@
-package com.bpa4j;
+package com.bpa4j.ui;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JButton;
@@ -42,10 +40,7 @@ public class HButton extends JButton{
 		this.maxScale=maxScale;
 		this.reaction=reaction;
 		setOpaque(false);
-		addMouseListener(m);
-	}
-	private void readObject(ObjectInputStream in)throws IOException,ClassNotFoundException{
-		in.defaultReadObject();
+		setBorder(null);
 		addMouseListener(m);
 	}
 	public void setEnabled(boolean b){super.setEnabled(b);if(!b)resetScale();}

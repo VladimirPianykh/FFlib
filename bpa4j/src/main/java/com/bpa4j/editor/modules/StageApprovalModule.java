@@ -17,11 +17,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.border.TitledBorder;
 
-import com.bpa4j.HButton;
 import com.bpa4j.core.Root;
 import com.bpa4j.core.User;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.defaults.editables.Processable;
+import com.bpa4j.ui.HButton;
 
 /**
  * A module for handling {@link Processable}s.

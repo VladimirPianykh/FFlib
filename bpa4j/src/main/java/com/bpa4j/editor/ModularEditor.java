@@ -15,10 +15,10 @@ import javax.swing.JPanel;
 
 import com.bpa4j.editor.modules.FormModule;
 import com.bpa4j.editor.modules.MapModule;
+import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.PathIcon;
 import com.bpa4j.editor.modules.CustomerModule;
 import com.bpa4j.editor.modules.EditorModule;
-import com.bpa4j.HButton;
-import com.bpa4j.PathIcon;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Root;
 import com.bpa4j.defaults.editables.AbstractCustomer;

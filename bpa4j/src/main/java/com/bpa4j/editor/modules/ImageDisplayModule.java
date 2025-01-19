@@ -18,7 +18,7 @@ import javax.swing.JPanel;
 
 import com.bpa4j.core.Root;
 import com.bpa4j.core.Data.Editable;
-import com.bpa4j.HButton;
+import com.bpa4j.ui.HButton;
 
 public class ImageDisplayModule implements EditorModule{
 	private Field f;

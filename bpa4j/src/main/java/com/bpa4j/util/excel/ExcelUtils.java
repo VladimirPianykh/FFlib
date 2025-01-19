@@ -1,5 +1,6 @@
 package com.bpa4j.util.excel;
 
+import com.bpa4j.core.Data;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.editor.EditorEntry;
 import org.apache.poi.ss.usermodel.*;
@@ -13,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Class for parsing an Excel (xls/xlsx) file into a list of Java objects.
@@ -77,7 +79,7 @@ public final class ExcelUtils{
 					field.setAccessible(true);
 					Cell cell=row.getCell(i,Row.CREATE_NULL_AS_BLANK);
 					try{
-						Object value=a==null?parseCellValue(cell,field.getType()):a.parser().getConstructor().newInstance().apply(cell.getStringCellValue());
+						Object value=a==null?parseCellValue(cell,field.getType()):a.value().getConstructor().newInstance().apply(cell.getStringCellValue());
 						field.set(instance,value);
 					}catch(IllegalStateException ex){throw new IllegalStateException("Cannot parse field "+field.getName()+" from column "+i+" (counting from 0).",ex);}
 					++i;
@@ -88,6 +90,7 @@ public final class ExcelUtils{
 		catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 		return instances;
 	}
+	@SuppressWarnings("unchecked")
 	private static Object parseCellValue(Cell cell,Class<?>targetType){
 		switch(cell.getCellType()){
 			case Cell.CELL_TYPE_STRING->{
@@ -95,7 +98,7 @@ public final class ExcelUtils{
 				if(targetType.isEnum()){
 					for(var constant:targetType.getEnumConstants())
 						if(constant.toString().equalsIgnoreCase(stringValue))return constant;
-				}
+				}else if(Editable.class.isAssignableFrom(targetType))return Data.getInstance().getGroup((Class<? extends Editable>)targetType).stream().filter(e->e.name.equalsIgnoreCase(stringValue)).findAny().orElseThrow(()->new IllegalStateException("There is no element of \""+stringValue+"\"."));
 				else if(targetType==LocalDate.class)return LocalDate.parse(cell.getStringCellValue(),dateFormatter);
 				if(targetType!=String.class)throw new IllegalStateException("Value \""+cell.getStringCellValue()+"\" cannot be treated as "+targetType.getName());
 				return stringValue;
@@ -136,16 +139,16 @@ public final class ExcelUtils{
 		Workbook workbook=new XSSFWorkbook();
 		Sheet sheet=workbook.createSheet("Data");
 		Class<?>classType=instances.getFirst().getClass();
-		// Получаем поля класса
+		//Получаем поля класса
 		Field[]fields=classType.getDeclaredFields();
-		// Создаем заголовки
+		//Создаем заголовки
 		Row headerRow=sheet.createRow(0);
 		for(int i=0;i<fields.length;i++){
 			fields[i].setAccessible(true);
-			if(fields[i].isAnnotationPresent(EditorEntry.class)){headerRow.createCell(i).setCellValue(fields[i].getAnnotation(EditorEntry.class).translation());}
-			else{headerRow.createCell(i).setCellValue(fields[i].getName());}
+			EditorEntry a=fields[i].getAnnotation(EditorEntry.class);
+			if(a!=null&&!Stream.of(a.properties()).anyMatch(p->p.equals("nexcel")))headerRow.createCell(i).setCellValue(fields[i].getAnnotation(EditorEntry.class).translation());
 		}
-		// Записываем данные
+		//Записываем данные
 		int rowIndex=1;
 		for(var instance:instances){
 			Row row=sheet.createRow(rowIndex++);
@@ -156,9 +159,9 @@ public final class ExcelUtils{
 				if(value instanceof String){cell.setCellValue((String)value);}else if(value instanceof Number){cell.setCellValue(((Number)value).doubleValue());}else if(value instanceof LocalDate){cell.setCellValue(((LocalDate)value).format(dateFormatter));}else if(value instanceof Enum<?>){cell.setCellValue(value.toString());}else if(value!=null){cell.setCellValue(value.toString());}
 			}
 		}
-		// Автоматическая настройка ширины колонок
+		//Автоматическая настройка ширины колонок
 		for(int i=0;i<fields.length;i++){sheet.autoSizeColumn(i);}
-		// Сохраняем файл
+		//Сохраняем файл
 		try (FileOutputStream fileOut = new FileOutputStream(file)) {
 			workbook.write(fileOut);
 		} catch (IOException e){

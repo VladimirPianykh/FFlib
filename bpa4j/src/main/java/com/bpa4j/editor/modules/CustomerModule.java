@@ -20,11 +20,11 @@ import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
-import com.bpa4j.HButton;
-import com.bpa4j.PathIcon;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.Data.Editable.ActionRecord;
 import com.bpa4j.defaults.editables.AbstractCustomer;
+import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.PathIcon;
 
 public class CustomerModule implements EditorModule{
 	public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){

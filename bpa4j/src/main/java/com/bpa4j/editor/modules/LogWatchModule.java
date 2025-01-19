@@ -20,9 +20,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import com.bpa4j.HButton;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.Data.Editable.ActionRecord;
+import com.bpa4j.ui.HButton;
 
 public class LogWatchModule implements EditorModule{
     public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){

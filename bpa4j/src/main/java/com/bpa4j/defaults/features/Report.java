@@ -16,6 +16,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.ui.AutoLayout;
 
 public class Report implements Feature{
 	public static HashMap<String,Report>reports=new HashMap<>();
@@ -63,7 +64,7 @@ public class Report implements Feature{
 			tab.revalidate();
 		};
 		if(!configurators.isEmpty()){
-			JPanel config=new JPanel(new GridLayout());
+			JPanel config=new JPanel(new AutoLayout());
 			config.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/10));
 			for(Function<Runnable,JComponent>c:configurators)config.add(c.apply(saver));
 			tab.add(config,BorderLayout.NORTH);

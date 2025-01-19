@@ -23,10 +23,10 @@ import java.util.function.Consumer;
 
 import javax.swing.JPanel;
 
-import com.bpa4j.Message;
 import com.bpa4j.defaults.DefaultPermission;
 import com.bpa4j.defaults.DefaultRole;
 import com.bpa4j.defaults.features.DefaultFeature;
+import com.bpa4j.ui.Message;
 
 public class User implements Serializable{
 	public static class Authorization implements Serializable{

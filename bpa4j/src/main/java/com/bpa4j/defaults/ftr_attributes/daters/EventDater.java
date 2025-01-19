@@ -67,7 +67,7 @@ public class EventDater<T extends Calendar.Event>implements Dater<List<T>>{
 		m.addAll(Stream.<Field>of(t.getClass().getFields()).filter(f->f.isAnnotationPresent(EditorEntry.class)).map(f->{
 			try{
 				return f.getAnnotation(EditorEntry.class).translation()+": "+String.valueOf(f.get(t));
-			}catch(IllegalAccessException ex){throw new RuntimeException(ex);}
+			}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
 		}).toList());
 		JList<String>p=new JList<>(m);
 		return p;
