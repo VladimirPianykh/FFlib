@@ -32,3 +32,6 @@ See the `HelpView` documentation for details.
 
 ## The library tells, that permissions are not defined, but they surely are.
 * Make sure that you've used at least one permission (that `YourPermission` class has been loaded).
+
+## The field, marked with `EditorEntry` is not visible in the editor.
+* Change it's modifier to `public`
