@@ -1,4 +1,4 @@
-package com.bpa4j.util;
+package com.bpa4j.util.codegen;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -11,13 +11,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,99 +33,40 @@ import javax.swing.JTextField;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.text.PDFTextStripper;
 
-import com.bpa4j.Wrapper;
 import com.bpa4j.core.Root;
 import com.bpa4j.ui.Message;
-import com.bpa4j.util.TaskAnalyzer.Property.PropertyType;
+import com.bpa4j.util.codegen.ProjectGraph.EditableNode;
+import com.bpa4j.util.codegen.ProjectGraph.ProjectNode;
+import com.bpa4j.util.codegen.ProjectGraph.EditableNode.Property;
+import com.bpa4j.util.codegen.ProjectGraph.EditableNode.Property.PropertyType;
 
 public class TaskAnalyzer{
 	public static interface AnalysisResult{
-		public boolean checkCompletion(File projectFolder);
-		public boolean generate(String prompt,File projectFolder);
-	}
-	public static class Property{
-		public static enum PropertyType{
-			STRING("String"),
-			INT("int"),
-			DOUBLE("double"),
-			BOOL("boolean"),
-			DATE("LocalDate"),
-			DATETIME("LocalDateTime");
-			String typeName;
-			private PropertyType(String typeName){this.typeName=typeName;}
-			public String toString(){return typeName;}
-		}
-		PropertyType type;
-		String name;
-		public Property(String name,PropertyType type){
-			this.name=name.trim();
-			this.type=type;
-		}
-		public String getCode(String prompt){
-			return type==null?"\t//TODO: add property \""+name+"\"\n":String.format("""
-				@EditorEntry(translation="%s")
-				public %s %s;
-			""",name,type.toString(),prompt);
-		}
-		public String toString(){return name+" ("+(type==null?"???":type.toString())+")";}
+		public boolean checkCompletion(ProjectGraph project);
+		public boolean generate(String prompt,ProjectGraph project);
 	}
 	public static class NewObjectResult implements AnalysisResult{
 		public ArrayList<Property>properties;
-		public String name;
-		public NewObjectResult(String name,Property...properties){
-			this.name=name;
+		public String objectName;
+		public NewObjectResult(String objectName,Property...properties){
+			this.objectName=objectName;
 			this.properties=new ArrayList<>(Arrays.asList(properties));
 		}
-		public boolean generate(String prompt,File projectFolder){
+		public boolean generate(String prompt,ProjectGraph project){
 			if(prompt.isBlank())return false;
-			Wrapper<Integer>i=new Wrapper<>(0);
-			String s="""
-			package com.ntoproject.editables.registered;
-			
-			import com.bpa4j.core.Data.Editable;
-			import com.bpa4j.editor.EditorEntry;
-			
-			public class %s extends Editable{
-			"""+
-			properties.stream().map(p->p.getCode("var"+(++i.var))).collect(Collectors.joining("\n"))+
-			"""
-				public %s(){
-					super("Новый %s);
-				}
-			}
-			""";
-			try{
-				File path=new File(projectFolder,"com");
-				if(path.isDirectory())path=new File(Stream.of(path.listFiles()).filter(f->f.isDirectory()).findAny().get(),"editables/registered/"+prompt+".java");
-				else path=new File(projectFolder,prompt+".java");
-				path.createNewFile();
-				if(name.isEmpty()){
-					String[]p=prompt.split("\s,?*");
-					Files.writeString(path.toPath(),String.format(s,p[0],p[0],p[1]));
-				}else Files.writeString(path.toPath(),String.format(s,prompt,prompt,name.toLowerCase()));
-				return true;
-			}catch(IOException ex){return false;}
+			if(objectName.isEmpty()){
+				String[]p=prompt.split("\s,?*");
+				if(p.length<2)return false;
+				project.createEditableNode(p[0],p[1],properties.toArray(new Property[0])).location.toPath();
+			}else project.createEditableNode(prompt,objectName,properties.toArray(new Property[0])).location.toPath();
+			return true;
 		}
-		public boolean checkCompletion(File projectFolder){
-			Wrapper<Boolean>b=new Wrapper<Boolean>(false);
-			try{
-				Files.walkFileTree(projectFolder.toPath(),new SimpleFileVisitor<Path>() {
-					public FileVisitResult visitFile(Path file,BasicFileAttributes attrs)throws IOException{
-						if(file.toString().endsWith(".java")){
-							String s=Files.readString(file);
-							if(s.contains("extends Editable")&&s.contains(name.toLowerCase().trim())){
-								b.var=true;
-								return FileVisitResult.TERMINATE;
-							}
-						}
-						return FileVisitResult.CONTINUE;
-					}
-				});
-			}catch(IOException ex){throw new UncheckedIOException(ex);}
-			return b.var;
+		public boolean checkCompletion(ProjectGraph project){
+			for(ProjectNode n:project.nodes)if(n instanceof EditableNode&&objectName.equalsIgnoreCase(((EditableNode)n).objectName))return true;
+			return false;
 		}
 		public String toString(){
-			return(name.isEmpty()?"Новый объект [имя, отображаемое имя]":"Новый объект \""+name+"\" [имя]")+
+			return(objectName.isEmpty()?"Новый объект [имя, отображаемое имя]":"Новый объект \""+objectName+"\" [имя]")+
 				(properties.isEmpty()?" без свойств":" со свойствами:\n"+properties.stream().map(p->p.toString()).collect(Collectors.joining("\n")));
 		}
 	}
@@ -141,37 +77,17 @@ public class TaskAnalyzer{
 			this.property=property;
 			this.objectName=objectName;
 		}
-		private File findFile(File parent)throws IOException{
-			Pattern p=Pattern.compile("([a-zA-Z_]+) extends Editable");
-			Wrapper<File>w=new Wrapper<File>(null);
-			Files.walkFileTree(parent.toPath(),new FileVisitor<Path>(){
-				public FileVisitResult preVisitDirectory(Path dir,BasicFileAttributes attrs){return FileVisitResult.CONTINUE;}
-				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException {
-					if(file.toString().endsWith(".java")){
-						String s=Files.readString(file);
-						Matcher m=p.matcher(s);
-						if(m.find()&&s.indexOf(m.group(1)+"()")<s.lastIndexOf(objectName)){
-							w.var=file.toFile();
-							return FileVisitResult.TERMINATE;
-						}
-					}
-					return FileVisitResult.CONTINUE;
-				}
-
-				@Override
-				public FileVisitResult visitFileFailed(Path file, IOException ex) throws IOException {
-					// TODO Auto-generated method stub
-					throw new UnsupportedOperationException("Unimplemented method 'visitFileFailed'");
-				}
-				public FileVisitResult postVisitDirectory(Path dir,IOException ex){return FileVisitResult.CONTINUE;}
-			});
-			if(w.var==null)throw new FileNotFoundException();
-			return w.var;
+		private EditableNode findEditable(ProjectGraph project)throws IOException{
+			for(ProjectNode n:project.nodes)if(n instanceof EditableNode){
+				EditableNode e=(EditableNode)n;
+				if(objectName.equalsIgnoreCase(e.objectName))return e;
+			}
+			throw new FileNotFoundException();
 		}
-		public boolean generate(String prompt,File projectFolder){
+		public boolean generate(String prompt,ProjectGraph project){
 			if(prompt.isBlank())return false;
 			try{
-				File f=findFile(projectFolder);
+				File f=findEditable(project).location;
 				StringBuilder s=new StringBuilder(Files.readString(f.toPath()));
 				s.insert(s.indexOf("extends Editable{")+"extends Editable{".length(),"\n\t\t"+property.getCode(prompt));
 				Files.writeString(f.toPath(),s.toString(),StandardOpenOption.CREATE,StandardOpenOption.WRITE);
@@ -182,9 +98,9 @@ public class TaskAnalyzer{
 			}
 			//TODO: add property into the file
 		}
-		public boolean checkCompletion(File projectFolder){
+		public boolean checkCompletion(ProjectGraph project){
 			try{
-				String s=Files.readString(findFile(projectFolder).toPath());
+				String s=Files.readString(findEditable(project).location.toPath());
 				return s.contains(property.name)&&(property.type==null||s.contains(property.type.typeName));
 			}catch(IOException ex){return false;}
 		}
@@ -196,22 +112,30 @@ public class TaskAnalyzer{
 		private final String text;
 		public UndefinedResult(String text){this.text=text.indent(-100);}
 		public String toString(){return text;}
-		public boolean checkCompletion(File projectFolder){return false;}
-		public boolean generate(String prompt,File projectFolder){
+		public boolean checkCompletion(ProjectGraph project){return false;}
+		public boolean generate(String prompt,ProjectGraph project){
 			throw new UnsupportedOperationException("TaskAnalyzer cannot handle such tasks.");
 		}
 	}
 	private String text;
-	private File projectFolder=new File(System.getProperty("user.home")+"/Downloads/generated");
+	private ProjectGraph project;
 	private final ArrayList<AnalysisResult>results=new ArrayList<>();
-	public TaskAnalyzer(String text){this.text=text;}
-	public TaskAnalyzer(File f){
+	public TaskAnalyzer(ProjectGraph project,String text){this.project=project;this.text=preprocess(text);}
+	public TaskAnalyzer(ProjectGraph project,File f){
+		this.project=project;
 		try{
-			//TODO: extract text from the document
 			if(f.getName().endsWith(".txt"))text=Files.readString(f.toPath());
 			else if(f.getName().endsWith(".pdf"))text=new PDFTextStripper().getText(Loader.loadPDF(f));
 			else throw new UnsupportedOperationException();
 		}catch(IOException ex){throw new UncheckedIOException(ex);}
+		text=preprocess(text);
+	}
+	private String preprocess(String text){
+		return text
+			.replace('\u00AB','"')
+			.replace('\u00BB','"')
+			.replace('\u2014','-')
+			.replaceAll("-.?\r?\n","");
 	}
 	private Property extractProperty(String s,boolean inQuotes){
 		PropertyType type=null;
@@ -241,23 +165,15 @@ public class TaskAnalyzer{
 		name.find();
 		ArrayList<Property>a=new ArrayList<>();
 		List<MatchResult>l=Pattern.compile("(?:([a-zA-Z])\\. |::sub)").matcher(s).results().toList();
-		Matcher m=Pattern.compile("(?:доработать|дополнить|улучшить|добавить.*?в).*объект[^\"]\"(.*?)\"",Pattern.DOTALL+Pattern.CASE_INSENSITIVE+Pattern.UNICODE_CASE).matcher(s);
+		Matcher m=Pattern.compile("(?:доработать|дополнить|улучшить).*?[^\"]\"(.*?)\"",Pattern.DOTALL+Pattern.CASE_INSENSITIVE+Pattern.UNICODE_CASE).matcher(s);
 		if(m.find()){
 			//TODO: add object completion
 			for(int i=0;i<l.size()-1;++i)results.add(extractUpgradeAction(s.substring(l.get(i).end(),l.get(i+1).start()),m.group(1)));
-		}else if((m=Pattern.compile("(?:объект|справочник)",Pattern.CASE_INSENSITIVE+Pattern.UNICODE_CASE).matcher(s)).find()){
+		}else if(Pattern.compile("(?:объект|справочник|создать)",Pattern.CASE_INSENSITIVE+Pattern.UNICODE_CASE).matcher(s).find()){
 			for(int i=0;i<l.size()-1;++i)a.add(extractProperty(s.substring(l.get(i).end(),l.get(i+1).start()),false));
 			results.add(new NewObjectResult(name.hasMatch()?name.group(1):"",a.toArray(new Property[0])));
 		}else results.add(new UndefinedResult(s));
 	}
-	/**
-	 * Sets the project folder. It is recommended to set it to <b>src/java</b> path:
-	 * <pre>
-	 * {@code new File(ApplicationClass.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent().getParent();}
-	 * </pre>
-	 * @param f
-	 */
-	public TaskAnalyzer setProjectFolder(File f){projectFolder=f;return this;}
 	@SuppressWarnings("PMD.SystemPrintln")
 	public void analyze(){
 		String lcText=text.toLowerCase();
@@ -277,10 +193,11 @@ public class TaskAnalyzer{
 			if(l.get(i+1).group(1)==null)break;
 		}
 		results.sort((r1,r2)->r1 instanceof UndefinedResult?1:-1);
-		projectFolder.mkdirs();
+	}
+	public void show(){
 		JFrame frame=new JFrame("Task analysis");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setExtendedState(6);
+		frame.setUndecorated(true);
+		frame.setSize(Root.SCREEN_SIZE);
 		frame.setLayout(new GridLayout());
 		JPanel list=new JPanel();
 		for(AnalysisResult r:results){
@@ -292,16 +209,16 @@ public class TaskAnalyzer{
 			t.setFont(new Font(Font.DIALOG,Font.ITALIC,Root.SCREEN_SIZE.height/40));
 			t.setPreferredSize(new Dimension(r.toString().lines().mapToInt(line->t.getFontMetrics(t.getFont()).stringWidth(line)).max().getAsInt(),(int)r.toString().lines().count()*t.getFontMetrics(t.getFont()).getHeight()));
 			JScrollPane s=new JScrollPane(t,JScrollPane.VERTICAL_SCROLLBAR_NEVER,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-			s.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width,(int)r.toString().lines().count()*t.getFontMetrics(t.getFont()).getHeight()+s.getHorizontalScrollBar().getHeight()));
+			s.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width,((int)r.toString().lines().count()+1)*t.getFontMetrics(t.getFont()).getHeight()+s.getHorizontalScrollBar().getHeight()));
 			p.add(s,BorderLayout.NORTH);
 			if(!(r instanceof UndefinedResult)){
-				boolean completed=r.checkCompletion(projectFolder);
+				boolean completed=r.checkCompletion(project);
 				JPanel input=new JPanel(new GridLayout());
 				input.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width,Root.SCREEN_SIZE.height/15));
 				JTextField prompt=new JTextField();
 				prompt.setFocusable(!completed);
 				prompt.setEditable(!completed);
-				JButton confirm=new JButton("Подтвердить");
+				JButton confirm=new JButton("Сгенерировать");
 				if(completed){
 					prompt.setBackground(Color.GREEN);
 					confirm.setBackground(Color.GREEN);
@@ -309,7 +226,7 @@ public class TaskAnalyzer{
 				}else{
 					ActionListener a=new ActionListener(){
 						public void actionPerformed(ActionEvent e){
-							if(r.generate(prompt.getText(),projectFolder)){
+							if(r.generate(prompt.getText(),project)){
 								prompt.setBackground(Color.GREEN);
 								prompt.setFocusable(false);
 								prompt.removeActionListener(this);

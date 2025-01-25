@@ -30,6 +30,7 @@ import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.core.User.Feature;
 import com.bpa4j.core.User.Role;
 import com.bpa4j.core.WorkFrame.WorkTabButton;
+import com.bpa4j.defaults.DefaultPermission;
 
 import java.util.NoSuchElementException;
 
@@ -112,14 +113,14 @@ public enum DefaultFeature implements Feature{
 			int columns=0;
 			for(EditableGroup<?>group:d.editables)try{
 				if(group.invisible)continue;
-				boolean canSee=User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
-				canCreate=User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
+				boolean canSee=User.getActiveUser().hasPermission(DefaultPermission.READ)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
+				canCreate=User.getActiveUser().hasPermission(DefaultPermission.CREATE)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
 				if(canSee||canCreate)++columns;
-			}catch(NoSuchElementException ex){throw new RuntimeException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.");}
+			}catch(NoSuchElementException ex){throw new NoSuchElementException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.",ex);}
 			for(EditableGroup<?>group:d.editables)try{
 				if(group.invisible)continue;
-				boolean canSee=User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
-				canCreate=User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
+				boolean canSee=User.getActiveUser().hasPermission(DefaultPermission.READ)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
+				canCreate=User.getActiveUser().hasPermission(DefaultPermission.CREATE)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
 				if(!canSee&&!canCreate)continue;
 				int n=(canSee?group.size():0)+(canCreate?1:0);
 				JPanel subTab=new JPanel(null);
@@ -130,7 +131,6 @@ public enum DefaultFeature implements Feature{
 					JButton b=group.createElementButton(r,font);
 					b.addActionListener(new ActionListener(){
 						public void actionPerformed(ActionEvent e){
-							if(ProgramStarter.editor==null)throw new RuntimeException("Editor has not been set.");
 							ProgramStarter.editor.constructEditor(r,false,()->{group.remove(r);p.remove(b);p.revalidate();});
 						}
 					});
@@ -147,13 +147,13 @@ public enum DefaultFeature implements Feature{
 								ProgramStarter.editor.constructEditor(nEditable,true,()->{group.remove(nEditable);p.revalidate();});
 								SwingUtilities.getWindowAncestor(content).dispose();
 								ProgramStarter.frame=new WorkFrame(User.getActiveUser());
-							}catch(ReflectiveOperationException ex){throw new RuntimeException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}
+							}catch(ReflectiveOperationException ex){throw new IllegalStateException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}
 						}
 					});
 					p.add(add);
 				}
 				tab.add(subTab);
-			}catch(NoSuchElementException ex){throw new RuntimeException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.");}
+			}catch(NoSuchElementException ex){throw new NoSuchElementException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.",ex);}
 			tab.setLayout(new GridLayout(1,0));
 			tab.revalidate();
 			tab.repaint(); 

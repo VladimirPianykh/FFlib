@@ -10,7 +10,6 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.awt.event.WindowAdapter;
-import java.awt.event.WindowListener;
 
 import javax.swing.JDialog;
 import javax.swing.JPanel;
