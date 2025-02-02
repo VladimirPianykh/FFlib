@@ -25,11 +25,11 @@ import com.bpa4j.ui.AutoLayout;
  */
 public final class SprintUI{
 	private SprintUI(){}
-	public static<T extends JComponent>T addStr(T t,String s,Color c){
+	public static<T extends JComponent>T addStr(String s,Color c,T t){
 		t.setBorder(BorderFactory.createTitledBorder(null,s,TitledBorder.DEFAULT_JUSTIFICATION,TitledBorder.DEFAULT_POSITION,UIManager.getFont("Button.font"),c));
 		return t;
 	}
-	public static<T extends JComponent>T addStr(T t,String s){
+	public static<T extends JComponent>T addStr(String s,T t){
 		t.setBorder(BorderFactory.createTitledBorder(s));
 		return t;
 	}
@@ -50,20 +50,20 @@ public final class SprintUI{
 		for(Component c:components)p.add(c);
 		return p;
 	}
-	public static JScrollPane createList(JPanel panel,int displayedItems){
+	public static JScrollPane createList(int displayedItems,JPanel panel){
 		JScrollPane s=new JScrollPane(panel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		s.addComponentListener(new ComponentAdapter(){
 			public void componentResized(ComponentEvent e){
-				panel.getPreferredSize().height=s.getHeight()/displayedItems;
+				panel.getPreferredSize().height=s.getHeight()*panel.getComponentCount()/displayedItems;
 			}
 			public void componentShown(ComponentEvent e){
-				panel.getPreferredSize().height=s.getHeight()/displayedItems;
+				panel.getPreferredSize().height=s.getHeight()*panel.getComponentCount()/displayedItems;
 			}
 		});
 		panel.setLayout(new GridLayout(0,1));
 		panel.addContainerListener(new ContainerAdapter(){
 			public void componentAdded(ContainerEvent e){
-				panel.getPreferredSize().height=s.getHeight()/displayedItems;
+				panel.getPreferredSize().height=s.getHeight()*panel.getComponentCount()/displayedItems;
 			}
 		});
 		return s;

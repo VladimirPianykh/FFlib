@@ -1,6 +1,8 @@
 package com.bpa4j.util;
 
+import java.util.Optional;
 import java.util.TreeMap;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +48,7 @@ public final class ParseUtils{
 		}
 	}
 	private ParseUtils(){}
-	public static final Pattern classDefPattern=Pattern.compile("(\\w+)(?: (?:extends|implements) (.*?)\\s*){0,2}\\s*\\{");
+	public static final Pattern classDefPattern=Pattern.compile("(\\w+)\\s*((?: (?:extends|implements) .*?\\s*){0,2})\\s*\\{");
 	public static Pattern createSubClassPattern(String superClassPattern){
 		return Pattern.compile("(?:class|interface|enum) (\\w+).*?(?: (?:extends|implements) .*?"+superClassPattern+").*\\{");
 	}
@@ -123,43 +125,40 @@ public final class ParseUtils{
 		}
 		return a;
 	}
-	public static int indexOf(CharSequence s,Pattern p){
+	public static Optional<MatchResult>find(CharSequence s,Pattern p){
 		Matcher m=p.matcher(s);
-		if(m.find())return m.start();
-		return -1;
+		if(m.find())return Optional.of(m.toMatchResult());
+		return Optional.empty();
 	}
-	public static int indexOf(CharSequence s,Pattern p,int fromIndex){
+	public static Optional<MatchResult>find(CharSequence s,Pattern p,int fromIndex){
 		Matcher m=p.matcher(s);
-		if(m.find(fromIndex))return m.start();
-		return -1;
+		if(m.find(fromIndex))return Optional.of(m.toMatchResult());
+		return Optional.empty();
 	}
 	/**
 	 * Finds the first pattern occurence in the given string.
 	 * @param skipper - the skipper to use (can be null)
 	 * @return the first index of successfull match.
 	 */
-	public static int indexOf(CharSequence s,Pattern p,Skipper skipper){return indexOf(s,p,skipper,0);}
+	public static Optional<MatchResult>find(CharSequence s,Pattern p,Skipper skipper){return find(s,p,skipper,0);}
 	/**
 	 * Finds the first pattern occurence in the given string after or at the specified index.
 	 * @param skipper - the skipper to use (can be null)
 	 * @return the first index of successfull match.
 	 */
-	public static int indexOf(CharSequence s,Pattern p,Skipper skipper,int fromIndex){
-		StringBuilder b=new StringBuilder();
-		int i=fromIndex;
-		for(;i<s.length();++i){
+	public static Optional<MatchResult>find(CharSequence s,Pattern p,Skipper skipper,int fromIndex){
+		Matcher m=p.matcher(s);
+		for(int i=fromIndex;i<s.length();++i){
 			int ii=skipper.adjustIndex(i,s);
 			if(ii!=i){
-				Matcher m=p.matcher(b);
-				if(m.find())return m.start()+(i-b.length());
-				b.setLength(0);
+				m.region(fromIndex,i);
+				if(m.find())return Optional.of(m.toMatchResult());
 				i=ii;
 			}
-			b.append(s.charAt(i));
 		}
-		Matcher m=p.matcher(b);
-		if(m.find())return m.start()+(i-b.length());
-		return -1;
+		m.region(fromIndex,s.length());
+		if(m.find())return Optional.of(m.toMatchResult());
+		return Optional.empty();
 	}
 	/**
 	 * Rewrites the string without the text ignored by skippers
@@ -172,5 +171,21 @@ public final class ParseUtils{
 			b.append(s.charAt(i));
 		}
 		return b.toString();
+	}
+	public static String replaceAll(CharSequence s,Pattern p,String replacement,Skipper skipper){
+		StringBuilder r=new StringBuilder();
+		StringBuilder b=new StringBuilder();
+		for(int i=0;i<s.length();++i){
+			int ii=skipper.adjustIndex(i,s);
+			if(ii!=i){
+				Matcher m=p.matcher(b);
+				r.append(m.replaceAll(replacement)).append(s.subSequence(i,ii));
+				b.setLength(0);
+				i=ii;
+			}
+			b.append(s.charAt(i));
+		}
+		r.append(p.matcher(b).replaceAll(replacement));
+		return r.toString();
 	}
 }

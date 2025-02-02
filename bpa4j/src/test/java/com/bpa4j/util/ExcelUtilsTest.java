@@ -31,7 +31,7 @@ class ExcelUtilsTest{
         File result = ExcelUtils.saveInstances(new File(outputPath), vals);
         desktop.open(result);
 
-        var resultList = ExcelUtils.createInstancesOf(result.getPath(), TestClass.class);
+        var resultList = ExcelUtils.createInstancesOf(result.getPath(), TestClass.class, true);
 
         assertEquals(vals.size(), resultList.size(), "Количество исходных объектов не равно итоговому");
         for (int i = 0; i < vals.size(); i++) {

@@ -101,7 +101,7 @@ public class TaskAnalyzer{
 		public boolean checkCompletion(ProjectGraph project){
 			try{
 				String s=Files.readString(findEditable(project).location.toPath());
-				return s.contains(property.name)&&(property.type==null||s.contains(property.type.typeName));
+				return s.contains(property.name)&&(property.type==null||s.contains(property.type.toString()));
 			}catch(IOException ex){return false;}
 		}
 		public String toString(){
@@ -118,7 +118,7 @@ public class TaskAnalyzer{
 		}
 	}
 	private String text;
-	private ProjectGraph project;
+	private final ProjectGraph project;
 	private final ArrayList<AnalysisResult>results=new ArrayList<>();
 	public TaskAnalyzer(ProjectGraph project,String text){this.project=project;this.text=preprocess(text);}
 	public TaskAnalyzer(ProjectGraph project,File f){
@@ -140,11 +140,12 @@ public class TaskAnalyzer{
 	private Property extractProperty(String s,boolean inQuotes){
 		PropertyType type=null;
 		String lc=s.toLowerCase();
+		if(lc.contains("имя"))return null;
 		if(lc.contains("время"))type=PropertyType.DATETIME;
 		else if(lc.contains("дата"))type=PropertyType.DATE;
 		else for(String t:new String[]{"целое","количество","кол-во","цена"})if(lc.contains(t))type=PropertyType.INT;
-		if(type==null)for(String t:new String[]{"дробное","вещественное","число"})if(lc.contains(t))type=PropertyType.DOUBLE;
-		if(type==null)for(String t:new String[]{"текст","строк","строч"})if(lc.contains(t))type=PropertyType.STRING;
+		if(type==null)for(String t:new String[]{"дробн","веществен","числ"})if(lc.contains(t))type=PropertyType.DOUBLE;
+		if(type==null)for(String t:new String[]{"текст","строк","строч","назван","описани"})if(lc.contains(t))type=PropertyType.STRING;
 		if(type==null)for(String t:new String[]{"булев","логиче","флаг"," ли "})if(lc.contains(t))type=PropertyType.BOOL;
 		return inQuotes?new Property(Pattern.compile("\"(.*?)\"").matcher(lc).results().map(e->e.group(1)).findAny().orElse(""),type)
 			:new Property(Pattern.compile("(.*)\\(.*\\)").matcher(lc).results().map(e->e.group(1)).findAny().orElse(""),type);
@@ -161,17 +162,20 @@ public class TaskAnalyzer{
 	}
 	private void processParagraph(String s){
 		s=s+"::sub";
-		Matcher name=Pattern.compile("\"(.*?)\"").matcher(s);
-		name.find();
 		ArrayList<Property>a=new ArrayList<>();
 		List<MatchResult>l=Pattern.compile("(?:([a-zA-Z])\\. |::sub)").matcher(s).results().toList();
-		Matcher m=Pattern.compile("(?:доработать|дополнить|улучшить).*?[^\"]\"(.*?)\"",Pattern.DOTALL+Pattern.CASE_INSENSITIVE+Pattern.UNICODE_CASE).matcher(s);
+		Matcher m=Pattern.compile("(?:доработать|дополнить|улучшить).*?\"(.*?)\"",Pattern.DOTALL+Pattern.CASE_INSENSITIVE+Pattern.UNICODE_CASE).matcher(s);
 		if(m.find()){
+			Matcher name=Pattern.compile("\"(.*?)\"").matcher(s);
+			name.find();
 			//TODO: add object completion
 			for(int i=0;i<l.size()-1;++i)results.add(extractUpgradeAction(s.substring(l.get(i).end(),l.get(i+1).start()),m.group(1)));
-		}else if(Pattern.compile("(?:объект|справочник|создать)",Pattern.CASE_INSENSITIVE+Pattern.UNICODE_CASE).matcher(s).find()){
-			for(int i=0;i<l.size()-1;++i)a.add(extractProperty(s.substring(l.get(i).end(),l.get(i+1).start()),false));
-			results.add(new NewObjectResult(name.hasMatch()?name.group(1):"",a.toArray(new Property[0])));
+		}else if((m=Pattern.compile("(?:объект|справочник) [^\\.]*?(?:\"(.*)\"|о (.*?)[\\.,\\?!:\\(\\)])",Pattern.CASE_INSENSITIVE+Pattern.UNICODE_CASE).matcher(s)).find()){
+			for(int i=0;i<l.size()-1;++i){
+				Property p=extractProperty(s.substring(l.get(i).end(),l.get(i+1).start()),false);
+				if(p!=null)a.add(p);
+			}
+			results.add(new NewObjectResult(m.group(m.group(1)==null?2:1),a.toArray(new Property[0])));
 		}else results.add(new UndefinedResult(s));
 	}
 	@SuppressWarnings("PMD.SystemPrintln")

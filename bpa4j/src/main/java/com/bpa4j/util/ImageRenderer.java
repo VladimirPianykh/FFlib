@@ -41,9 +41,9 @@ public final class ImageRenderer{
      * }
      * </pre>
      *
-     * @param name   текст, который нужно отобразить на картинке
-     * @param width  ширина
-     * @param height высота
+     * @param text - текст, который нужно отобразить на картинке
+     * @param width - ширина
+     * @param height - высота
      * @return созданный файл
      */
     public static File generateAndSaveImage(String text, int width, int height) {
@@ -68,8 +68,8 @@ public final class ImageRenderer{
      * }
      * </pre>
      *
-     * @param name     текст, который нужно отобразить на картинке
-     * @param pathIcon объект {@link PathIcon} на который будет накладываться текст
+     * @param text - текст, который нужно отобразить на картинке
+     * @param pathIcon - объект {@link PathIcon} на который будет накладываться текст
      * @return созданный файл
      */
     public static File generateAndSaveImage(String text, PathIcon pathIcon) {

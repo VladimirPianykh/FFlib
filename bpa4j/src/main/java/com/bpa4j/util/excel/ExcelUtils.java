@@ -2,7 +2,10 @@ package com.bpa4j.util.excel;
 
 import com.bpa4j.core.Data;
 import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.editor.EditorEntry;
+import com.bpa4j.ui.Message;
+
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -16,6 +19,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import javax.swing.JFileChooser;
+import java.awt.Window;
+import java.awt.Color;
+
 /**
  * Class for parsing an Excel (xls/xlsx) file into a list of Java objects.
  * <p>
@@ -27,15 +34,36 @@ import java.util.stream.Stream;
  * </pre>
  */
 public final class ExcelUtils{
+	public static class ExcelLoader{
+		private static class ExcelConfig{
+			public final String dialogDescription;
+			public final Class<? extends Editable>type;
+			public final boolean parseName;
+			public ExcelConfig(String dialogDescription,Class<? extends Editable>type,boolean parseName){
+				this.dialogDescription=dialogDescription;
+				this.type=type;
+				this.parseName=parseName;
+			}
+		}
+		private ArrayList<ExcelConfig>list;
+		public ExcelLoader addParam(String dialogDescription,Class<? extends Editable>type,boolean parseName){
+			list.add(new ExcelConfig(dialogDescription,type,parseName));
+			return this;
+		}
+		public void load(){
+			JFileChooser f=new JFileChooser(System.getProperty("user.home")+"/Downloads");
+			new Message("Выберите файлы, соответствующие заголовкам диалоговых окон.",Color.WHITE);
+			for(ExcelConfig c:list){
+				f.setDialogTitle(c.dialogDescription);
+				f.showOpenDialog(Window.getWindows()[Window.getWindows().length-1]);
+				EditableGroup<?>g=Data.getInstance().getGroup(c.type);
+				for(Editable e:ExcelUtils.createInstancesOf(f.getSelectedFile().toString(),c.type,c.parseName))g.add(e);
+			}
+			new Message("Готово! Файлы загружены из Excel!",Color.GREEN);
+		}
+	}
 	private ExcelUtils(){}
 	static final DateTimeFormatter dateFormatter=DateTimeFormatter.ofPattern("yyyy-MM-dd");
-	/**
-	 * Parses a list of objects from the given file.
-	 * <p>
-	 * The "name" is ignored
-	 * @see #createInstancesOf(String,Class,boolean)
-	 */
-	public static<T>ArrayList<T>createInstancesOf(String path,Class<T>type){return createInstancesOf(path,type,false);}
 	/**
      * Parses a list of objects from the given file.
      * <p>
