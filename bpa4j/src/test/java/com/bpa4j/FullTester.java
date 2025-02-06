@@ -27,6 +27,7 @@ import com.bpa4j.defaults.editables.AbstractCustomer;
 import com.bpa4j.defaults.editables.Processable;
 import com.bpa4j.defaults.features.Board;
 import com.bpa4j.defaults.features.Calendar;
+import com.bpa4j.defaults.features.DatedList;
 import com.bpa4j.defaults.features.DefaultFeature;
 import com.bpa4j.defaults.features.ItemList;
 import com.bpa4j.defaults.features.Report;
@@ -131,6 +132,11 @@ public final class FullTester{
 		public String property2=new String[]{"1 отборочный","2 отборочный","Финал"}[(int)(Math.random()*3)];
 		public String toString(){return "Олимпиада";}
 	}
+	public static class MyDater implements Dater<MyProcessable>{
+		public JComponent apply(MyProcessable t,LocalDate u){
+			return new JSpinner();
+		}
+	}
 	public enum AppRole implements Role{
 		MYROLE(
 			()->AppPermission.values(),
@@ -139,7 +145,8 @@ public final class FullTester{
 				Board.registerBoard("board",MyProcessable.class),
 				Calendar.registerCalendar("calendar",MyEvent.class),
 				Report.registerReport("report"),
-				ItemList.registerList("list",MyProcessable.class)
+				ItemList.registerList("list",MyProcessable.class),
+				DatedList.registerList("dlist",MyProcessable.class)
 			}
 		);
 		private AppRole(Supplier<Permission[]>p,Supplier<Feature[]>f){SwingUtilities.invokeLater(()->Registrator.register(this,f.get(),p.get()));}
@@ -158,7 +165,7 @@ public final class FullTester{
 	}
 	private FullTester(){}
 	public static void main(String[]args)throws ReflectiveOperationException,URISyntaxException{
-		new ProjectGraph(new File("C:/Users/user/Desktop/IT/Java/1C/NTO training/T1/NTO_TRAINING/src/main/java")).show();
+		// new ProjectGraph(new File("C:/Users/user/Desktop/IT/Java/1C/NTO training/T1/NTO_TRAINING/src/main/java")).show();
 		Navigator.init();
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;
@@ -249,6 +256,7 @@ public final class FullTester{
 			.addCollectiveAction(a->{
 				for(MyProcessable p:a)p.toString(); //Does nothing
 			});
-		FlagWEditor.configure(MyEditable2.class.getField("a"),null,null,MyEditable2.Status.S1);
+		FlagWEditor.configure(MyEditable2.class.getField("a"),null,null,()->MyEditable2.Status.S1);
+		DatedList.<MyProcessable>getList("dlist").setDateProvider(()->new MyDater());
 	}
 }

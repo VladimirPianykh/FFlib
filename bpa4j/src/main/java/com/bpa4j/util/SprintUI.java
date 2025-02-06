@@ -2,6 +2,7 @@ package com.bpa4j.util;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -53,17 +54,16 @@ public final class SprintUI{
 	public static JScrollPane createList(int displayedItems,JPanel panel){
 		JScrollPane s=new JScrollPane(panel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		s.addComponentListener(new ComponentAdapter(){
-			public void componentResized(ComponentEvent e){
-				panel.getPreferredSize().height=s.getHeight()*panel.getComponentCount()/displayedItems;
-			}
+			public void componentResized(ComponentEvent e){componentShown(e);}
 			public void componentShown(ComponentEvent e){
-				panel.getPreferredSize().height=s.getHeight()*panel.getComponentCount()/displayedItems;
+				panel.setPreferredSize(new Dimension(panel.getPreferredSize().width,s.getHeight()*panel.getComponentCount()/displayedItems));
+				s.getVerticalScrollBar().setUnitIncrement(s.getHeight()/40);
 			}
 		});
 		panel.setLayout(new GridLayout(0,1));
 		panel.addContainerListener(new ContainerAdapter(){
 			public void componentAdded(ContainerEvent e){
-				panel.getPreferredSize().height=s.getHeight()*panel.getComponentCount()/displayedItems;
+				panel.setPreferredSize(new Dimension(panel.getPreferredSize().width,s.getHeight()*panel.getComponentCount()/displayedItems));
 			}
 		});
 		return s;
