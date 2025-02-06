@@ -38,7 +38,7 @@ import com.bpa4j.editor.modules.FormModule;
 import com.bpa4j.ui.HButton;
 
 @SuppressWarnings("unchecked")
-public class DatedList<T extends Editable>implements Feature{
+public final class DatedList<T extends Editable>implements Feature{
 	static{
 		if(!Data.getInstance().ftrInstances.containsKey(DatedList.class.getName()))Data.getInstance().ftrInstances.put(DatedList.class.getName(),new HashMap<>());
 	}
@@ -61,7 +61,7 @@ public class DatedList<T extends Editable>implements Feature{
 		return b;
 	}
 	private JComponent createTableEntry(T t,JPanel tab,Font font){
-		LocalDate now=LocalDate.now();
+		Wrapper<LocalDate>date=new Wrapper<>(LocalDate.now());
 		if(objects.get(t)==null)objects.put(t,dateProvider.get());
 		Field[]fields=objects.get(t).getClass().getFields();
 		boolean flag=false;
@@ -91,8 +91,13 @@ public class DatedList<T extends Editable>implements Feature{
 		b.setFont(new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/20));
 		p.add(b);
 		JPanel dates=new JPanel(new GridLayout(1,7));
-		for(int i=0;i<7;++i)dates.add(objects.get(t).apply(t,now.plusDays(i)));
-		dates.setBounds(tab.getWidth()/3,0,flag?tab.getWidth()/2:tab.getWidth()*2/3,tab.getHeight());
+		dates.setBounds(tab.getWidth()/3,0,flag?tab.getWidth()/2:tab.getWidth()*2/3,tab.getHeight()/10);
+		for(int i=0;i<7;++i)dates.add(objects.get(t).apply(t,date.var.plusDays(i)));
+		b.addMouseWheelListener(e->{
+			date.var=date.var.plusDays(e.getWheelRotation());
+			dates.removeAll();
+			for(int i=0;i<7;++i)dates.add(objects.get(t).apply(t,date.var.plusDays(i)));
+		});
 		p.add(dates);
 		if(flag)try{
 			JPopupMenu menu=new JPopupMenu("Параметры:");
@@ -137,6 +142,7 @@ public class DatedList<T extends Editable>implements Feature{
 	 */
 	public DatedList<T>setDateProvider(Supplier<Dater<T>>provider){dateProvider=provider;return this;}
 	public Set<T>getObjects(){return objects.keySet();}
+	public HashMap<T,Dater<T>>getObjectsWithDaters(){return objects;}
 	public T createObject(){
 		try{
 			T object=type.getDeclaredConstructor().newInstance();

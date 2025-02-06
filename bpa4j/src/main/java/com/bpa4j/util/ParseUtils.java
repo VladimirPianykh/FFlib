@@ -47,6 +47,22 @@ public final class ParseUtils{
 			}
 		}
 	}
+	public static class InnerScopeSkipper implements Skipper{
+		private int k=1;
+		private final char open,closed;
+		public InnerScopeSkipper(char open,char closed){
+			this.open=open;
+			this.closed=closed;
+		}
+		public int adjustIndex(int index,CharSequence s){
+			int ii=StandardSkipper.SYNTAX.adjustIndex(index,s);
+			if(ii!=index)return ii;
+			if(s.charAt(index)==open)++k;
+			else if(s.charAt(index)==closed)--k;
+			if(k==0)return s.length();
+			return index;
+		}
+	}
 	private ParseUtils(){}
 	public static final Pattern classDefPattern=Pattern.compile("(\\w+)\\s*((?: (?:extends|implements) .*?\\s*){0,2})\\s*\\{");
 	public static Pattern createSubClassPattern(String superClassPattern){
@@ -153,7 +169,7 @@ public final class ParseUtils{
 			if(ii!=i){
 				m.region(fromIndex,i);
 				if(m.find())return Optional.of(m.toMatchResult());
-				i=ii;
+				fromIndex=i=ii;
 			}
 		}
 		m.region(fromIndex,s.length());
@@ -183,6 +199,24 @@ public final class ParseUtils{
 				b.setLength(0);
 				i=ii;
 			}
+			b.append(s.charAt(i));
+		}
+		r.append(p.matcher(b).replaceAll(replacement));
+		return r.toString();
+	}
+	public static String replaceAll(CharSequence s,Pattern p,String replacement,Skipper skipper,int fromIndex){
+		StringBuilder r=new StringBuilder();
+		StringBuilder b=new StringBuilder();
+		r.append(s.subSequence(0,fromIndex));
+		for(int i=fromIndex;i<s.length();++i){
+			int ii=skipper.adjustIndex(i,s);
+			if(ii!=i){
+				Matcher m=p.matcher(b);
+				r.append(m.replaceAll(replacement)).append(s.subSequence(i,ii));
+				b.setLength(0);
+				i=ii;
+			}
+			if(i>=s.length())break;
 			b.append(s.charAt(i));
 		}
 		r.append(p.matcher(b).replaceAll(replacement));

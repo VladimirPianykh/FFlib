@@ -8,10 +8,13 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -41,11 +44,13 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
@@ -58,6 +63,7 @@ import com.bpa4j.util.SprintUI;
 import com.bpa4j.util.ParseUtils.StandardSkipper;
 import com.bpa4j.util.codegen.ProjectGraph.EditableNode.Property;
 import com.bpa4j.util.codegen.ProjectGraph.EditableNode.Property.PropertyType;
+import com.bpa4j.util.codegen.ProjectGraph.RolesNode.RoleRepresentation;
 
 public class ProjectGraph{
 	public static abstract class ProjectNode{
@@ -273,7 +279,7 @@ public class ProjectGraph{
 		public PermissionsNode(File file){
 			super(file);
 			try{
-				String s=ParseUtils.findFirstBlock(Pattern.compile("public enum (\\w+) implements Permission",Pattern.DOTALL),ParseUtils.rewrite(Files.readString(file.toPath()),StandardSkipper.SYNTAX),'{','}');
+				String s=ParseUtils.findFirstBlock(Pattern.compile("public enum \\w+ implements.*?Permission"),Files.readString(file.toPath()),'{','}',StandardSkipper.SYNTAX);
 				permissions=new ArrayList<>(Arrays.asList(
 					s.substring(0,s.indexOf(';'))
 					.replaceAll("\\s+","")
@@ -281,19 +287,24 @@ public class ProjectGraph{
 				));
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
-		// public void addPermission(String permission){
-		// 	try{
-		// 		if(permissions.contains(permission))throw new IllegalStateException(name+" already has exists.");
-		// 		while(!Files.isWritable(location.toPath()))Thread.onSpinWait();
-		// 		StringBuilder s=new StringBuilder(Files.readString(location.toPath()));
-		// 		ParseUtils.find(
-		// 			s,
-		// 			Pattern.compile("public enum (\\w) implements.*?Permission\\s*\\{"),
-		// 			StandardSkipper.SYNTAX
-		// 		).get().start();
-		// 		Files.writeString(location.toPath(),s);
-		// 	}catch(IOException ex){throw new UncheckedIOException(ex);}
-		// }
+		public void addPermission(String permission){
+			//UNTESTED
+			try{
+				if(permissions.contains(permission))throw new IllegalStateException(name+" already has exists.");
+				while(!Files.isWritable(location.toPath()))Thread.onSpinWait();
+				StringBuilder s=new StringBuilder(Files.readString(location.toPath()));
+				MatchResult r=ParseUtils.find(
+					s,
+					Pattern.compile("public enum \\w+ implements.*?Permission\\s*\\{(\\s*)"),
+					StandardSkipper.SYNTAX
+				).get();
+				s.insert(r.start(),r.group(1)+permission+",");
+				Files.writeString(location.toPath(),s);
+			}catch(IOException ex){throw new UncheckedIOException(ex);}
+		}
+		public void removePermission(String permission){
+			//TODO: remove permission
+		}
 	}
 	public static class RolesNode extends ProjectNode{
 		public static class RoleRepresentation{
@@ -311,7 +322,7 @@ public class ProjectGraph{
 			super(file);
 			try{
 				String roleClass=ParseUtils.findFirstBlock(
-					Pattern.compile("public enum (\\w+) implements.*?Role\\s*\\{"),
+					Pattern.compile("public enum \\w+ implements.*?Role"),
 					Files.readString(file.toPath()), 
 					'{','}',
 					StandardSkipper.SYNTAX
@@ -339,7 +350,7 @@ public class ProjectGraph{
 						roles.add(new RoleRepresentation(name,new TreeSet<>(p.permissions),null));
 					}else{
 						String s=ParseUtils.findFirstBlock(Pattern.compile("new Permission\\s*\\[\\]"),permissions,'{','}');
-						roles.add(new RoleRepresentation(name,s==null?null:new TreeSet<>(Arrays.asList(s.replaceAll("\\s+","").split(","))),null));
+						roles.add(new RoleRepresentation(name,s==null?null:s.isBlank()?new TreeSet<>():new TreeSet<>(Arrays.asList(s.replaceAll("\\s+","").split(","))),null));
 					}
 				}
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
@@ -386,7 +397,7 @@ public class ProjectGraph{
 					).get().start();
 					Matcher m=Pattern.compile("(\\s*,?\\s*)"+Pattern.quote(permission)+"(\\s*,?\\s*)").matcher(s);
 					m.find(index);
-					Files.writeString(location.toPath(),m.replaceAll(result->{
+					Files.writeString(location.toPath(),m.replaceFirst(result->{
 						if(result.start()<index)return result.group();
 						return result.group(1).isBlank()?result.group(1):result.group(2);
 					}));
@@ -395,20 +406,51 @@ public class ProjectGraph{
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 			throw new IllegalArgumentException("There is no role "+roleName);
 		}
-		public void addRole(String name,String...permissions){
+		public RoleRepresentation addRole(String name,String...permissions){
 			try{
 				RoleRepresentation r=new RoleRepresentation(name,new TreeSet<>(Arrays.asList(permissions)),null);
 				while(!Files.isWritable(location.toPath()))Thread.onSpinWait();
 				StringBuilder s=new StringBuilder(Files.readString(location.toPath()));
+				MatchResult m=ParseUtils.find(s,Pattern.compile("public enum \\w+ implements.*?Role\\s*\\{(\\s*)"),StandardSkipper.SYNTAX).get();
+				s.insert(
+					m.start(1),
+					String.format("""
+							%s(
+								()->new Permission[]{%s},
+								()->new Feature[]{}
+							),
+					""",m.group(1)+name,Stream.of(permissions).collect(Collectors.joining(",")))
+				);
+				//TODO: add role
 				Files.writeString(location.toPath(),s);
 				roles.add(r);
+				return r;
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
-	}
-	public static class EditorNode extends ProjectNode{
-		public EditorNode(File file){
-			super(file);
-			//TODO: implement EditorNode
+		public void removeRole(String name){
+			try{
+				while(!Files.isWritable(location.toPath()))Thread.onSpinWait();
+				StringBuilder s=new StringBuilder(Files.readString(location.toPath()));
+				MatchResult m=ParseUtils.find(
+					s,
+					Pattern.compile(name+"\\s*\\("),
+					StandardSkipper.SYNTAX,
+					ParseUtils.find(s,Pattern.compile("public enum \\w+ implements.*?Role\\s*\\{(\\s*)"),StandardSkipper.SYNTAX).get().end()
+				).get();
+				s=new StringBuilder(ParseUtils.replaceAll(
+					s,
+					Pattern.compile(".+",Pattern.DOTALL),
+					"",
+					new ParseUtils.InnerScopeSkipper('(',')'),
+					m.end()
+				));
+				StringBuilder result=new StringBuilder();
+				Matcher matcher=Pattern.compile(".*?,\\s*").matcher(s).region(m.start(),s.length());
+				matcher.find();
+				matcher.appendReplacement(result,"").appendTail(result);
+				Files.writeString(location.toPath(),result);
+				roles.removeIf(r->r.name.equals(name));
+			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
 	}
 	public static class GroupsNode extends ProjectNode{
@@ -494,6 +536,7 @@ public class ProjectGraph{
 				JPanel buttons=new JPanel();
 				JButton remove=new JButton();
 				remove.addActionListener(e->{
+					if(p.type==null&&JOptionPane.showConfirmDialog(tab,"Удалить свойство "+p.name+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION)return;
 					n.removeProperty(p);
 					Container parent=getParent();
 					parent.remove(this);
@@ -544,7 +587,7 @@ public class ProjectGraph{
 				buttons.add(addPanel);
 				JButton remove=new JButton();
 				remove.addActionListener(e->{
-					if(n.properties.isEmpty()||JOptionPane.showConfirmDialog(tab,"Действительно удалить "+n.name+" (\""+n.objectName+")\"?","Удалить?",JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){
+					if(n.properties.isEmpty()||JOptionPane.showConfirmDialog(tab,"Действительно удалить "+n.name+" (\""+n.objectName+")\"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)==JOptionPane.OK_OPTION){
 						deleteNode(n);
 						Container parent=getParent();
 						parent.remove(this);
@@ -609,6 +652,126 @@ public class ProjectGraph{
 		tab.add(sList,BorderLayout.NORTH);
 		for(ProjectNode node:nodes)if(node instanceof EditableNode)objList.add(new E((EditableNode)node));
 	}
+	private void fillAccessTab(JPanel tab){
+		tab.setLayout(new GridLayout(1,2));
+		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
+		RolesNode rn=(RolesNode)nodes.parallelStream().filter(n->n instanceof RolesNode).findAny().get();
+		class P extends JPanel{
+			public P(String permission){
+				setLayout(new GridBagLayout());
+				GridBagConstraints c=new GridBagConstraints();
+				c.fill=GridBagConstraints.BOTH;
+				c.weighty=1;
+				c.gridheight=1;
+				c.gridwidth=2;
+				c.weightx=0.66;
+				JLabel name=new JLabel(permission);
+				add(name,c);
+				name.setTransferHandler(new TransferHandler("text"){
+					public boolean canImport(TransferSupport support){return false;}
+				});
+				name.addMouseListener(new MouseAdapter(){
+					public void mousePressed(MouseEvent e){
+						name.getTransferHandler().exportAsDrag(name,e,TransferHandler.COPY);
+					}
+				});
+				JButton delete=new JButton();
+				delete.addActionListener(e->{
+					if(JOptionPane.showConfirmDialog(tab,"Удалить разрешение "+permission+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION)return;
+					pn.removePermission(permission);
+					Container parent=getParent();
+					parent.remove(this);
+					((JComponent)parent).getTopLevelAncestor().revalidate();
+				});
+				delete.setText("удалить");
+				delete.setBackground(Color.RED);
+				c.gridwidth=1;
+				c.weightx=0.33;
+				add(delete,c);
+			}
+		}
+		class RP extends JPanel{
+			public RP(RoleRepresentation role,String permission){
+				setLayout(new GridBagLayout());
+				GridBagConstraints c=new GridBagConstraints();
+				c.fill=GridBagConstraints.BOTH;
+				c.weighty=1;
+				c.gridheight=1;
+				c.gridwidth=2;
+				c.weightx=0.66;
+				add(new JLabel(permission),c);
+				JButton delete=new JButton();
+				delete.addActionListener(e->{
+					rn.removePermission(role.name,permission);
+					Container parent=getParent();
+					parent.remove(this);
+					((JComponent)parent).getTopLevelAncestor().revalidate();
+				});
+				delete.setText("отозвать");
+				delete.setBackground(Color.DARK_GRAY);
+				delete.setForeground(Color.RED);
+				c.gridwidth=1;
+				c.weightx=0.33;
+				add(delete,c);
+			}
+		}
+		class R extends JPanel{
+			public R(RoleRepresentation role){
+				setBorder(BorderFactory.createTitledBorder(role.name));
+				setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
+				JPanel buttons=new JPanel();
+				JButton delete=new JButton();
+				delete.addActionListener(e->{
+					if(JOptionPane.showConfirmDialog(tab,"Удалить "+role.name+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION)return;
+					rn.removeRole(role.name);
+					Container parent=getParent();
+					parent.remove(this);
+					((JComponent)parent).getTopLevelAncestor().revalidate();
+				});
+				delete.setBackground(Color.RED);
+				buttons.add(delete);
+				add(buttons);
+				if(role.permissions!=null)for(String p:role.permissions)add(new RP(role,p));
+				setTransferHandler(new TransferHandler(){
+					public boolean canImport(TransferSupport support){
+						return support.getDataFlavors()[0].getRepresentationClass().equals(String.class);
+					}
+					public boolean importData(TransferSupport support){
+						try{
+							String p="AppPermission."+support.getTransferable().getTransferData(support.getDataFlavors()[0]);
+							rn.addPermission(role.name,p);
+							add(new RP(role,p));
+							revalidate();
+							return true;
+						}catch(IOException|UnsupportedFlavorException ex){throw new IllegalStateException(ex);}
+					}
+				});
+			}
+		}
+		JPanel pPanel=new JPanel();
+		for(String p:pn.permissions)pPanel.add(new P(p));
+		tab.add(SprintUI.createList(15,pPanel));
+		JPanel rPanel=new JPanel(new BorderLayout());
+		JPanel rList=new JPanel();
+		rList.setLayout(new BoxLayout(rList,BoxLayout.Y_AXIS));
+		JPanel rButtons=new JPanel();
+		JButton addRole=new JButton();
+		addRole.addActionListener(e->{
+			String s=JOptionPane.showInputDialog("Введите системное имя роли.");
+			if(s==null)return;
+			rList.add(new R(rn.addRole(s)));
+			rList.revalidate();
+		});
+		addRole.setText("добавить роль");
+		addRole.setBackground(Color.GREEN);
+		rButtons.add(addRole);
+		for(RoleRepresentation r:rn.roles)rList.add(new R(r));
+		JScrollPane sRPanel=new JScrollPane(rList);
+		sRPanel.getVerticalScrollBar().setUnitIncrement(Root.SCREEN_SIZE.height/60);
+		rPanel.add(sRPanel,BorderLayout.CENTER);
+		rPanel.add(rButtons,BorderLayout.SOUTH);
+		tab.add(rPanel);
+	}
 	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties){
 		File file=new File(projectFolder,"com");
 		if(file.isDirectory())file=new File(Stream.of(file.listFiles()).filter(f->f.isDirectory()).findAny().get(),"editables/registered/"+name+".java");
@@ -656,6 +819,7 @@ public class ProjectGraph{
 		fillObjectsTab(objects);
 		p.addTab("Объекты",objects);
 		JPanel access=new JPanel();
+		fillAccessTab(access);
 		p.addTab("Доступ",access);
 		JPanel problems=new JPanel();
 		problems.setBackground(Color.BLACK);
