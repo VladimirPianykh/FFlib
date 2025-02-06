@@ -184,6 +184,8 @@ public final class ExcelUtils{
 				Cell cell=row.createCell(i);
 				fields[i].setAccessible(true);
 				Object value=fields[i].get(instance);
+				EditorEntry a=fields[i].getAnnotation(EditorEntry.class);
+				if(a==null){continue;}
 				if(value instanceof String){cell.setCellValue((String)value);}else if(value instanceof Number){cell.setCellValue(((Number)value).doubleValue());}else if(value instanceof LocalDate){cell.setCellValue(((LocalDate)value).format(dateFormatter));}else if(value instanceof Enum<?>){cell.setCellValue(value.toString());}else if(value!=null){cell.setCellValue(value.toString());}
 			}
 		}
