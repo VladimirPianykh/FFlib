@@ -140,5 +140,17 @@
 			"static Function<${TM_FILENAME_BASE},${1:String}>${2:function}=e->$0",
 		],
 		"description":""
+	},
+	"Create Verifier nested subclass":{
+		"scope":"java",
+		"prefix":"_verifier",
+		"body":[
+			"public static class Verifier implements com.bpa4j.editor.Verifier{",
+				"\tpublic String verify(Editable original,Editable editable,boolean isNew){",
+					"\t\t$0",
+				"\t}",
+			"}"
+		],
+		"description":""
 	}
 }

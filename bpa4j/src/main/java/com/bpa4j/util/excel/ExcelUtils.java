@@ -45,7 +45,7 @@ public final class ExcelUtils{
 				this.parseName=parseName;
 			}
 		}
-		private ArrayList<ExcelConfig>list;
+		private final ArrayList<ExcelConfig>list=new ArrayList<>();
 		public ExcelLoader addParam(String dialogDescription,Class<? extends Editable>type,boolean parseName){
 			list.add(new ExcelConfig(dialogDescription,type,parseName));
 			return this;
@@ -55,7 +55,7 @@ public final class ExcelUtils{
 			new Message("Выберите файлы, соответствующие заголовкам диалоговых окон.",Color.WHITE);
 			for(ExcelConfig c:list){
 				f.setDialogTitle(c.dialogDescription);
-				f.showOpenDialog(Window.getWindows()[Window.getWindows().length-1]);
+				f.showOpenDialog(Window.getWindows()[0]);
 				EditableGroup<?>g=Data.getInstance().getGroup(c.type);
 				for(Editable e:ExcelUtils.createInstancesOf(f.getSelectedFile().toString(),c.type,c.parseName))g.add(e);
 			}
@@ -95,7 +95,7 @@ public final class ExcelUtils{
 				int i=0;
 				if(parseName&&instance instanceof Editable){
 					Cell cell=row.getCell(0);
-					((Editable)instance).name=cell.getCellType()==Cell.CELL_TYPE_NUMERIC?String.valueOf(cell.getNumericCellValue()):cell.getStringCellValue();
+					((Editable)instance).name=(cell.getCellType()==Cell.CELL_TYPE_NUMERIC?String.valueOf(cell.getNumericCellValue()):cell.getStringCellValue()).trim();
 					++i;
 				}
 				r:for(Field f:type.getDeclaredFields()){
@@ -122,7 +122,7 @@ public final class ExcelUtils{
 	private static Object parseCellValue(Cell cell,Class<?>targetType){
 		switch(cell.getCellType()){
 			case Cell.CELL_TYPE_STRING->{
-				String stringValue=cell.getStringCellValue();
+				String stringValue=cell.getStringCellValue().trim();
 				if(targetType.isEnum()){
 					for(var constant:targetType.getEnumConstants())
 						if(constant.toString().equalsIgnoreCase(stringValue))return constant;

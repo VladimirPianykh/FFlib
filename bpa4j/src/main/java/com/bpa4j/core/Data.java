@@ -127,7 +127,8 @@ public final class Data implements Serializable{
 	/**
 	 * An interface for creating {@link com.bpa4j.defaults.features.Board TaskBoards}
 	 */
-	public HashSet<EditableGroup<?>>editables=new HashSet<EditableGroup<?>>();
+	public HashSet<EditableGroup<?>>editables=new HashSet<>();
+	public HashMap<String,Serializable>globals=new HashMap<>();
 	public HashMap<String,HashMap<String,? extends Feature>>ftrInstances=new HashMap<>();
 	public static Data getInstance(){
 		if(instance==null)try{

@@ -52,6 +52,11 @@ import com.bpa4j.util.TestGen;
 import com.bpa4j.util.codegen.ProjectGraph;
 
 public final class FullTester{
+	public static class MyEditable5 extends Editable{
+		public MyEditable5(){
+			super("Новый объект");
+		}
+	}
 	public static class MyEditable4 extends Editable{
 		static int index=2024;
 		@EditorEntry(translation="Группа")
@@ -83,14 +88,14 @@ public final class FullTester{
 			private Status(String translation){this.translation=translation;}
 			public String toString(){return translation;}
 		}
-		@EditorEntry(translation="Перечисление",editorBaseSource=FlagWEditor.class)
+		@EditorEntry(translation="Перечисление")
 		public Status a=Status.S1;
-		@EditorEntry(translation="Группа")
-		public EditableGroup<MyEditable2>group=new EditableGroup<MyEditable2>(
+		@EditorEntry(translation="Группа",editorBaseSource=FlagWEditor.class)
+		public EditableGroup<MyEditable3>group=new EditableGroup<MyEditable3>(
 			new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 			new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
-			MyEditable2.class
-		);;
+			MyEditable3.class
+		);
 		public MyEditable2(){
 			super("Новый объект");
 		}
@@ -152,6 +157,8 @@ public final class FullTester{
 		private AppRole(Supplier<Permission[]>p,Supplier<Feature[]>f){SwingUtilities.invokeLater(()->Registrator.register(this,f.get(),p.get()));}
 	}
 	public enum AppPermission implements Permission{
+		READ_MYEDITABLE5,
+		CREATE_MYEDITABLE5,
 		READ_MYPROCESSABLE,
 		CREATE_MYPROCESSABLE,
 		READ_MYTHIRDEDITABLE,
@@ -165,7 +172,7 @@ public final class FullTester{
 	}
 	private FullTester(){}
 	public static void main(String[]args)throws ReflectiveOperationException,URISyntaxException{
-		// new ProjectGraph(new File("C:/Users/user/Desktop/IT/Java/1C/NTO training/T1/NTO_TRAINING/src/main/java")).show();
+		// new ProjectGraph(new File("C:/Users/user/Desktop/IT/Java/1C/NTO training/team/T1/NTO_TRAINING/src/main/java")).show();
 		Navigator.init();
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;
@@ -177,36 +184,38 @@ public final class FullTester{
 		);
 		if(ProgramStarter.isFirstLaunch()){
 			User.register("Пользователь 1","",AppRole.MYROLE);
-			EditableGroup<MyProcessable>myProcessables=new EditableGroup<MyProcessable>(
+			EditableGroup<MyProcessable>myProcessables=new EditableGroup<>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				MyProcessable.class
 			);
-			EditableGroup<MyEditable3>myThirdEditables=new EditableGroup<MyEditable3>(
+			EditableGroup<MyEditable3>myThirdEditables=new EditableGroup<>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				MyEditable3.class
 			);
-			EditableGroup<MyEditable4>myFourthEditables=new EditableGroup<MyEditable4>(
+			EditableGroup<MyEditable4>myFourthEditables=new EditableGroup<>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				MyEditable4.class
 			);
-			EditableGroup<MyCustomer>customers=new EditableGroup<MyCustomer>(
+			EditableGroup<MyCustomer>customers=new EditableGroup<>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
 				MyCustomer.class
 			);
-			Registrator.register(myProcessables);
-			Registrator.register(myThirdEditables.hide());
-			Registrator.register(myFourthEditables.hide());
-			Registrator.register(customers);
+			EditableGroup<MyEditable5>myEditables5=new EditableGroup<>(
+				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
+				new PathIcon("ui/right.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
+				MyEditable5.class
+			);
+			Registrator.register(myProcessables,myThirdEditables.hide(),myFourthEditables.hide(),customers,myEditables5);
 			ProgramStarter.runProgram();
 			TestGen.generate(4,myProcessables);
 			TestGen.generate(50,myThirdEditables,myFourthEditables);
 		}else ProgramStarter.runProgram();
 		GroupElementSupplier<MyProcessable>groupES=new GroupElementSupplier<>(MyProcessable.class);
-		Board.<MyProcessable>getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){
+		Board.<MyProcessable >getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){
 			private final JComboBox<Boolean>c=new JComboBox<>();
 			public JComponent getConfigurator(Runnable saver,ArrayList<MyProcessable>objects){
 				c.removeAllItems();
@@ -256,7 +265,11 @@ public final class FullTester{
 			.addCollectiveAction(a->{
 				for(MyProcessable p:a)p.toString(); //Does nothing
 			});
-		FlagWEditor.configure(MyEditable2.class.getField("a"),null,null,()->MyEditable2.Status.S1);
 		DatedList.<MyProcessable>getList("dlist").setDateProvider(()->new MyDater());
+		FlagWEditor.configure(MyEditable2.class.getField("group"),null,null,()->new EditableGroup<MyEditable3>(
+			new PathIcon("ui/product.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
+			new PathIcon("ui/product_add.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),
+			MyEditable3.class
+		));
 	}
 }

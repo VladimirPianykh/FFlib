@@ -11,6 +11,7 @@ import java.awt.event.ContainerEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
+import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -40,6 +41,10 @@ public final class SprintUI{
 		bar.add(menu);
 		bar.setToolTipText(menu.getText());
 		return bar;
+	}
+	public static<T>JScrollPane wrap(JList<T>list){
+		JScrollPane s=new JScrollPane(list);
+		return s;
 	}
 	public static JMenu createMenu(JMenuItem...items){
 		JMenu menu=new JMenu();

@@ -9,7 +9,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
@@ -280,11 +281,11 @@ public class ProjectGraph{
 			super(file);
 			try{
 				String s=ParseUtils.findFirstBlock(Pattern.compile("public enum \\w+ implements.*?Permission"),Files.readString(file.toPath()),'{','}',StandardSkipper.SYNTAX);
-				permissions=new ArrayList<>(Arrays.asList(
-					s.substring(0,s.indexOf(';'))
-					.replaceAll("\\s+","")
-					.split(",")
-				));
+				String a=s
+					.substring(0,s.indexOf(';'))
+					.replaceAll("\\s+","");
+				permissions=new ArrayList<>(Arrays.asList(a.isBlank()?new String[0]:a.split(",")));
+				permissions.sort((a1,a2)->-1);
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
 		public void addPermission(String permission){
@@ -298,12 +299,27 @@ public class ProjectGraph{
 					Pattern.compile("public enum \\w+ implements.*?Permission\\s*\\{(\\s*)"),
 					StandardSkipper.SYNTAX
 				).get();
-				s.insert(r.start(),r.group(1)+permission+",");
+				s.insert(r.start(1),r.group(1)+permission+",");
 				Files.writeString(location.toPath(),s);
+				permissions.add(permission);
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
 		public void removePermission(String permission){
-			//TODO: remove permission
+			try{
+				if(!permissions.contains(permission))throw new IllegalStateException(name+" does not exist.");
+				while(!Files.isWritable(location.toPath()))Thread.onSpinWait();
+				StringBuilder s=new StringBuilder(Files.readString(location.toPath()));
+				StringBuilder result=new StringBuilder();
+				Matcher m=Pattern.compile(Pattern.quote(permission)+",\\s*").matcher(s);
+				m.find(ParseUtils.find(
+					s,
+					Pattern.compile("public enum \\w+ implements.*?Permission\\s*\\{"),
+					StandardSkipper.SYNTAX
+				).get().end());
+				m.appendReplacement(result,"").appendTail(result);
+				Files.writeString(location.toPath(),result);
+				permissions.remove(permission);
+			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
 	}
 	public static class RolesNode extends ProjectNode{
@@ -472,9 +488,16 @@ public class ProjectGraph{
 		}
 		public final String message;
 		public final ProblemType type;
+		public final Runnable solver;
 		public Problem(String message,ProblemType type){
 			this.message=message;
 			this.type=type;
+			solver=null;
+		}
+		public Problem(String message,ProblemType type,Runnable solver){
+			this.message=message;
+			this.type=type;
+			this.solver=solver;
 		}
 	}
 	public ArrayList<ProjectNode>nodes=new ArrayList<>();
@@ -509,7 +532,7 @@ public class ProjectGraph{
 		}catch(IOException ex){throw new UncheckedIOException(ex);}
 	}
 	private void fillObjectsTab(JPanel tab){
-		ProjectGraph th=this;
+		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
 		tab.setLayout(new BorderLayout());
 		class B extends JPanel{
 			public B(Property p,EditableNode n){
@@ -558,32 +581,21 @@ public class ProjectGraph{
 				JPanel buttons=new JPanel();
 				buttons.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width*2/3,Root.SCREEN_SIZE.height/30));
 				JPanel addPanel=new JPanel(new GridLayout());
-				JTextField addName=new JTextField();
 				JComboBox<PropertyType>addType=new JComboBox<>(PropertyType.values());
 				addType.setSelectedItem(null);
-				JButton addButton=new JButton();
-				addButton.setBackground(Color.GREEN);
-				addButton.setText("Добавить");
-				ActionListener addAction=e->{
-					if(addName.getText().isBlank()){
-						new Message("Введите название свойства!",Color.RED);
-						return;
-					}else if(addType.getSelectedItem()==null){
-						new Message("Выберите тип свойства!",Color.RED);
-						return;
-					}
-					Property nProperty=new Property(addName.getText().trim(),(PropertyType)addType.getSelectedItem());
+				addType.setBackground(Color.GREEN);
+				addType.addActionListener(e->{
+					String name=JOptionPane.showInputDialog("Введите название свойства.");
+					if(name==null||name.isBlank())return;
+					String varName=JOptionPane.showInputDialog("Введите название переменной.");
+					if(varName==null||varName.isBlank())return;
+					Property nProperty=new Property(name.trim(),(PropertyType)addType.getSelectedItem());
 					addType.setSelectedItem(null);
-					addName.setText("");
-					n.addProperty(nProperty,"gvar"+(int)(Math.random()*9999900+100));
-					add(new B(nProperty,n));
+					n.addProperty(nProperty,varName);
+					add(new B(nProperty,n),1);
 					getTopLevelAncestor().revalidate();
-				};
-				addButton.addActionListener(addAction);
-				addName.addActionListener(addAction);
-				addPanel.add(addButton);
+				});
 				addPanel.add(addType);
-				addPanel.add(addName);
 				buttons.add(addPanel);
 				JButton remove=new JButton();
 				remove.addActionListener(e->{
@@ -610,7 +622,7 @@ public class ProjectGraph{
 					s[0]=s[0].trim();
 					s[1]=s[1].trim();
 					setBorder(BorderFactory.createTitledBorder(s[0]+" ("+s[1]+")"));
-					if(!n.name.equals(s[0]))n.changeNameIn(th,s[0]);
+					if(!n.name.equals(s[0]))n.changeNameIn(ProjectGraph.this,s[0]);
 					if(!n.objectName.equals(s[1]))n.changeObjectName(s[1]);
 				});
 				rename.setText("переименовать");
@@ -618,6 +630,18 @@ public class ProjectGraph{
 				rename.setBackground(Color.CYAN);
 				rename.setForeground(Color.BLACK);
 				buttons.add(rename);
+				String readPermission="READ_"+n.name.toUpperCase(),createPermission="CREATE_"+n.name.toUpperCase();
+				if(!(pn.permissions.contains(readPermission)&&pn.permissions.contains(createPermission))){
+					JButton addPermissions=new JButton("добавить разрешения");
+					addPermissions.addActionListener(e->{
+						pn.addPermission(createPermission);
+						pn.addPermission(readPermission);
+						buttons.remove(addPermissions);
+						buttons.revalidate();
+						buttons.repaint();
+					});
+					buttons.add(addPermissions);
+				}
 				add(buttons);
 				for(Property p:n.properties)add(new B(p,n));
 			}
@@ -630,24 +654,20 @@ public class ProjectGraph{
 		JPanel buttons=new JPanel();
 		buttons.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width,Root.SCREEN_SIZE.height/10));
 		JButton addButton=new JButton();
-		addButton.setText("Создать");
+		addButton.setText("создать");
 		addButton.setBackground(Color.GREEN);
-		JTextField addName=SprintUI.addStr("имя, отображаемое имя",new JTextField());
-		ActionListener addAction=e->{
-			String[]s=addName.getText().split(", ?",2);
-			if(s.length<2||s[0].isBlank()||s[1].isBlank()){
-				new Message("Введите название класса и отображаемое имя!",Color.RED);
-				return;
+		addButton.addActionListener(e->{
+			String name,objectName;
+			while(true){
+				name=JOptionPane.showInputDialog("Введите название класса.");
+				if(name==null||name.isBlank())break;
+				objectName=JOptionPane.showInputDialog("Введите название объекта.");
+				if(objectName==null||objectName.isBlank())break;
+				objList.add(new E(createEditableNode(name,objectName)));
 			}
-			addName.setText("");
-			objList.add(new E(createEditableNode(s[0],s[1])));
 			sList.revalidate();
-		};
-		addButton.addActionListener(addAction);
-		addName.addActionListener(addAction);
-		JPanel addPanel=SprintUI.join(addButton,addName);
-		addPanel.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width/3,Root.SCREEN_SIZE.height/15));
-		buttons.add(addPanel);
+		});
+		buttons.add(addButton);
 		tab.add(buttons,BorderLayout.SOUTH);
 		tab.add(sList,BorderLayout.NORTH);
 		for(ProjectNode node:nodes)if(node instanceof EditableNode)objList.add(new E((EditableNode)node));
@@ -816,10 +836,20 @@ public class ProjectGraph{
 		JTabbedPane p=new JTabbedPane();
 		p.setSize(f.getWidth(),f.getHeight()*4/5);
 		JPanel objects=new JPanel();
-		fillObjectsTab(objects);
+		objects.addComponentListener(new ComponentAdapter(){
+			public void componentShown(ComponentEvent e){
+				objects.removeAll();
+				fillObjectsTab(objects);
+			}
+		});	
 		p.addTab("Объекты",objects);
 		JPanel access=new JPanel();
-		fillAccessTab(access);
+		access.addComponentListener(new ComponentAdapter(){
+			public void componentShown(ComponentEvent e){
+				access.removeAll();
+				fillAccessTab(access);
+			}
+		});	
 		p.addTab("Доступ",access);
 		JPanel problems=new JPanel();
 		problems.setBackground(Color.BLACK);

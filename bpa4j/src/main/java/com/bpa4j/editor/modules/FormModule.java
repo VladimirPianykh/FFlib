@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -300,7 +301,7 @@ public class FormModule implements EditorModule{
 				saver.var=()->a.getText();
 				return a;
 			}else if(f.getType()==int.class){
-				JSpinner a=new JSpinner(new SpinnerNumberModel((int)f.get(o),0,10000000,1));
+				JSpinner a=new JSpinner(new SpinnerNumberModel(f.getInt(o),0,10000000,1));
 				saver.var=()->a.getValue();
 				return a;
 			}else if(f.getType()==double.class){
@@ -329,6 +330,11 @@ public class FormModule implements EditorModule{
 					}
 				};
 				return a;
+			}else if(f.getType()==boolean.class){
+				JCheckBox a=new JCheckBox();
+				a.setSelected(f.getBoolean(o));
+				saver.var=()->a.isSelected();
+				return a;
 			}else if(f.getType()==LocalDate.class){
 				JDateChooser a=new JDateChooser();
 				a.setDateFormatString("yyyy-MM-dd");
@@ -349,15 +355,17 @@ public class FormModule implements EditorModule{
 					saver.var=()->a.getSelectedItem();
 					return a;
 				}catch(IllegalArgumentException exception){
-					JButton a=new JButton(f.get(o)==null?"":((Editable)f.get(o)).name);
+					Wrapper<Editable>value=new Wrapper<>((Editable)f.get(o));
+					JButton a=new JButton(value.var==null?"":value.var.name);
 					ActionListener edit=e->{
-						try{ProgramStarter.editor.constructEditor((Editable)f.get(o),false);}catch(IllegalAccessException ex2){throw new IllegalStateException(ex2);}
+						ProgramStarter.editor.constructEditor((Editable)value.var,false);
 					};
-					a.addActionListener(f.get(o)==null?new ActionListener(){
+					a.addActionListener(value.var==null?new ActionListener(){
 						public void actionPerformed(ActionEvent e){
 							try{
 								f.set(o,f.getType().getDeclaredConstructor().newInstance());
-								ProgramStarter.editor.constructEditor((Editable)f.get(o),true,()->{
+								value.var=(Editable)f.get(o);
+								ProgramStarter.editor.constructEditor((Editable)value.var,true,()->{
 									try{f.set(o,null);}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
 								});
 								a.removeActionListener(this);
@@ -365,7 +373,7 @@ public class FormModule implements EditorModule{
 							}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 						}
 					}:edit);
-					saver.var=()->{try{return f.get(o);}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}};
+					saver.var=()->value.var;
 					return a;
 				}
 			}else if(EditableGroup.class.isAssignableFrom(f.getType())){
@@ -400,7 +408,7 @@ public class FormModule implements EditorModule{
 					}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 				});
 				a.add(create);
-				saver.var=()->{try{return f.get(o);}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}};
+				saver.var=()->group;
 				return a;
 			}else if(f.getType().isEnum()){
 				JComboBox<Object>a=new JComboBox<>();
