@@ -64,7 +64,7 @@
 		"scope":"java",
 		"prefix":"_group",
 		"body":[
-			"EditableGroup<$1>${2:group}=new EditableGroup<$1>(",
+			"EditableGroup<$1>${2:group}=new EditableGroup<>(",
 				"\tnew PathIcon(\"ui/$3.png\",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),",
 				"\tnew PathIcon(\"ui/$4.png\",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),",
 				"\t$1.class",

@@ -107,7 +107,7 @@ public final class FullTester{
 		public int intField;
 		@EditorEntry(translation="Дробное число")
 		public double doubleField;
-		@EditorEntry(translation="Дата")
+		@EditorEntry(translation="Дата",properties = {"initonly"})
 		public LocalDate dateField=LocalDate.now();
 		@EditorEntry(translation="Редактируемый объект")
 		public MyEditable2 editableField;
@@ -118,7 +118,7 @@ public final class FullTester{
 		public MyProcessable(){
 			super(
 				"Новый объект",
-				new Stage("Отрицание",AppPermission.MANAGE_PROCESSABLE,()->{
+				new Stage("Отрицание",AppPermission.MANAGE_PROCESSABLE,e->{
 					Wrapper<Boolean>w=new Wrapper<Boolean>(true);
 					ProgramStarter.editor.constructEditor(new MyEditable2(),true,()->w.var=false);
 					return w.var;
@@ -215,7 +215,7 @@ public final class FullTester{
 			TestGen.generate(50,myThirdEditables,myFourthEditables);
 		}else ProgramStarter.runProgram();
 		GroupElementSupplier<MyProcessable>groupES=new GroupElementSupplier<>(MyProcessable.class);
-		Board.<MyProcessable >getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){
+		Board.<MyProcessable>getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){
 			private final JComboBox<Boolean>c=new JComboBox<>();
 			public JComponent getConfigurator(Runnable saver,ArrayList<MyProcessable>objects){
 				c.removeAllItems();

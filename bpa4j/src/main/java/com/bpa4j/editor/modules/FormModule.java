@@ -11,16 +11,17 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
-import java.time.Instant;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.function.Supplier;
 
 import javax.swing.BorderFactory;
@@ -30,6 +31,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
+import javax.swing.JFormattedTextField.AbstractFormatter;
+import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.JLayer;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -43,6 +47,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.Timer;
 import javax.swing.plaf.LayerUI;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.text.DefaultFormatter;
 
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Data;
@@ -59,7 +64,9 @@ import com.bpa4j.editor.NameProvider;
 import com.bpa4j.editor.Verifier;
 import com.bpa4j.ui.HButton;
 import com.bpa4j.ui.Message;
-import com.toedter.calendar.JDateChooser;
+import com.github.lgooddatepicker.components.DatePicker;
+import com.github.lgooddatepicker.components.DateTimePicker;
+import com.github.lgooddatepicker.components.TimePicker;
 
 public class FormModule implements EditorModule{
 	public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){
@@ -146,6 +153,7 @@ public class FormModule implements EditorModule{
 				((JTextArea)c).setWrapStyleWord(false);
 			}else if(a.editorBaseSource()==EditorEntryBase.class)c=wrapEditorComponent(createEditorBase(editable,f,currentSaver),font);
 			else c=a.editorBaseSource().getDeclaredConstructor().newInstance().createEditorBase(editable,f,currentSaver,demo);
+			if(currentSaver.var==null)throw new IllegalStateException("Saver for "+f.getName()+" is null.");
 			savers.add(currentSaver.var);
 			if(c!=null){
 				c.setBorder(BorderFactory.createTitledBorder(null,"Значение",0,0,font.deriveFont(font.getSize2D()/2),Color.LIGHT_GRAY));
@@ -156,6 +164,9 @@ public class FormModule implements EditorModule{
 					entry.add(new JLayer<JComponent>(c,new LayerUI<>(){
 						protected void processMouseEvent(MouseEvent e,JLayer<? extends JComponent>l){e.consume();}
 						protected void processKeyEvent(KeyEvent e,JLayer<? extends JComponent>l){e.consume();}
+						protected void processMouseMotionEvent(MouseEvent e,JLayer<? extends JComponent>l){e.consume();}
+						protected void processComponentEvent(ComponentEvent e,JLayer<? extends JComponent>l){}
+						protected void processFocusEvent(FocusEvent e,JLayer<? extends JComponent>l){}
 					}));
 				}else entry.add(c);
 			}
@@ -226,15 +237,15 @@ public class FormModule implements EditorModule{
 			cancel=c;
 		}
 		final HButton fCancel=cancel;
-		JComponent info=null;
+		Wrapper<JComponent>info=new Wrapper<>(null);
 		if(infoProvider.var!=null){
-			info=infoProvider.var.provideInfo(demo.var);
-			info.setBounds(editor.getWidth()*5/6,editor.getHeight()/4,editor.getWidth()/6,editor.getHeight()/2);
-			tab.add(info);
+			info.var=infoProvider.var.provideInfo(editable,demo.var);
+			info.var.setBounds(editor.getWidth()*5/6,editor.getHeight()/4,editor.getWidth()/6,editor.getHeight()/2);
+			tab.add(info.var);
 		}
-		final JComponent fInfo=info;
 		ok.addActionListener(e->{
 			try{
+				if(info.var!=null)info.var.dispatchEvent(new ComponentEvent(tab,ComponentEvent.COMPONENT_SHOWN));
 				if(savers.isEmpty()){
 					editor.dispose();
 					editable.name=nameField.getText();
@@ -257,14 +268,14 @@ public class FormModule implements EditorModule{
 				}else{
 					p.setValue(++w.var);
 					layout.show(form,String.valueOf(w.var));
-					if(fInfo!=null){
-						if(fInfo instanceof JTable)((AbstractTableModel)((JTable)fInfo).getModel()).fireTableDataChanged();
-						else if(fInfo instanceof JScrollPane){
-							Component c=((JScrollPane)fInfo).getViewport().getView();
+					if(info.var!=null){
+						if(info.var instanceof JTable)((AbstractTableModel)((JTable)info.var).getModel()).fireTableDataChanged();
+						else if(info.var instanceof JScrollPane){
+							Component c=((JScrollPane)info.var).getViewport().getView();
 							if(c instanceof JTable)((AbstractTableModel)((JTable)c).getModel()).fireTableDataChanged();
 						}
-						fInfo.repaint();
-						fInfo.revalidate();
+						info.var.repaint();
+						info.var.revalidate();
 					}
 					if(w.var==savers.size()){
 						ok.setText("Готово");
@@ -307,26 +318,24 @@ public class FormModule implements EditorModule{
 			}else if(f.getType()==double.class){
 				JTextArea a=new JTextArea(f.get(o).toString());
 				a.setLineWrap(true);
-				a.setWrapStyleWord(true);
 				saver.var=()->{
-					try{return(double)Double.parseDouble(a.getText());}
-					catch(Exception exc){
+					try{return Double.parseDouble(a.getText());}
+					catch(Exception ex){
 						a.setText("0");
 						new Message("Неправильный формат числа, выбрано значение по умолчанию",Color.RED);
-						return(double)0;
+						return 0d;
 					}
 				};
 				return a;
 			}else if(f.getType()==float.class){
 				JTextArea a=new JTextArea(f.get(o).toString());
 				a.setLineWrap(true);
-				a.setWrapStyleWord(true);
 				saver.var=()->{
-					try{return(float)Float.parseFloat(a.getText());}
+					try{return Float.parseFloat(a.getText());}
 					catch(Exception exc){
 						a.setText("0");
 						new Message("Неправильный формат числа, выбрано значение по умолчанию",Color.RED);
-						return(float)0;
+						return 0f;
 					}
 				};
 				return a;
@@ -335,17 +344,69 @@ public class FormModule implements EditorModule{
 				a.setSelected(f.getBoolean(o));
 				saver.var=()->a.isSelected();
 				return a;
+			}else if(f.getType()==Integer.class){
+				JSpinner a=new JSpinner(new SpinnerNumberModel(f.get(o)==null?-1:f.getInt(o),-1,10000000,1));
+				JSpinner.NumberEditor t=new JSpinner.NumberEditor(a);
+				//UNTESTED
+				t.getTextField().setFormatterFactory(new AbstractFormatterFactory(){
+					public AbstractFormatter getFormatter(JFormattedTextField tf){
+						return new DefaultFormatter(){
+							public Object stringToValue(String s)throws ParseException{
+								if(s==null||s.isBlank())return -1;
+								else return super.stringToValue(s);
+							}
+							public String valueToString(Object s)throws ParseException{
+								if(((int)s)==-1)return "";
+								else return super.valueToString(s);
+							}
+						};
+					}
+				});
+				if(f.get(o)==null)a.setEditor(t);
+				saver.var=()->a.getValue();
+				return a;
+			}else if(f.getType()==Double.class){
+				JTextArea a=new JTextArea(f.get(o)==null?"":f.get(o).toString());
+				a.setLineWrap(true);
+				saver.var=()->{
+					try{return a.getText().isBlank()?null:Double.parseDouble(a.getText());}
+					catch(Exception ex){
+						a.setText("0");
+						new Message("Неправильный формат числа, выбрано значение по умолчанию",Color.RED);
+						return 0d;
+					}
+				};
+				return a;
+			}else if(f.getType()==Float.class){
+				JTextArea a=new JTextArea(f.get(o)==null?"":f.get(o).toString());
+				a.setLineWrap(true);
+				saver.var=()->{
+					try{return a.getText().isBlank()?null:Float.parseFloat(a.getText());}
+					catch(Exception exc){
+						a.setText("0");
+						new Message("Неправильный формат числа, выбрано значение по умолчанию",Color.RED);
+						return 0f;
+					}
+				};
+				return a;
+			}else if(f.getType()==LocalTime.class){
+				TimePicker a=new TimePicker();
+				try{a.setTime((LocalTime)f.get(o));}catch(NullPointerException ex){throw new NullPointerException("LocalTime fields must be non-null");}
+				saver.var=()->a.getTime();
+				return a;
 			}else if(f.getType()==LocalDate.class){
-				JDateChooser a=new JDateChooser();
-				a.setDateFormatString("yyyy-MM-dd");
-				try{a.setDate(Date.from(((LocalDate)f.get(o)).atStartOfDay(ZoneId.systemDefault()).toInstant()));}catch(NullPointerException ex){throw new NullPointerException("LocalDate fields must be non-null");}
-				saver.var=()->Instant.ofEpochMilli(a.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+				DatePicker a=new DatePicker();
+				try{a.setDate((LocalDate)f.get(o));}catch(NullPointerException ex){throw new NullPointerException("LocalDate fields must be non-null");}
+				saver.var=()->a.getDate();
 				return a;
 			}else if(f.getType()==LocalDateTime.class){
-				JDateChooser d=new JDateChooser();
-				d.setDateFormatString("yyyy-MM-dd в HH:mm:ss");
-				try{d.setDate(Date.from(((LocalDateTime)f.get(o)).atZone(ZoneId.systemDefault()).toInstant()));}catch(NullPointerException ex){throw new NullPointerException("LocalDateTime fields must be non-null");}
-				saver.var=()->Instant.ofEpochMilli(d.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
+				DateTimePicker d=new DateTimePicker();
+				try{d.setDateTimeStrict((LocalDateTime)f.get(o));}catch(NullPointerException ex){throw new NullPointerException("LocalDateTime fields must be non-null");}
+				saver.var=()->{
+					try{
+						return d.getDateTimeStrict()==null?f.get(o):d.getDateTimeStrict();
+					}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
+				};
 				return d;
 			}else if(Editable.class.isAssignableFrom(f.getType())){
 				try{

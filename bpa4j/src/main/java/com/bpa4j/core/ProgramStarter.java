@@ -14,6 +14,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.net.URL;
+
 import javax.swing.AbstractAction;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -45,7 +47,12 @@ import com.bpa4j.ui.Message;
  * 	</ul>
  */
 public final class ProgramStarter{
-	private static boolean firstLaunch=!new File(Root.folder).exists();
+	private static boolean firstLaunch;
+	static{
+		URL is=Root.CL.getResource("resources/initial/Data.ser");
+		if(is==null)is=Root.RCL.getResource("resources/initial/Data.ser");
+		firstLaunch=(!new File(Root.folder).exists()&&is==null);
+	}
 	public static WorkFrame frame;
 	public static IEditor editor=new ModularEditor();
 	public static String welcomeMessage;

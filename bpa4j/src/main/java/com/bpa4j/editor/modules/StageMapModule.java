@@ -59,7 +59,7 @@ public class StageMapModule implements EditorModule{
 				b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				b.addActionListener(e->{
 					if(p.getStage().checker==null)throw new NullPointerException("Stage checker cannot be null");
-					if(p.getStage().checker.getAsBoolean()){
+					if(p.getStage().checker.apply(p)){
 						p.approve("");
 						editor.dispose();
 					}

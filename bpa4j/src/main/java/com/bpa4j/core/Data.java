@@ -10,9 +10,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -132,11 +134,23 @@ public final class Data implements Serializable{
 	public HashMap<String,HashMap<String,? extends Feature>>ftrInstances=new HashMap<>();
 	public static Data getInstance(){
 		if(instance==null)try{
-			FileInputStream fIS=new FileInputStream(Root.folder+"Data.ser");
-			ObjectInputStream oIS=new ObjectInputStream(fIS);
+			FileInputStream is=new FileInputStream(Root.folder+"Data.ser");
+			ObjectInputStream oIS=new ObjectInputStream(is);
 			instance=(Data)oIS.readObject();
 			oIS.close();
-		}catch(FileNotFoundException ex){instance=new Data();}
+		}catch(FileNotFoundException ex){
+			try{
+				InputStream is=Root.CL.getResourceAsStream("resources/initial/Data.ser");
+				if(is==null)is=Root.RCL.getResourceAsStream("resources/initial/Data.ser");
+				if(is==null)instance=new Data();
+				else{
+					ObjectInputStream oIS=new ObjectInputStream(is);
+					instance=(Data)oIS.readObject();
+					oIS.close();
+				}
+			}catch(IOException ex2){throw new UncheckedIOException(ex2);}
+			catch(ClassNotFoundException ex2){throw new IllegalStateException(ex2);}
+		}
 		catch(IOException ex){
 			FileVisitor<Path>del=new FileVisitor<>(){
 				public FileVisitResult preVisitDirectory(Path dir,BasicFileAttributes attrs)throws IOException{return FileVisitResult.CONTINUE;}

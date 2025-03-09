@@ -1,7 +1,6 @@
 package com.bpa4j.util;
 
 import java.lang.reflect.Field;
-
 import com.bpa4j.core.Data;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.Data.EditableGroup;

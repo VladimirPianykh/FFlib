@@ -24,11 +24,13 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -65,18 +67,20 @@ import com.bpa4j.util.ParseUtils.StandardSkipper;
 import com.bpa4j.util.codegen.ProjectGraph.EditableNode.Property;
 import com.bpa4j.util.codegen.ProjectGraph.EditableNode.Property.PropertyType;
 import com.bpa4j.util.codegen.ProjectGraph.RolesNode.RoleRepresentation;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.HelpEntry;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.Instruction;
 
 public class ProjectGraph{
 	public static abstract class ProjectNode{
-		public String name;
 		public File location;
-		public ProjectNode(File location){
-			name=location.getName().substring(0,location.getName().lastIndexOf('.'));
-			this.location=location;
-		}
+		public ProjectNode(File location){this.location=location;}
 	}
 	public static abstract class ClassNode extends ProjectNode{
-		public ClassNode(File location){super(location);}
+		public String name;
+		public ClassNode(File location){
+			super(location);
+			name=location.getName().substring(0,location.getName().lastIndexOf('.'));
+		}
 		public synchronized void changeNameIn(ProjectGraph project,String name){
 			try{
 				if(this.name.equals(name))return;
@@ -124,7 +128,7 @@ public class ProjectGraph{
 					public %s %s;
 				""",name,type.toString(),prompt);
 			}
-			public void changeNameFor(String name,EditableNode n){
+			public void changeName(String name,EditableNode n){
 				try{
 					while(!Files.isWritable(n.location.toPath()))Thread.onSpinWait();
 					StringBuilder s=new StringBuilder(Files.readString(n.location.toPath()));
@@ -145,12 +149,11 @@ public class ProjectGraph{
 					}
 				}catch(IOException ex){throw new UncheckedIOException(ex);}
 			}
-			public void changeTypeFor(PropertyType type,EditableNode n){
+			public void changeType(PropertyType type,EditableNode n){
 				try{
 					while(!Files.isWritable(n.location.toPath()))Thread.onSpinWait();
 					StringBuilder s=new StringBuilder(Files.readString(n.location.toPath()));
 					if(this.type==null){
-						//UNTESTED
 						MatchResult r=ParseUtils.find(s,Pattern.compile("//\\s*TODO: add property\\s*\"\\s*"+Pattern.quote(name)+"\\s*\"")).orElse(null);
 						if(r==null)return; //property has already been implemented and CANNOT be changed
 						s.replace(r.start(),r.end(),String.format("""
@@ -289,9 +292,8 @@ public class ProjectGraph{
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
 		public void addPermission(String permission){
-			//UNTESTED
 			try{
-				if(permissions.contains(permission))throw new IllegalStateException(name+" already has exists.");
+				if(permissions.contains(permission))throw new IllegalStateException(permission+" already exists.");
 				while(!Files.isWritable(location.toPath()))Thread.onSpinWait();
 				StringBuilder s=new StringBuilder(Files.readString(location.toPath()));
 				MatchResult r=ParseUtils.find(
@@ -306,7 +308,7 @@ public class ProjectGraph{
 		}
 		public void removePermission(String permission){
 			try{
-				if(!permissions.contains(permission))throw new IllegalStateException(name+" does not exist.");
+				if(!permissions.contains(permission))throw new IllegalStateException(permission+" does not exist.");
 				while(!Files.isWritable(location.toPath()))Thread.onSpinWait();
 				StringBuilder s=new StringBuilder(Files.readString(location.toPath()));
 				StringBuilder result=new StringBuilder();
@@ -477,6 +479,127 @@ public class ProjectGraph{
 				Matcher m=Pattern.compile("EditableGroup \\w+\\s*=\\s*new EditableGroup\\(.*?(.*?,.*?,.*?)?\\)").matcher(s);
 				m.find();
 				s.insert(m.end(),"");
+				//TODO: complete GroupsNode
+			}catch(IOException ex){throw new UncheckedIOException(ex);}
+		}
+	}
+	public static class NavigatorNode extends ProjectNode{
+		public static class Instruction{
+			public static enum Type{
+				START,
+				FEATURE,
+				TEXT,
+				COMMENT;
+				public char toChar(){
+					return switch(this){
+						case START->'s';
+						case FEATURE->'f';
+						case TEXT->'t';
+						case COMMENT->'c';
+						default->throw new AssertionError("This method does not know other constants.");
+					};
+				}
+				public static Type toType(char c){
+					return switch(c){
+						case 's'->Instruction.Type.START;
+						case 'f'->Instruction.Type.FEATURE;
+						case 't'->Instruction.Type.TEXT;
+						case 'c'->Instruction.Type.COMMENT;
+						default->throw new IllegalArgumentException("Char '"+c+"' does not correspond to any constant.");
+					};
+				}
+			}
+			public String text;
+			public Type type;
+			public Instruction(String text,Type type){this.text=text;this.type=type;}
+		}
+		public static class HelpEntry{
+			public String text;
+			public ArrayList<Instruction>instructions=new ArrayList<>();
+			public HelpEntry(String text){this.text=text;}
+			public void changeText(String text,NavigatorNode n){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(n.location.toPath()).split("\n")){
+						String[]s=l.split(" ",2);
+						if(s[1].equals(this.text))s[1]=text;
+						b.append(s[0]).append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(n.location.toPath(),b);
+					this.text=text;
+				}catch(IOException ex){throw new UncheckedIOException(ex);}
+			}
+			public void replaceInstruction(Instruction c,int index,NavigatorNode n){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(n.location.toPath()).split("\n")){
+						String[]s=l.split(" ",2);
+						if(text.equals(s[1])){
+							String[]t=s[0].split("\\.");
+							int i=0;
+							for(;i<index;++i)b.append(t[i]).append('.');
+							b.append(c.type.toChar()).append(c.text).append('.');
+							++i;
+							for(;i<t.length;++i)b.append(t[i]).append('.');
+							b.deleteCharAt(b.length()-1);
+						}else b.append(s[0]);
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(n.location.toPath(),b);
+					instructions.set(index,c);
+				}catch(IOException ex){throw new UncheckedIOException(ex);}
+			}
+			public void appendInstruction(Instruction c,NavigatorNode n){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(n.location.toPath()).split("\n")){
+						String[]s=l.split(" ",2);
+						b.append(s[0]);
+						if(s[1].equals(text))b.append('.').append(c.type.toChar()).append(c.text);
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(n.location.toPath(),b);
+					instructions.add(c);
+				}catch(IOException ex){throw new UncheckedIOException(ex);}
+			}
+			public void deleteLastInstruction(NavigatorNode n){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(n.location.toPath()).split("\n")){
+						String[]s=l.split(" ",2);
+						if(text.equals(s[1])){
+							String[]t=s[0].split("\\.");
+							for(int j=0;j<t.length-1;++j)b.append(t[j]);
+						}else b.append(s[0]);
+						if(!(b.isEmpty()||Character.isWhitespace(b.charAt(b.length()-1))))b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(n.location.toPath(),b);
+					instructions.removeLast();
+				}catch(IOException ex){throw new UncheckedIOException(ex);}
+			}
+		}
+		public ArrayList<HelpEntry>entries=new ArrayList<>();
+		public NavigatorNode(File file){
+			super(file);
+			try{
+				for(String l:Files.readString(file.toPath()).split("\n")){
+					String[]s=l.split(" ",2);
+					HelpEntry e=new HelpEntry(s[1]);
+					e.instructions.addAll(Stream.of(s[0].split("\\.")).map(t->new Instruction(t.substring(1),Instruction.Type.toType(t.charAt(0)))).toList());
+					entries.add(e);
+				}
+			}catch(IOException ex){throw new UncheckedIOException(ex);}
+		}
+		public void deleteEntry(String text){
+			HelpEntry e=entries.stream().filter(entry->entry.text.equals(text)).findAny().get();
+			try{
+				StringBuilder b=new StringBuilder();
+				for(String l:Files.readString(location.toPath()).split("\n")){
+					String[]s=l.split(" ",2);
+					if(!s[1].equals(e.text))b.append(s[0]).append(' ').append(s[1]).append('\n');
+				}
+				Files.writeString(location.toPath(),b);
+				entries.remove(e);
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
 	}
@@ -524,6 +647,8 @@ public class ProjectGraph{
 							}else if(m.group(2)!=null&&editablePattern.matcher(m.group(2)).find())nodes.add(new EditableNode(file.toFile()));
 							System.err.println("Parsed: "+m.group(1));
 						}
+					}else if(file.getFileName().toString().equals("helppath.cfg")){
+						nodes.add(new NavigatorNode(file.toFile()));
 					}
 					return FileVisitResult.CONTINUE;
 				}
@@ -542,16 +667,16 @@ public class ProjectGraph{
 				c.weighty=1;
 				c.gridheight=1;
 				JTextField name=new JTextField(p.name);
-				name.addActionListener(e->p.changeNameFor(name.getText(),n));
+				name.addActionListener(e->p.changeName(name.getText(),n));
 				name.addFocusListener(new FocusAdapter(){
-					public void focusLost(FocusEvent e){p.changeNameFor(name.getText(),n);}
+					public void focusLost(FocusEvent e){p.changeName(name.getText(),n);}
 				});
 				c.gridwidth=2;
 				c.weightx=0.5;
 				add(name,c);
 				JComboBox<PropertyType>type=new JComboBox<PropertyType>(PropertyType.values());
 				type.setSelectedItem(p.type);
-				type.addItemListener(e->{if(e.getStateChange()==ItemEvent.SELECTED)p.changeTypeFor((PropertyType)e.getItem(),n);});
+				type.addItemListener(e->{if(e.getStateChange()==ItemEvent.SELECTED)p.changeType((PropertyType)e.getItem(),n);});
 				c.gridx=2;
 				c.gridwidth=1;
 				c.weightx=0.25;
@@ -792,6 +917,88 @@ public class ProjectGraph{
 		rPanel.add(rButtons,BorderLayout.SOUTH);
 		tab.add(rPanel);
 	}
+	private void fillNavigatorTab(JPanel tab){
+		tab.setLayout(new GridLayout());
+		Optional<ProjectNode>nodeOptional=nodes.stream().filter(n->n instanceof NavigatorNode).findAny();
+		if(nodeOptional.isEmpty()){
+			//TODO: add "no helppath.cfg in this project" sign and a button to add it
+			return;
+		}
+		NavigatorNode n=(NavigatorNode)nodeOptional.get();
+		class I extends JPanel{
+			public I(int ind,HelpEntry entry){
+				setLayout(new GridLayout());
+				JTextField text=new JTextField(entry.instructions.get(ind).text);
+				text.addFocusListener(new FocusAdapter(){
+					public void focusLost(FocusEvent e){
+						Instruction c=entry.instructions.get(ind);
+						c.text=text.getText();
+						entry.replaceInstruction(c,ind,n);
+					}
+				});
+				add(text);
+				// JPanel buttons=new JPanel();
+				// add(buttons);
+			}
+		}
+		class E extends JPanel{
+			public E(HelpEntry entry){
+				setBorder(BorderFactory.createLineBorder(new Color(200,255,200),Root.SCREEN_SIZE.height/100));
+				setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
+				JPanel buttons=new JPanel();
+				JButton delete=new JButton();
+				delete.addActionListener(e->{
+					if(JOptionPane.showConfirmDialog(tab,"Удалить запись "+entry.text+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION)return;
+					n.deleteEntry(entry.text);
+					Container parent=getParent();
+					parent.remove(parent.getComponent(0));
+					((JComponent)parent).getTopLevelAncestor().revalidate();
+					System.out.println(((Container)parent.getComponent(0)).getComponentCount());
+				});
+				delete.setText("удалить");
+				delete.setBackground(Color.RED);
+				buttons.add(delete);
+				JButton delLast=new JButton();
+				delLast.addActionListener(e->{
+					if(JOptionPane.showConfirmDialog(tab,"Удалить последнюю инструкцию записи "+entry.text+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION)return;
+					entry.deleteLastInstruction(n);
+					remove(getComponentCount()-1);
+					revalidate();
+				});
+				delLast.setText("удалить последнюю инструкцию");
+				delLast.setBackground(new Color(100,0,0));
+				delLast.setForeground(Color.WHITE);
+				buttons.add(delLast);
+				add(buttons);
+				JButton add=new JButton();
+				add.addActionListener(e->{
+					String s=JOptionPane.showInputDialog("Введите текст инструкции");
+					int type=JOptionPane.showOptionDialog(tab,"Выберите тип инструкции","Выберите тип",JOptionPane.DEFAULT_OPTION,JOptionPane.QUESTION_MESSAGE,null,Instruction.Type.values(),Instruction.Type.TEXT);
+					if(s==null||type==JOptionPane.CLOSED_OPTION)return;
+					s=s.replace(' ','_').replace('.',';');
+					Instruction c=new Instruction(s,Instruction.Type.values()[type]);
+					entry.appendInstruction(c,n);
+					add(new I(entry.instructions.size()-1,entry),2);
+				});
+				add.setText("добавить инструкцию");
+				add.setBackground(Color.GREEN);
+				buttons.add(add);
+				add(buttons);
+				JTextField textArea=new JTextField(entry.text);
+				textArea.addFocusListener(new FocusAdapter(){
+					public void focusLost(FocusEvent e){if(!textArea.getText().trim().equals(entry.text))entry.changeText(textArea.getText().trim(),n);}
+				});
+				add(textArea);
+				JPanel instructions=new JPanel();
+				instructions.setLayout(new BoxLayout(instructions,BoxLayout.Y_AXIS));
+				for(int i=0;i<entry.instructions.size();++i)instructions.add(new I(i,entry));
+				add(new JScrollPane(instructions));
+			}
+		}
+		JPanel panel=new JPanel();
+		for(HelpEntry e:n.entries)panel.add(new E(e));
+		tab.add(SprintUI.createList(15,panel));
+	}
 	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties){
 		File file=new File(projectFolder,"com");
 		if(file.isDirectory())file=new File(Stream.of(file.listFiles()).filter(f->f.isDirectory()).findAny().get(),"editables/registered/"+name+".java");
@@ -818,7 +1025,10 @@ public class ProjectGraph{
 		f.setUndecorated(true);
 		f.setSize(Root.SCREEN_SIZE);
 		f.setLayout(null);
-		JButton analyze=new JButton("Анализировать ТЗ");
+		JPanel buttons=new JPanel();
+		buttons.setBounds(0,f.getHeight()*9/10,f.getWidth()/4,f.getHeight()/15);
+		buttons.setLayout(new BoxLayout(buttons,BoxLayout.Y_AXIS));
+		JButton analyze=new JButton("Анализ");
 		Wrapper<TaskAnalyzer>analyzer=new Wrapper<>(null);
 		analyze.addActionListener(e->{
 			if(analyzer.var==null){
@@ -829,10 +1039,19 @@ public class ProjectGraph{
 			}
 			analyzer.var.show();
 		});
-		analyze.setBounds(0,f.getHeight()*9/10,f.getWidth()/4,f.getHeight()/15);
 		analyze.setBackground(Color.DARK_GRAY);
 		analyze.setForeground(Color.WHITE);
-		f.add(analyze);
+		buttons.add(analyze);
+		JButton saveState=new JButton("Сохранить состояние");
+		saveState.addActionListener(e->{
+			if(new File(Root.folder+"Data.ser").exists())try{
+				new File(projectFolder+"/resources/initial/").mkdirs();
+				Files.copy(Path.of(Root.folder+"Data.ser"),Path.of(projectFolder+"/resources/initial/Data.ser"),StandardCopyOption.REPLACE_EXISTING);
+				Files.copy(Path.of(Root.folder+"Users.ser"),Path.of(projectFolder+"/resources/initial/Users.ser"),StandardCopyOption.REPLACE_EXISTING);
+			}catch(IOException ex){throw new UncheckedIOException(ex);}
+		});
+		buttons.add(saveState);
+		f.add(buttons);
 		JTabbedPane p=new JTabbedPane();
 		p.setSize(f.getWidth(),f.getHeight()*4/5);
 		JPanel objects=new JPanel();
@@ -851,6 +1070,14 @@ public class ProjectGraph{
 			}
 		});	
 		p.addTab("Доступ",access);
+		JPanel navigator=new JPanel();
+		navigator.addComponentListener(new ComponentAdapter(){
+			public void componentShown(ComponentEvent e){
+				navigator.removeAll();
+				fillNavigatorTab(navigator);
+			}
+		});	
+		p.addTab("Навигатор",navigator);
 		JPanel problems=new JPanel();
 		problems.setBackground(Color.BLACK);
 		JScrollPane sProblems=SprintUI.createList(10,problems);

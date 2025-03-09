@@ -9,9 +9,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.io.UncheckedIOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
@@ -64,7 +66,7 @@ public class User implements Serializable{
 		permissions.put(DefaultRole.EMPTY,new Permission[]{});
 		permissions.put(DefaultRole.ADMIN,registeredPermissions.toArray(new Permission[0]));
 	}
-	private static User user;
+	private static User currentUser;
 	public String login,password;
 	public Role role;
 	public int passTries,tries;
@@ -77,9 +79,20 @@ public class User implements Serializable{
 			ObjectInputStream oIS=new ObjectInputStream(fIS);
 			userMap=(HashMap<String,User>)oIS.readObject();
 			oIS.close();fIS.close();
-		}catch(FileNotFoundException ex){userMap=new HashMap<String,User>();}
-		catch(IOException ex){throw new RuntimeException(ex);}
-		catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Users corrupted");}
+		}catch(FileNotFoundException ex){
+			try{
+				InputStream is=Root.CL.getResourceAsStream("resources/initial/Users.ser");
+				if(is==null)is=Root.RCL.getResourceAsStream("resources/initial/Users.ser");
+				if(is==null)userMap=new HashMap<String,User>();
+				else{
+					ObjectInputStream oIS=new ObjectInputStream(is);
+					userMap=(HashMap<String,User>)oIS.readObject();
+					oIS.close();
+				}
+			}catch(IOException ex2){throw new UncheckedIOException(ex2);}
+			catch(ClassNotFoundException ex2){throw new IllegalStateException(ex2);}
+		}catch(IOException ex){throw new UncheckedIOException(ex);}
+		catch(ClassNotFoundException ex){throw new IllegalStateException("FATAL ERROR: Users corrupted");}
 		for(User u:userMap.values())if(u.lockTime!=null){
 			if(u.lockTime.until(LocalDateTime.now(),ChronoUnit.MINUTES)<5)System.exit(1);
 			else u.lockTime=null;
@@ -87,22 +100,22 @@ public class User implements Serializable{
 	}
 	public static User register(String login,String pass){
 		if(userMap==null)load();
-		user=new User(login,pass,userMap.isEmpty()?DefaultRole.ADMIN:DefaultRole.EMPTY);
-		userMap.put(login,user);
+		currentUser=new User(login,pass,userMap.isEmpty()?DefaultRole.ADMIN:DefaultRole.EMPTY);
+		userMap.put(login,currentUser);
 		save();
-		return user;
+		return currentUser;
 	}
 	public static User register(String login,String pass,Role role){
 		if(userMap==null)load();
-		user=new User(login,pass,userMap.isEmpty()?DefaultRole.ADMIN:DefaultRole.EMPTY);
-		user.role=role;
-		userMap.put(login,user);
+		currentUser=new User(login,pass,userMap.isEmpty()?DefaultRole.ADMIN:DefaultRole.EMPTY);
+		currentUser.role=role;
+		userMap.put(login,currentUser);
 		save();
-		return user;
+		return currentUser;
 	}
 	public static User getActiveUser(){
-		if(user==null)throw new RuntimeException("No user registered!");
-		return user;
+		if(currentUser==null)throw new RuntimeException("No user registered!");
+		return currentUser;
 	}
 	public static int getUserCount(){
 		if(userMap==null)load();
@@ -142,7 +155,7 @@ public class User implements Serializable{
 	public boolean login(String password){
 		if(password.equals(this.password)){
 			lockTime=null;
-			user=this;
+			currentUser=this;
 			history.addFirst(new Authorization(this));
 			passTries=0;tries=0;
 			Runtime.getRuntime().addShutdownHook(new Thread(){public void run(){logout();}});

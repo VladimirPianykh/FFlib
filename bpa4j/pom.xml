@@ -11,7 +11,7 @@
 	</scm>
 	<groupId>io.github.vladimirpianykh</groupId>
 	<artifactId>bpa4j</artifactId>
-	<version>1.0.11</version>
+	<version>1.0.16</version>
 	<packaging>jar</packaging>
 	<description>
 		A DI-based library for blazing-fast business-process automation applications development.
@@ -96,6 +96,11 @@
 	</properties>
 	<dependencies>
 		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.36</version>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
 			<version>3.0.3</version>
@@ -111,9 +116,9 @@
 			<version>3.8-beta4</version>
 		</dependency>
 		<dependency>
-			<groupId>com.toedter</groupId>
-			<artifactId>jcalendar</artifactId>
-			<version>1.2.2</version>
+			<groupId>com.github.lgooddatepicker</groupId>
+			<artifactId>LGoodDatePicker</artifactId>
+			<version>11.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchart</groupId>

@@ -1,6 +1,7 @@
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\features\Board.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\util\codegen\TaskAnalyzer.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\Wrapper.java
+C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\input\SelectFromEditor.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\ui\Switcher.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\util\codegen\ProjectGraph.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\ui\Message.java
@@ -26,6 +27,7 @@ C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\ft
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\features\EditableList.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\editor\modules\CustomerModule.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\ftr_attributes\data_renderers\ChartDataRenderer.java
+C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\ui\LazyPanel.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\features\DatedList.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\editables\Processable.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\table\DynamicCellRenderer.java
@@ -39,6 +41,7 @@ C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\editor\modu
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\editor\InfoProvider.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\editor\ModularEditor.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\editor\modules\ImageDisplayModule.java
+C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\SerializableFunction.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\core\Root.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\SerializableBooleanSupplier.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\input\EmptySaver.java
@@ -61,6 +64,7 @@ C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\util\ParseU
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\ftr_attributes\data_renderers\AnswerDataRenderer.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\HelpView.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\features\Calendar.java
+C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\editables\processable_attributes\ObjectCreationChecker.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\editor\Input.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\ftr_attributes\daters\EmptyDater.java
 C:\Users\user\Desktop\IT\Java\1C\BPA4j\bpa4j\src\main\java\com\bpa4j\defaults\table\FormCellEditor.java

@@ -4,6 +4,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.GradientPaint;
@@ -115,7 +116,7 @@ public class WorkFrame extends JFrame{
 		content.setBounds(0,getHeight()/4,getWidth(),getHeight()*3/4);
 		content.setOpaque(false);
 		add(content);
-		JPanel sidebar=new JPanel(null);
+		JPanel sidebar=new JPanel(new FlowLayout());
 		sidebar.setBackground(new Color(10,15,10));
 		JScrollPane s=new JScrollPane(sidebar,JScrollPane.VERTICAL_SCROLLBAR_NEVER,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		s.setBounds(0,0,getWidth(),getHeight()/4);
@@ -146,8 +147,9 @@ public class WorkFrame extends JFrame{
 		for(Feature f:ftrMap.get(user.role)){
 			WorkTabButton t=new WorkTabButton(f,content,sidebar.getComponentCount());
 			sidebar.add(t);
-			t.setBounds(sidebar.getComponentCount()*getHeight()/4,0,getHeight()/4,getHeight()/4);
+			t.setPreferredSize(new Dimension(s.getHeight(),s.getHeight()));
 		}
+		sidebar.setPreferredSize(new Dimension(s.getHeight()*(sidebar.getComponentCount()+1),s.getHeight()));
 		add(s);
 		setVisible(true);
 	}
