@@ -152,5 +152,19 @@
 			"}"
 		],
 		"description":""
+	},
+	"Creates a child of BLFeatureManager":{
+		"scope":"java",
+		"prefix":"_blf",
+		"body":[
+			"public class ${TM_FILENAME_BASE} extends BLFeatureManager<$1>{",
+				"\tpublic final ${TM_FILENAME_BASE} instance=new ${TM_FILENAME_BASE}();",
+				"\tpublic $1 register(){",
+					"\t\t$1 f=$2.register$0;",
+					"\t\treturn f;",
+				"\t}",
+			"}"
+		],
+		"description":""
 	}
 }

@@ -1,5 +1,6 @@
 package com.bpa4j.defaults.features;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -83,7 +84,7 @@ public final class ItemList<T extends Serializable>implements Feature{
 			out.defaultWriteObject();
 		}
 	};
-	private transient ArrayList<Consumer<JList<T>>>tableDecorators;
+	private transient ArrayList<Consumer<JList<T>>>listDecorators;
 	private transient Sorter<T>sorter;
 	private transient Filter<T>filter;
 	private transient Supplier<ArrayList<T>>elementSupplier;
@@ -118,8 +119,8 @@ public final class ItemList<T extends Serializable>implements Feature{
 	 * @param decorator - table decorator to be used
 	 */
 	public ItemList<T>addListDecorator(Consumer<JList<T>>decorator){
-		if(tableDecorators==null)tableDecorators=new ArrayList<>();
-		tableDecorators.add(decorator);
+		if(listDecorators==null)listDecorators=new ArrayList<>();
+		listDecorators.add(decorator);
 		return this;
 	}
 	/**
@@ -224,12 +225,15 @@ public final class ItemList<T extends Serializable>implements Feature{
 		fillTable(m);
 		sPane.setPreferredSize(new Dimension(tab.getWidth(),config==null?tab.getHeight():tab.getHeight()*8/9));
 		t.setModel(m);
-		if(tableDecorators!=null)for(Consumer<JList<T>>c:tableDecorators)c.accept(t);
+		if(listDecorators!=null)for(Consumer<JList<T>>c:listDecorators)c.accept(t);
 		tab.add(sPane,BorderLayout.SOUTH);
 		if(config!=null)tab.add(config,BorderLayout.NORTH);
 	}
 	public void paint(Graphics2D g2,BufferedImage image,int s){
-		//TODO: paint ItemList icon
+		g2.setStroke(new BasicStroke(s/40));
+		g2.drawLine(s/6,s/4,s*5/6,s/4);
+		g2.drawLine(s/6,s/2,s/2,s/2);
+		g2.drawLine(s/6,s*3/4,s*2/3,s*3/4);
 	}
 	public String toString(){return name;}
 }

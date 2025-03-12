@@ -1,6 +1,5 @@
 package com.bpa4j;
 
-import java.io.File;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -49,7 +48,6 @@ import com.bpa4j.editor.modules.LogWatchModule;
 import com.bpa4j.editor.modules.StageApprovalModule;
 import com.bpa4j.ui.PathIcon;
 import com.bpa4j.util.TestGen;
-import com.bpa4j.util.codegen.ProjectGraph;
 
 public final class FullTester{
 	public static class MyEditable5 extends Editable{

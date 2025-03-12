@@ -39,7 +39,10 @@ public class Report implements Feature{
 	public Report addDataRenderer(Supplier<JComponent>dataRenderer){dataRenderers.add(dataRenderer);return this;}
 	/**
 	 * <p>Adds a configurator to this report.</p>
-	 * <p>The configurator is a {@link Function} which takes a saver as input and returns a {@link JComponent}. The component is added to the top of the tab.</p>
+	 * <p>
+	 *   The configurator is a {@link Function} which takes a saver as input and returns a {@link JComponent}.
+	 *   The component is added to the top of the tab.
+	 * </p>
 	 */
 	public Report addConfigurator(Function<Runnable,JComponent>configurator){configurators.add(configurator);return this;}
 	public void paint(Graphics2D g2,BufferedImage image,int h){

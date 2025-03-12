@@ -75,11 +75,11 @@ public class EditableList<T extends Editable>implements Feature{
 			return editable;
 		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
 	}
-	public void paint(Graphics2D g2,BufferedImage image,int h){
-		g2.setStroke(new BasicStroke(h/40));
-		g2.drawLine(h/6,h/4,h*5/6,h/4);
-		g2.drawLine(h/6,h/2,h/2,h/2);
-		g2.drawLine(h/6,h*3/4,h*2/3,h*3/4);
+	public void paint(Graphics2D g2,BufferedImage image,int s){
+		g2.setStroke(new BasicStroke(s/40));
+		g2.drawLine(s/6,s/4,s*5/6,s/4);
+		g2.drawLine(s/6,s/2,s/2,s/2);
+		g2.drawLine(s/6,s*3/4,s*2/3,s*3/4);
 	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
 		EditableGroup<T>group=(EditableGroup<T>)Data.getInstance().getGroup(type);

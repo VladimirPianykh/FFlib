@@ -17,6 +17,10 @@ import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.editor.EditorEntryBase;
 
+/**
+ * An editor for multiple selection.
+ * Works only with {@link Selectable}.
+ */
 public class SelectionListEditor implements EditorEntryBase{
 	public JComponent createEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo){
 		if(f.getType()!=Selectable.class)throw new IllegalArgumentException("The field must have type Selectable<?>, but the actual type is "+f.getType()+".");
