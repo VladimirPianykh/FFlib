@@ -134,7 +134,7 @@ public final class Data implements Serializable{
 	public HashMap<String,HashMap<String,? extends Feature>>ftrInstances=new HashMap<>();
 	public static Data getInstance(){
 		if(instance==null)try{
-			FileInputStream is=new FileInputStream(Root.folder+"Data.ser");
+			FileInputStream is=new FileInputStream(Root.folder+"Data.ser"+ProgramStarter.version);
 			ObjectInputStream oIS=new ObjectInputStream(is);
 			instance=(Data)oIS.readObject();
 			oIS.close();
@@ -160,10 +160,10 @@ public final class Data implements Serializable{
 			};
 			try{
 				Files.walkFileTree(Path.of(Root.folder),del);
-			}catch(IOException exception){throw new RuntimeException(exception);}
+			}catch(IOException ex2){throw new UncheckedIOException(ex2);}
 			new Message("Обнаружено устаревшее сохранение. Удалите его и перезапустите программу.",Color.RED);
 			Runtime.getRuntime().halt(1);
-		}catch(ClassNotFoundException ex){throw new RuntimeException("FATAL ERROR: Data corrupted");}
+		}catch(ClassNotFoundException ex){throw new IllegalStateException("FATAL ERROR: Data corrupted",ex);}
 		return instance;
 	}
 	/**
@@ -171,7 +171,7 @@ public final class Data implements Serializable{
 	 */
 	public static void save(){
 		try{
-			FileOutputStream fOS=new FileOutputStream(Root.folder+"Data.ser");
+			FileOutputStream fOS=new FileOutputStream(Root.folder+"Data.ser"+ProgramStarter.version);
 			ObjectOutputStream oOS=new ObjectOutputStream(fOS);
 			oOS.writeObject(instance);
 			oOS.close();fOS.close();
@@ -187,6 +187,7 @@ public final class Data implements Serializable{
 		for(EditableGroup<?>group:editables)if(group.type.equals(type))return(EditableGroup<T>)group;
 		throw new IllegalArgumentException("There is no group of type "+type.getName());
 	}
+	public static synchronized<T extends Editable>EditableGroup<T>group(Class<T>type){return instance.getGroup(type);}
 	@SuppressWarnings("unchecked")
 	public <T extends Feature>HashMap<String,T>getFtrInstances(Class<T>type){
 		return(HashMap<String,T>)ftrInstances.get(type.getName());

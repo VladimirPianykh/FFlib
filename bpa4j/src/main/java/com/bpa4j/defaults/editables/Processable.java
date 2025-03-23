@@ -29,11 +29,14 @@ public abstract class Processable extends Editable{
 	public Processable(String name,Stage...stages){super(name);this.stages=stages.clone();}
 	public Stage getStage(){return stages[currentStage];}
 	public boolean isLastStage(){return currentStage==stages.length-1;}
-	public void approve(String comment){
+	public boolean approve(String comment){
 		if(isLastStage())throw new IllegalStateException("Cannot approve an object with the last stage.");
-		records.add(new ActionRecord('+'+getStage().name,User.getActiveUser()));
-		++currentStage;
-		if(!comment.isBlank())records.add(new ActionRecord('>'+User.getActiveUser().login+':'+comment,User.getActiveUser()));
+		if(getStage().checker==null||getStage().checker.apply(this)){
+			records.add(new ActionRecord('+'+getStage().name,User.getActiveUser()));
+			++currentStage;
+			if(!comment.isBlank())records.add(new ActionRecord('>'+User.getActiveUser().login+':'+comment,User.getActiveUser()));
+			return true;
+		}else return false;
 	}
 	public void reject(String comment){
 		currentStage=getStage().rejectionIndex;

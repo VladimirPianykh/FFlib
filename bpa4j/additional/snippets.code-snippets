@@ -15,7 +15,7 @@
 			"Navigator.init();",
 			"ProgramStarter.welcomeMessage=\"$1\";",
 			"ProgramStarter.authRequired=${2|false,true|};",
-			"if(ProgramStarter.isFirstLaunch()){",
+			"if(ProgramStarter.firstLaunch){",
 				"\t//Регистрация пользователей",
 				"\t$0",
 				"\t//Декларация групп",
@@ -148,6 +148,20 @@
 			"public static class Verifier implements com.bpa4j.editor.Verifier{",
 				"\tpublic String verify(Editable original,Editable editable,boolean isNew){",
 					"\t\t$0",
+				"\t}",
+			"}"
+		],
+		"description":""
+	},
+	"Creates a child of BLFeatureManager":{
+		"scope":"java",
+		"prefix":"_blf",
+		"body":[
+			"public class ${TM_FILENAME_BASE} extends BLFeatureManager<$1>{",
+				"\tpublic static final ${TM_FILENAME_BASE} instance=new ${TM_FILENAME_BASE}();",
+				"\tpublic $1 register(){",
+					"\t\t$1 f=$2.register$0;",
+					"\t\treturn f;",
 				"\t}",
 			"}"
 		],

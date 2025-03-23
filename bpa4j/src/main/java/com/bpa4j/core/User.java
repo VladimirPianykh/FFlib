@@ -75,7 +75,7 @@ public class User implements Serializable{
 	@SuppressWarnings("unchecked")
 	private static void load(){
 		try{
-			FileInputStream fIS=new FileInputStream(Root.folder+"Users.ser");
+			FileInputStream fIS=new FileInputStream(Root.folder+"Users.ser"+ProgramStarter.version);
 			ObjectInputStream oIS=new ObjectInputStream(fIS);
 			userMap=(HashMap<String,User>)oIS.readObject();
 			oIS.close();fIS.close();
@@ -137,7 +137,7 @@ public class User implements Serializable{
 	public static void save(){
 		try{
 			new File(Root.folder).mkdirs();
-			FileOutputStream fOS=new FileOutputStream(Root.folder+"Users.ser");
+			FileOutputStream fOS=new FileOutputStream(Root.folder+"Users.ser"+ProgramStarter.version);
 			ObjectOutputStream oOS=new ObjectOutputStream(fOS);
 			oOS.writeObject(User.userMap);
 			oOS.close();fOS.close();

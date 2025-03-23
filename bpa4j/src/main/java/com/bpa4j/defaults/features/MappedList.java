@@ -35,15 +35,15 @@ import com.bpa4j.defaults.table.FormCellEditor;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.ui.HButton;
 
-@SuppressWarnings("unchecked")
-public class MappedList<T extends Editable,V extends Serializable>implements Feature{
+@SuppressWarnings({"unchecked","PMD.ReplaceVectorWithList"})
+public final class MappedList<T extends Editable,V extends Serializable>implements Feature{
 	static{
 		if(!Data.getInstance().ftrInstances.containsKey(MappedList.class.getName()))Data.getInstance().ftrInstances.put(MappedList.class.getName(),new HashMap<>());
 	}
-	private Class<T>type;
-	private Class<V>vType;
-	private String name;
-	private HashMap<T,V>objects=new HashMap<>();
+	private final Class<T>type;
+	private final Class<V>vType;
+	private final String name;
+	public final HashMap<T,V>objects=new HashMap<>();
 	private MappedList(String name,EditableGroup<T>group,Class<V>vType){this.name=name;this.type=group.type;this.vType=vType;}
 	public static<T extends Editable,V extends Serializable>MappedList<T,V>getList(String name){
 		if(((HashMap<String,MappedList<T,V>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).containsKey(name))return ((HashMap<String,MappedList<T,V>>)Data.getInstance().ftrInstances.get(MappedList.class.getName())).get(name);
@@ -71,22 +71,14 @@ public class MappedList<T extends Editable,V extends Serializable>implements Fea
 		try{
 			if(!objects.containsKey(t))objects.put(t,vType.getDeclaredConstructor(type).newInstance(t));
 			return objects.get(t);
-		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
+		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 	}
 	public T createObject(){
 		try{
 			T t=type.getDeclaredConstructor().newInstance();
 			Data.getInstance().getGroup(type).add(t);
 			return t;
-		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
-	}
-	public void paint(Graphics2D g2,BufferedImage image,int h){
-		g2.setStroke(new BasicStroke(h/20));
-		g2.drawRoundRect(h/10,h/10,h*4/5,h*4/5,h/10,h/10);
-		g2.setClip(new RoundRectangle2D.Double(h/10,h/10,h*4/5,h*4/5,h/10,h/10));
-		g2.setStroke(new BasicStroke(h/50));
-		for(int x=h/10;x<h*9/10;x+=h/10)g2.drawLine(x,h/10,x,h*9/10);
-		for(int y=h/10;y<h*9/10;y+=h/10)g2.drawLine(h/10,y,h*9/10,y);
+		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
 		tab.setLayout(new BorderLayout());
@@ -165,6 +157,14 @@ public class MappedList<T extends Editable,V extends Serializable>implements Fea
 		tab.add(add,BorderLayout.SOUTH);
 		tab.add(s,BorderLayout.NORTH);
 		tab.revalidate();
+	}
+	public void paint(Graphics2D g2,BufferedImage image,int h){
+		g2.setStroke(new BasicStroke(h/20));
+		g2.drawRoundRect(h/10,h/10,h*4/5,h*4/5,h/10,h/10);
+		g2.setClip(new RoundRectangle2D.Double(h/10,h/10,h*4/5,h*4/5,h/10,h/10));
+		g2.setStroke(new BasicStroke(h/50));
+		for(int x=h/10;x<h*9/10;x+=h/10)g2.drawLine(x,h/10,x,h*9/10);
+		for(int y=h/10;y<h*9/10;y+=h/10)g2.drawLine(h/10,y,h*9/10,y);
 	}
 	public String toString(){return name;}
 }

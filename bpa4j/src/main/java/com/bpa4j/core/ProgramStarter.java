@@ -14,6 +14,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
 
 import javax.swing.AbstractAction;
@@ -30,6 +33,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import com.bpa4j.ui.Switcher;
+import com.bpa4j.core.Data.Editable;
 import com.bpa4j.editor.IEditor;
 import com.bpa4j.editor.ModularEditor;
 import com.bpa4j.ui.HButton;
@@ -46,12 +50,19 @@ import com.bpa4j.ui.Message;
  * 	  <li>{@code welcomeMessage}</li>
  * 	</ul>
  */
+
 public final class ProgramStarter{
-	private static boolean firstLaunch;
+	public static final boolean firstLaunch;
+	public static final String version;
 	static{
-		URL is=Root.CL.getResource("resources/initial/Data.ser");
-		if(is==null)is=Root.RCL.getResource("resources/initial/Data.ser");
-		firstLaunch=(!new File(Root.folder).exists()&&is==null);
+		URL url=Root.CL.getResource("resources/initial/Data.ser");
+		if(url==null)url=Root.RCL.getResource("resources/initial/Data.ser");
+		InputStream is=Root.CL.getResourceAsStream("resources/version.txt");
+		if(is==null)is=Root.RCL.getResourceAsStream("resources/version.txt");
+		try{
+			version=is==null?"":new String(is.readAllBytes());
+		}catch(IOException ex){throw new UncheckedIOException(ex);}
+		firstLaunch=(!new File(Root.folder+"Data.ser"+version).exists()&&url==null);
 	}
 	public static WorkFrame frame;
 	public static IEditor editor=new ModularEditor();
@@ -61,12 +72,13 @@ public final class ProgramStarter{
 	 */
 	public static boolean authRequired=true;
 	private ProgramStarter(){}
-	public static boolean isFirstLaunch(){return firstLaunch;}
+	public static void constructEditor(Editable editable,boolean isNew){constructEditor(editable,isNew,null);}
+	public static void constructEditor(Editable editable,boolean isNew,Runnable deleter){editor.constructEditor(editable,isNew,deleter);}
 	public static void runProgram(){
 		new File(Root.folder).mkdirs();
 		try{
 			UIManager.setLookAndFeel(new NimbusLookAndFeel());
-		}catch(UnsupportedLookAndFeelException ex){throw new AssertionError("The BPALookAndFeel must be supported.",ex);}
+		}catch(UnsupportedLookAndFeelException ex){throw new IllegalStateException(ex);}
 		ToolTipManager.sharedInstance().setInitialDelay(0);
 		Dimension d=Root.SCREEN_SIZE;
 		Color[]c1={new Color(114,130,46),new Color(79,79,29)},c2={new Color(102,102,77),new Color(69,63,48)};

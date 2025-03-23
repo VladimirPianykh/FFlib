@@ -59,6 +59,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import com.bpa4j.Wrapper;
+import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Root;
 import com.bpa4j.ui.Message;
 import com.bpa4j.util.ParseUtils;
@@ -582,13 +583,22 @@ public class ProjectGraph{
 		public NavigatorNode(File file){
 			super(file);
 			try{
-				for(String l:Files.readString(file.toPath()).split("\n")){
+				String str=Files.readString(file.toPath());
+				if(str.isBlank())return;
+				for(String l:str.split("\n")){
 					String[]s=l.split(" ",2);
 					HelpEntry e=new HelpEntry(s[1]);
 					e.instructions.addAll(Stream.of(s[0].split("\\.")).map(t->new Instruction(t.substring(1),Instruction.Type.toType(t.charAt(0)))).toList());
 					entries.add(e);
 				}
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
+		}
+		/**
+		 * Creates a new NavigatorNode.
+		 */
+		public NavigatorNode(ProjectGraph project){
+			super(new File(project.projectFolder,"resources/helppath.cfg"));
+			try{location.createNewFile();}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
 		public void deleteEntry(String text){
 			HelpEntry e=entries.stream().filter(entry->entry.text.equals(text)).findAny().get();
@@ -922,6 +932,16 @@ public class ProjectGraph{
 		Optional<ProjectNode>nodeOptional=nodes.stream().filter(n->n instanceof NavigatorNode).findAny();
 		if(nodeOptional.isEmpty()){
 			//TODO: add "no helppath.cfg in this project" sign and a button to add it
+			tab.setLayout(new GridLayout(2,1));
+			tab.add(new JLabel("helppath.cfg отсутствует в проекте."));
+			JButton add=new JButton();
+			add.addActionListener(e->{
+				tab.removeAll();
+				nodes.add(new NavigatorNode(projectFolder));
+				fillNavigatorTab(tab);
+				tab.revalidate();
+			});
+			tab.add(add);
 			return;
 		}
 		NavigatorNode n=(NavigatorNode)nodeOptional.get();
@@ -1044,10 +1064,10 @@ public class ProjectGraph{
 		buttons.add(analyze);
 		JButton saveState=new JButton("Сохранить состояние");
 		saveState.addActionListener(e->{
-			if(new File(Root.folder+"Data.ser").exists())try{
+			if(new File(Root.folder+"Data.ser"+ProgramStarter.version).exists())try{
 				new File(projectFolder+"/resources/initial/").mkdirs();
-				Files.copy(Path.of(Root.folder+"Data.ser"),Path.of(projectFolder+"/resources/initial/Data.ser"),StandardCopyOption.REPLACE_EXISTING);
-				Files.copy(Path.of(Root.folder+"Users.ser"),Path.of(projectFolder+"/resources/initial/Users.ser"),StandardCopyOption.REPLACE_EXISTING);
+				Files.copy(Path.of(Root.folder+"Data.ser"+ProgramStarter.version),Path.of(projectFolder+"/resources/initial/Data.ser"),StandardCopyOption.REPLACE_EXISTING);
+				Files.copy(Path.of(Root.folder+"Users.ser"+ProgramStarter.version),Path.of(projectFolder+"/resources/initial/Users.ser"),StandardCopyOption.REPLACE_EXISTING);
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		});
 		buttons.add(saveState);

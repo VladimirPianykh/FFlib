@@ -24,10 +24,10 @@ import com.bpa4j.defaults.features.Calendar.Event;
 import com.bpa4j.editor.EditorEntry;
 
 /**
- * A {@link Dater} that creates a drop down list with all events, if present.
+ * A {@link Dater} that creates a dropdown list with all events (if present).
  */
 public class EventDater<T extends Calendar.Event>implements Dater<List<T>>{
-	private Function<Event,JComponent>provider;
+	private final Function<Event,JComponent>provider;
 	/**
 	 * Constructs a new {@code EventDater} with the component provider given.
 	 * Component provider is a function that accepts {@code T} and returns a {@link JComponent}
@@ -66,7 +66,7 @@ public class EventDater<T extends Calendar.Event>implements Dater<List<T>>{
 		DefaultListModel<String>m=new DefaultListModel<>();
 		m.addAll(Stream.<Field>of(t.getClass().getFields()).filter(f->f.isAnnotationPresent(EditorEntry.class)).map(f->{
 			try{
-				return f.getAnnotation(EditorEntry.class).translation()+": "+String.valueOf(f.get(t));
+				return f.getAnnotation(EditorEntry.class).translation()+": "+f.get(t);
 			}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
 		}).toList());
 		JList<String>p=new JList<>(m);

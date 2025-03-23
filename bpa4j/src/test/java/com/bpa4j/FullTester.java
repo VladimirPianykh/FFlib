@@ -180,7 +180,7 @@ public final class FullTester{
 			new LimitToModule(new CustomerModule(),MyCustomer.class),
 			new ExcludeModule(new FormModule(),MyProcessable.class,MyCustomer.class)
 		);
-		if(ProgramStarter.isFirstLaunch()){
+		if(ProgramStarter.firstLaunch){
 			User.register("Пользователь 1","",AppRole.MYROLE);
 			EditableGroup<MyProcessable>myProcessables=new EditableGroup<>(
 				new PathIcon("ui/left.png",Root.SCREEN_SIZE.height/11,Root.SCREEN_SIZE.height/11),

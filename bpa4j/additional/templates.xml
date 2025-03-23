@@ -1,0 +1,36 @@
+<template name="edverifier" value="public static class Verifier implements com.bpa4j.editor.Verifier {&#10;    public String verify(Editable original, Editable editable, boolean isNew) {&#10;        $0$&#10;    }&#10;}" toReformat="false" toShortenFQNames="true">
+    <variable name="0" expression="" defaultValue="" alwaysStopAt="true" />
+</template>
+<template name="edstartapp" value="Navigator.init();&#10;ProgramStarter.welcomeMessage=&quot;$1$&quot;;&#10;ProgramStarter.authRequired=false};&#10;if(ProgramStarter.firstLaunch){&#10;    //Регистрация пользователей&#10;    $users$&#10;    //Декларация групп&#10;    &#10;    ProgramStarter.runProgram();&#10;    //Регистрация групп&#10;    &#10;    //Тестовые данные&#10;    &#10;}else ProgramStarter.runProgram();" toReformat="false" toShortenFQNames="true">
+<variable name="1" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="users" expression="" defaultValue="" alwaysStopAt="true" />
+</template>
+<template name="edmodule" value="public class $1$ implements EditorModule {&#10;    public JPanel createTab(JDialog editor, Editable editable, boolean isNew, Runnable deleter) {&#10;        JPanel tab = new JPanel();&#10;        return tab;&#10;    }&#10;}&#10;" toReformat="false" toShortenFQNames="true">
+<variable name="1" expression="" defaultValue="" alwaysStopAt="true" />
+</template>
+<template name="editable" value="public class $CLASS_NAME$ extends Editable{&#10;    public $CLASS_NAME$(){&#10;        super(&quot;Новый $1$&quot;);&#10;    }&#10;}" toReformat="false" toShortenFQNames="true">
+<variable name="CLASS_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="1" expression="" defaultValue="" alwaysStopAt="true" />
+</template>
+<template name="edgroup" value="EditableGroup&lt;$1$&gt; group = new EditableGroup&lt;&gt;(&#10;    new PathIcon(&quot;ui/$3$.png&quot;, Root.SCREEN_SIZE.height / 11, Root.SCREEN_SIZE.height / 11),&#10;    new PathIcon(&quot;ui/$4$.png&quot;, Root.SCREEN_SIZE.height / 11, Root.SCREEN_SIZE.height / 11),&#10;    $1$.class&#10;);" toReformat="false" toShortenFQNames="true">
+<variable name="1" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="3" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="4" expression="" defaultValue="" alwaysStopAt="true" />
+</template>
+<template name="edenum" value="public static enum $1$ {&#10;    private String translation;&#10;    private $1$(String translation) {&#10;        this.translation = translation;&#10;    }&#10;    public String toString() {&#10;        return translation;&#10;    }&#10;}" toReformat="false" toShortenFQNames="true">
+<variable name="1" expression="" defaultValue="" alwaysStopAt="true" />
+</template>
+<template name="edentry" value="@EditorEntry(translation=&quot;$tran$&quot;)&#10;public $type$ $name$;" toReformat="false" toShortenFQNames="true">
+<variable name="tran" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="type" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="name" expression="" defaultValue="" alwaysStopAt="true" />
+</template>
+<template name="edblfeature" value="import com.bpa4j.core.BLFeatureManager;&#10;import com.bpa4j.defaults.features.DisposableDocument;&#10;import com.ntoproject.editables.registered.MembershipSell;&#10;&#10;public class $NAME$ extends BLFeatureManager&lt;$REP$&lt;$T$&gt;&gt; {&#10;    public static final $NAME$ instance = new $NAME$();&#10;&#10;    public $REP$&lt;$T$&gt; register(){&#10;        $REP$&lt;$T$&gt;f = $REP$.registerDocument(&quot;desc&quot;,$T$.class);&#10;        //настройка&#10;        return f;&#10;    }&#10;}&#10;" toReformat="false" toShortenFQNames="true">
+<variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="REP" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="T" expression="" defaultValue="" alwaysStopAt="true" />
+</template>
+<template name="edapproles" value="public enum AppRole implements Role{&#10;    $1$(&#10;        ()-&gt;new Permission[]{},&#10;        ()-&gt;new Feature[]{}&#10;    );&#10;    private AppRole(Supplier&lt;Permission[]&gt; p, Supplier&lt;Feature[]&gt; f) {&#10;        SwingUtilities.invokeLater(() -&gt; Registrator.register(this, f.get(), p.get()));&#10;    }&#10;}&#10;&#10;public enum AppPermission implements Permission{&#10;    $2$;&#10;    private AppPermission() {&#10;        Registrator.register(this);&#10;    }&#10;}&#10;" toReformat="false" toShortenFQNames="true">
+<variable name="1" expression="" defaultValue="" alwaysStopAt="true" />
+<variable name="2" expression="" defaultValue="" alwaysStopAt="true" />
+</template>

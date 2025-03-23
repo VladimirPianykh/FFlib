@@ -42,9 +42,9 @@ public final class DatedList<T extends Editable>implements Feature{
 	static{
 		if(!Data.getInstance().ftrInstances.containsKey(DatedList.class.getName()))Data.getInstance().ftrInstances.put(DatedList.class.getName(),new HashMap<>());
 	}
-	private Class<T>type;
-	private String name;
-	private HashMap<T,Dater<T>>objects=new HashMap<>();
+	private final Class<T>type;
+	private final String name;
+	private final HashMap<T,Dater<T>>objects=new HashMap<>();
 	private transient Supplier<Dater<T>>dateProvider;
 	private DatedList(String name,Class<T>type){this.name=name;this.type=type;}
 	public static<T extends Editable>DatedList<T>getList(String name){
@@ -122,13 +122,13 @@ public final class DatedList<T extends Editable>implements Feature{
 				public void popupMenuWillBecomeInvisible(PopupMenuEvent e){
 					try{
 						for(int i=0;i<fields.length;++i)fields[i].set(t,savers.get(i).get());
-					}catch(IllegalAccessException ex){throw new RuntimeException(ex);}
+					}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
 				}
 				public void popupMenuCanceled(PopupMenuEvent e){}
 			});
 			p.add(params);
-		}catch(IllegalAccessException ex){throw new RuntimeException("The class with editable fields cannot be anonimous. These fields must be public.",ex);}
-		catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
+		}catch(IllegalAccessException ex){throw new IllegalStateException("The class with editable fields cannot be anonimous. These fields must be public.",ex);}
+		catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 		return p;
 	}
 	/**
@@ -148,7 +148,7 @@ public final class DatedList<T extends Editable>implements Feature{
 			T object=type.getDeclaredConstructor().newInstance();
 			objects.put(object,null);
 			return object;
-		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
+		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 	}
 	public void paint(Graphics2D g2,BufferedImage image,int h){
 		g2.setStroke(new BasicStroke(h/20));
