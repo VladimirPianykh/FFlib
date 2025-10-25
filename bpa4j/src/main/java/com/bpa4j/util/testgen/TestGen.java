@@ -1,4 +1,4 @@
-package com.bpa4j.util;
+package com.bpa4j.util.testgen;
 
 import java.lang.reflect.Field;
 import com.bpa4j.core.Data;
@@ -15,7 +15,15 @@ import com.bpa4j.editor.Verifier;
  */
 public final class TestGen{
 	private TestGen(){}
-	public static String[]names={"Алиса","Вася","Саша","Петя","Лена","Женя","Коля","Гена","Полина","Лёша"};
+	public static String[]names={
+		"Алиса", "Боря", "Дима", "Оля", "Егор", "Таня", "Витя", "Костя", "Юля", "Стас", "Галя",
+		"Марк", "Настя", "Федя", "Ира", "Мила", "Сева", "Лера", "Паша", "Лёва", "Ника",
+		"Тим", "Рита", "Жора", "Аня", "Вика", "Гоша", "Рома", "Сава", "Зоя", "Яна",
+		"Макс", "Лиза", "Рената", "Саша", "Катя", "Варя", "Гена", "Нина", "Арс", "Алла",
+		"Илья", "Вова", "Соня", "Лёша", "Женя", "Петя", "Олег", "Юра", "Маша",
+		"Лена", "Даша", "Толя", "Надя", "Лика", "Тима", "Кира", "Глеб", "Миша",
+		"Люба", "Вера", "Аркаша", "Мария", "Семен", "Света", "Ваня", "Ярик", "Филя"
+	};
 	/**
 	 * Generates objects for the given groups randomly.
 	 * <p>Groups are processed in the order of passing.</p>

@@ -12,6 +12,9 @@ import com.bpa4j.core.EditableDemo;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.modules.FormModule;
 
+/**
+ * An editor that displays the function/supplier return value
+ */
 public class FunctionEditor implements EditorEntryBase{
 	@SuppressWarnings({"rawtypes","unchecked"})
 	public JComponent createEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo){
@@ -20,7 +23,9 @@ public class FunctionEditor implements EditorEntryBase{
 			public String getText(){
 				try{
 					if(demo.var==null)return "Ошибка!";
-					return String.valueOf(((Function)f.get(o)).apply(demo.var.get()));
+					return f.get(o)instanceof Function
+						?String.valueOf(((Function)f.get(o)).apply(demo.var.get()))
+						:String.valueOf(((Supplier)f.get(o)).get());
 				}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
 			}
 		},null);

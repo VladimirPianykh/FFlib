@@ -24,6 +24,10 @@ import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.Data.Editable.ActionRecord;
 import com.bpa4j.ui.HButton;
 
+/**
+ * A module to watch logs stored in the {@code records} field.
+ * Is used when task explicitly asks to implement log viewing.
+ */
 public class LogWatchModule implements EditorModule{
     public JPanel createTab(JDialog editor,Editable editable,boolean isNew,Runnable deleter){
 		JPanel tab=new JPanel(null);

@@ -153,7 +153,44 @@
 		],
 		"description":""
 	},
-	"Creates a child of BLFeatureManager":{
+	"Create Completer nested subclass":{
+		"scope":"java",
+		"prefix":"_completer",
+		"body":[
+			"public static class Completer implements com.bpa4j.editor.Completer{",
+				"\tpublic boolean isCompletable(Editable editable,int fieldsEdited){",
+					"\t\t${1:return true;}",
+				"\t}",
+				"\tpublic void completeObject(Editable editable){$0}",
+			"}"
+		],
+		"description":""
+	},
+	"Create NameProvider nested subclass":{
+		"scope":"java",
+		"prefix":"_nameProvider",
+		"body":[
+			"public class NameProvider implements com.bpa4j.editor.NameProvider{",
+				"\tpublic String provideName(Editable editable){",
+					"\t\t${0:return editable.name;}",
+				"\t}",
+			"}"
+		],
+		"description":""
+	},
+	"Create InfoProvider nested subclass":{
+		"scope":"java",
+		"prefix":"_infoProvider",
+		"body":[
+			"public class InfoProvider implements com.bpa4j.editor.InfoProvider{",
+				"\tpublic JComponent provideInfo(Editable original,EditableDemo editable){",
+					"\t\t${0:return new JLabel(\"Нет данных\");}",
+				"\t}",
+			"}"
+		],
+		"description":""
+	},
+	"Create BLFeatureManager subclass":{
 		"scope":"java",
 		"prefix":"_blf",
 		"body":[

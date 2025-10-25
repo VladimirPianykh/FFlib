@@ -96,6 +96,11 @@
 	</properties>
 	<dependencies>
 		<dependency>
+			<groupId>com.formdev</groupId>
+			<artifactId>flatlaf</artifactId>
+			<version>3.5.4</version>
+		</dependency>
+		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>1.18.36</version>
@@ -130,6 +135,11 @@
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>5.10.2</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.javaparser</groupId>
+			<artifactId>javaparser-core</artifactId>
+			<version>3.25.7</version>
 		</dependency>
 	</dependencies>
 </project>

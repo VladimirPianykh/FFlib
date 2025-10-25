@@ -35,11 +35,13 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 import com.bpa4j.core.Root;
 import com.bpa4j.ui.Message;
-import com.bpa4j.util.codegen.ProjectGraph.EditableNode;
-import com.bpa4j.util.codegen.ProjectGraph.ProjectNode;
-import com.bpa4j.util.codegen.ProjectGraph.EditableNode.Property;
-import com.bpa4j.util.codegen.ProjectGraph.EditableNode.Property.PropertyType;
+import com.bpa4j.util.codegen.EditableNode.Property;
+import com.bpa4j.util.codegen.EditableNode.Property.PropertyType;
 
+/**
+ * An effort towards parsing the task itself.
+ * Very bad idea.
+ */
 public class TaskAnalyzer{
 	public static interface AnalysisResult{
 		public boolean checkCompletion(ProjectGraph project);
@@ -147,7 +149,8 @@ public class TaskAnalyzer{
 		if(type==null)for(String t:new String[]{"дробн","веществен","числ"})if(lc.contains(t))type=PropertyType.DOUBLE;
 		if(type==null)for(String t:new String[]{"текст","строк","строч","назван","описани"})if(lc.contains(t))type=PropertyType.STRING;
 		if(type==null)for(String t:new String[]{"булев","логиче","флаг"," ли "})if(lc.contains(t))type=PropertyType.BOOL;
-		return inQuotes?new Property(Pattern.compile("\"(.*?)\"").matcher(lc).results().map(e->e.group(1)).findAny().orElse(""),type)
+		return inQuotes
+			?new Property(Pattern.compile("\"(.*?)\"").matcher(lc).results().map(e->e.group(1)).findAny().orElse(""),type)
 			:new Property(Pattern.compile("(.*)\\(.*\\)").matcher(lc).results().map(e->e.group(1)).findAny().orElse(""),type);
 	}
 	private AnalysisResult extractUpgradeAction(String s,String objectName){

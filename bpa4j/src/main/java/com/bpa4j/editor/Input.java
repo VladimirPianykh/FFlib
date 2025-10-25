@@ -8,4 +8,5 @@ public @interface Input{
     Class<? extends Verifier>verifier()default Verifier.class;
     Class<? extends NameProvider>nameProvider()default NameProvider.class;
     Class<? extends InfoProvider>infoProvider()default InfoProvider.class;
+    Class<? extends Completer>completer()default Completer.class;
 }

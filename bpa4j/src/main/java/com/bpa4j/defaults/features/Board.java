@@ -43,6 +43,10 @@ import com.bpa4j.ui.HButton;
 
 /**
  * A board with objects of the given type.
+ * Similar classes are called Board-like.
+ * </p>
+ * Generally an editable table,
+ * which can be supplemented with configuration components: filters, sorters, etc.
  */
 @SuppressWarnings("unchecked")
 public final class Board<T extends Serializable>implements Feature{

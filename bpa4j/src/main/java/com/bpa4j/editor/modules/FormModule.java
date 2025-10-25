@@ -12,9 +12,6 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
 import java.text.ParseException;
@@ -34,7 +31,7 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JFormattedTextField.AbstractFormatterFactory;
-import javax.swing.JLayer;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -45,17 +42,17 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.Timer;
-import javax.swing.plaf.LayerUI;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.text.DefaultFormatter;
 
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Data;
+import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.core.EditableDemo;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.defaults.input.EmptySaver;
-import com.bpa4j.core.Data.Editable;
-import com.bpa4j.core.Data.EditableGroup;
+import com.bpa4j.editor.Completer;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.InfoProvider;
@@ -95,14 +92,16 @@ public class FormModule implements EditorModule{
 		nameField.setFont(new Font(Font.DIALOG,Font.PLAIN,nameField.getHeight()*2/3));
 		nameField.setBackground(Color.DARK_GRAY);
 		nameField.setForeground(Color.LIGHT_GRAY);
-		Wrapper<Verifier>verifier=new Wrapper<Verifier>(null);
-		Wrapper<NameProvider>nameProvider=new Wrapper<NameProvider>(null);
-		Wrapper<InfoProvider>infoProvider=new Wrapper<InfoProvider>(null);
+		Wrapper<Verifier>verifier=new Wrapper<>(null);
+		Wrapper<NameProvider>nameProvider=new Wrapper<>(null);
+		Wrapper<InfoProvider>infoProvider=new Wrapper<>(null);
+		Wrapper<Completer>completer=new Wrapper<>(null);
 		Input v=((Input)editable.getClass().getAnnotation(Input.class));
 		if(v!=null)try{
 			if(v.verifier()!=Verifier.class)verifier.var=v.verifier().getDeclaredConstructor().newInstance();
 			if(v.nameProvider()!=NameProvider.class)nameProvider.var=v.nameProvider().getDeclaredConstructor().newInstance();
 			if(v.infoProvider()!=InfoProvider.class)infoProvider.var=v.infoProvider().getDeclaredConstructor().newInstance();
+			if(v.completer()!=Completer.class)completer.var=v.completer().getDeclaredConstructor().newInstance();
 		}catch(ReflectiveOperationException ex){throw new IllegalStateException("Verifiers, name providers and info providers must have default constructors.",ex);}
 		tab.add(nameField);
 		tab.add(ok);
@@ -133,25 +132,7 @@ public class FormModule implements EditorModule{
 			name.setBorder(BorderFactory.createTitledBorder(null,"Параметр",0,0,font.deriveFont(font.getSize2D()/2),Color.LIGHT_GRAY));
 			entry.add(name);
 			JComponent c;
-			if(Supplier.class.isAssignableFrom(f.getType())){
-				currentSaver.var=new com.bpa4j.defaults.input.EmptySaver();
-				c=wrapEditorComponent(new JTextArea(){
-					public String getText(){
-						try{
-							if(demo.var==null)return "Ошибка!";
-							if(f.get(demo.var.get())==null)throw new NullPointerException("Supplier fields must be non-null.");
-							return String.valueOf(((Supplier<?>)f.get(demo.var.get())).get());
-						}catch(IllegalAccessException ex){throw new IllegalStateException("Supplier fields can only be non-static.",ex);}
-					}
-					public void paint(Graphics g){
-						setText(getText());
-						super.paint(g);
-					}
-				},font);
-				((JTextArea)c).setEditable(false);
-				((JTextArea)c).setLineWrap(false);
-				((JTextArea)c).setWrapStyleWord(false);
-			}else if(a.editorBaseSource()==EditorEntryBase.class)c=wrapEditorComponent(createEditorBase(editable,f,currentSaver),font);
+			if(a.editorBaseSource()==EditorEntryBase.class)c=wrapEditorComponent(createEditorBase(editable,f,currentSaver),font);
 			else c=a.editorBaseSource().getDeclaredConstructor().newInstance().createEditorBase(editable,f,currentSaver,demo);
 			if(currentSaver.var==null)throw new IllegalStateException("Saver for "+f.getName()+" is null.");
 			savers.add(currentSaver.var);
@@ -161,19 +142,22 @@ public class FormModule implements EditorModule{
 				for(String s:a.properties())if(s.equals("readonly")||(!isNew&&s.equals("initonly"))){flag=true;break;}
 				if(flag){
 					c.setFocusable(false);
-					entry.add(new JLayer<JComponent>(c,new LayerUI<>(){
-						protected void processMouseEvent(MouseEvent e,JLayer<? extends JComponent>l){e.consume();}
-						protected void processKeyEvent(KeyEvent e,JLayer<? extends JComponent>l){e.consume();}
-						protected void processMouseMotionEvent(MouseEvent e,JLayer<? extends JComponent>l){e.consume();}
-						protected void processComponentEvent(ComponentEvent e,JLayer<? extends JComponent>l){}
-						protected void processFocusEvent(FocusEvent e,JLayer<? extends JComponent>l){}
-					}));
+					JList<String>l=new JList<>();
+					DefaultListModel<String>m=new DefaultListModel<>();
+					m.add(0,"");
+					l.setCellRenderer((list,value,index,isSelected,cellHasFocus)->{
+						c.setPreferredSize(l.getSize());
+						return c;
+					});
+					l.setModel(m);
+					entry.add(l);
 				}else entry.add(c);
 			}
-			form.add(String.valueOf(k),entry);
+			if(c==null)form.add(String.valueOf(k),new JLabel("---"));
+			else form.add(String.valueOf(k),entry);
 			++k;
-		}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
-		demo.var=new EditableDemo(editable.getClass(),savers);
+		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
+		demo.var=new EditableDemo(editable.getClass(),savers,()->nameField.getText());
 		DefaultListModel<String>results=new DefaultListModel<>();
 		JList<String>l=new JList<>(results);
 		form.add(String.valueOf(k),l);
@@ -205,9 +189,42 @@ public class FormModule implements EditorModule{
 			};
 			delete.addActionListener(e->{deleter.run();editor.dispose();});
 			delete.setBounds(editor.getWidth()*3/10,editor.getHeight()*9/10,editor.getHeight()/20,editor.getHeight()/20);
+			delete.setToolTipText("Удалить");
 			delete.setOpaque(false);
 			tab.add(delete);
 		}
+		HButton complete=null;
+		if(completer.var!=null){
+			complete=new HButton(){
+				public void paint(Graphics g){
+					g.setColor(new Color(20,40+scale*10,20));
+					g.fillRoundRect(0,0,getWidth(),getHeight(),getHeight()*2/3,getHeight()*2/3);
+					((Graphics2D)g).setStroke(new BasicStroke(getHeight()/20));
+					g.setColor(Color.DARK_GRAY);
+					g.drawRoundRect(0,0,getWidth(),getHeight(),getHeight()*2/3,getHeight()*2/3);
+					g.setColor(Color.BLACK);
+					g.drawLine(getWidth()/3,getHeight()/3,getWidth()*2/3,getHeight()/2);
+					g.drawLine(getWidth()*2/3,getHeight()/2,getWidth()/3,getHeight()*2/3);
+					if(getModel().isPressed()){
+						g.setColor(new Color(0,0,0,100));
+						g.fillRoundRect(0,0,getWidth(),getHeight(),getHeight()*2/3,getHeight()*2/3);
+					}
+				}
+			};
+			complete.addActionListener(e->{
+				try{
+					editable.name=nameField.getText();
+					for(int i=0;i<editableFields.size();++i)if(!(savers.get(i)instanceof EmptySaver))editableFields.get(i).set(editable,savers.get(i).get());
+					completer.var.completeObject(editable);
+					editor.dispose();
+				}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
+			});
+			complete.setBounds(ok.getX()+ok.getWidth()*3/2,ok.getY(),ok.getHeight(),ok.getHeight());
+			complete.setToolTipText("Заполнить автоматически");
+			tab.add(complete);
+			complete.setVisible(completer.var.isCompletable(editable,0));
+		}
+		final HButton fComplete=complete;
 		if(!isNew){
 			HButton c=new HButton(15,5){
 				public void paint(Graphics g){
@@ -227,6 +244,7 @@ public class FormModule implements EditorModule{
 					if(w.var==0)c.setText("Отмена");
 					ok.setText("Далее");
 					ok.setBackground(Color.GRAY);
+					if(fComplete!=null)fComplete.setVisible(completer.var.isCompletable(editable,0));
 				}
 			});
 			c.setBounds(editor.getWidth()*2/5,editor.getHeight()*12/15,editor.getWidth()/5,editor.getHeight()/20);
@@ -252,7 +270,8 @@ public class FormModule implements EditorModule{
 					return;
 				}
 				if(w.var==savers.size()){
-					if(verifier.var==null||verifier.var.verify(editable,demo.var.get(),isNew).isEmpty()){
+					String verifierMsg=verifier.var==null?"":verifier.var.verify(editable,demo.var.get(),isNew);
+					if(verifierMsg.isEmpty()){
 						for(int i=0;i<editableFields.size();++i)if(!(savers.get(i)instanceof EmptySaver))editableFields.get(i).set(editable,savers.get(i).get());
 						editor.dispose();
 						editable.name=nameField.getText();
@@ -263,7 +282,8 @@ public class FormModule implements EditorModule{
 						t.start();
 						layout.show(form,String.valueOf(w.var=0));
 						p.setValue(0);
-						new Message(verifier.var.verify(editable,demo.var.get(),isNew),Color.RED);
+						new Message(verifierMsg,Color.RED);
+						if(fComplete!=null)fComplete.setVisible(completer.var.isCompletable(editable,0));
 					}
 				}else{
 					p.setValue(++w.var);
@@ -285,8 +305,9 @@ public class FormModule implements EditorModule{
 						for(int i=0;i<editableFields.size();++i)if(!(savers.get(i)instanceof EmptySaver))results.addElement(editableFields.get(i).getAnnotation(EditorEntry.class).translation()+": "+savers.get(i).get());
 					}
 					if(fCancel!=null)fCancel.setText("Назад");
+					if(fComplete!=null)fComplete.setVisible(completer.var.isCompletable(editable,w.var));
 				}
-			}catch(ReflectiveOperationException ex){throw new RuntimeException(ex);}
+			}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 		});
 		form.setBounds(infoProvider.var==null?editor.getWidth()/8:editor.getWidth()/20,editor.getHeight()/4,editor.getWidth()*3/4,editor.getHeight()/2);
 		tab.add(form);

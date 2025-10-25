@@ -28,11 +28,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
-
 import com.bpa4j.ui.Switcher;
+import com.formdev.flatlaf.FlatDarkLaf;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.editor.IEditor;
 import com.bpa4j.editor.ModularEditor;
@@ -76,9 +73,7 @@ public final class ProgramStarter{
 	public static void constructEditor(Editable editable,boolean isNew,Runnable deleter){editor.constructEditor(editable,isNew,deleter);}
 	public static void runProgram(){
 		new File(Root.folder).mkdirs();
-		try{
-			UIManager.setLookAndFeel(new NimbusLookAndFeel());
-		}catch(UnsupportedLookAndFeelException ex){throw new IllegalStateException(ex);}
+		FlatDarkLaf.setup();
 		ToolTipManager.sharedInstance().setInitialDelay(0);
 		Dimension d=Root.SCREEN_SIZE;
 		Color[]c1={new Color(114,130,46),new Color(79,79,29)},c2={new Color(102,102,77),new Color(69,63,48)};

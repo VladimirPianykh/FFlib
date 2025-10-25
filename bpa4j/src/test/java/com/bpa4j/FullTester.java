@@ -1,5 +1,6 @@
 package com.bpa4j;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -37,8 +38,11 @@ import com.bpa4j.defaults.ftr_attributes.data_renderers.ChartDataRenderer.ChartM
 import com.bpa4j.defaults.ftr_attributes.daters.EventDater;
 import com.bpa4j.defaults.ftr_attributes.element_suppliers.ChartDataConverter;
 import com.bpa4j.defaults.ftr_attributes.element_suppliers.GroupElementSupplier;
+import com.bpa4j.defaults.input.ConditionalWEditor;
 import com.bpa4j.defaults.input.FlagWEditor;
+import com.bpa4j.defaults.input.FunctionEditor;
 import com.bpa4j.editor.EditorEntry;
+import com.bpa4j.editor.Input;
 import com.bpa4j.editor.ModularEditor;
 import com.bpa4j.editor.modules.CustomerModule;
 import com.bpa4j.editor.modules.ExcludeModule;
@@ -47,7 +51,9 @@ import com.bpa4j.editor.modules.LimitToModule;
 import com.bpa4j.editor.modules.LogWatchModule;
 import com.bpa4j.editor.modules.StageApprovalModule;
 import com.bpa4j.ui.PathIcon;
-import com.bpa4j.util.TestGen;
+import com.bpa4j.util.codegen.ProjectGraph;
+import com.bpa4j.util.codegen.ProjectGraphV2;
+import com.bpa4j.util.testgen.TestGen;
 
 public final class FullTester{
 	public static class MyEditable5 extends Editable{
@@ -98,19 +104,39 @@ public final class FullTester{
 			super("Новый объект");
 		}
 	}
+	@Input(completer=MyProcessable.Completer.class,nameProvider=MyProcessable.NameProvider.class)
 	public static class MyProcessable extends Processable{
-		@EditorEntry(translation="Строка")
+		public static class Completer implements com.bpa4j.editor.Completer{
+			public boolean isCompletable(Editable editable,int fieldsEdited){
+				return fieldsEdited>=2;
+			}
+			public void completeObject(Editable editable){
+				MyProcessable e=(MyProcessable)editable;
+				e.doubleField=e.intField*2;
+			}
+		}
+		public static class NameProvider implements com.bpa4j.editor.NameProvider{
+			public String provideName(Editable editable){
+				return editable.name+"1";
+			}
+		}
+		@EditorEntry(translation="Строка",editorBaseSource = ConditionalWEditor.class)
 		public String strField;
+		static{
+			try{
+				ConditionalWEditor.configure(MyProcessable.class.getField("strField"),null,e->Math.random()>0.4);
+			}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
+		}
 		@EditorEntry(translation="Число")
 		public int intField;
-		@EditorEntry(translation="Дробное число")
+		@EditorEntry(translation="Дробное число",properties = {"readonly"})
 		public double doubleField;
 		@EditorEntry(translation="Дата",properties = {"initonly"})
 		public LocalDate dateField=LocalDate.now();
 		@EditorEntry(translation="Редактируемый объект")
 		public MyEditable2 editableField;
-		@EditorEntry(translation="Supplier")
-		public SerializableSupplier<String>s=()->{
+		@EditorEntry(translation="Supplier",editorBaseSource=FunctionEditor.class)
+		public static Supplier<String>s=()->{
 			return Stream.generate(()->(char)('a'+Math.random()*25)).limit(20).map(c->String.valueOf(c)).reduce((c1,c2)->c1+c2).get();
 		};
 		public MyProcessable(){
@@ -170,7 +196,7 @@ public final class FullTester{
 	}
 	private FullTester(){}
 	public static void main(String[]args)throws ReflectiveOperationException,URISyntaxException{
-		// new ProjectGraph(new File("C:/Users/user/Desktop/IT/Java/1C/NTO training/team/T1/NTO_TRAINING/src/main/java")).show();
+		new ProjectGraphV2(new File("C:/Users/user/Desktop/IT/Java/1C/NTO training/team/T1/NTO_TRAINING/src/main/java")).show();
 		Navigator.init();
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;
@@ -223,7 +249,9 @@ public final class FullTester{
 				return c;
 			}
 			public int compare(MyProcessable o1,MyProcessable o2){
-				return(c.getSelectedItem()==null||(boolean)c.getSelectedItem())?o1.name.length()-o2.name.length():o1.strField.length()-o2.strField.length();
+				try{
+					return(c.getSelectedItem()==null||(boolean)c.getSelectedItem())?o1.name.length()-o2.name.length():o1.strField.length()-o2.strField.length();
+				}catch(NullPointerException ex){return 0;}
 			}
 		}).setElementSupplier(groupES).setAllowCreation(true);
 		Calendar.<MyEvent>getCalendar("calendar")

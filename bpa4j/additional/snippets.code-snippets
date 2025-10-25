@@ -153,7 +153,7 @@
 		],
 		"description":""
 	},
-	"Creates a child of BLFeatureManager":{
+	"Create BLFeatureManager subclass":{
 		"scope":"java",
 		"prefix":"_blf",
 		"body":[
@@ -163,6 +163,19 @@
 					"\t\t$1 f=$2.register$0;",
 					"\t\treturn f;",
 				"\t}",
+			"}"
+		],
+		"description":""
+	},
+	"Create Completer nested subclass":{
+		"scope":"java",
+		"prefix":"_completer",
+		"body":[
+			"public static class Completer implements com.bpa4j.editor.Completer{",
+				"\tpublic boolean isCompletable(Editable editable,int fieldsEdited){",
+					"\t\t${1:return true;}",
+				"\t}",
+				"\tpublic void completeObject(Editable editable){$0}",
 			"}"
 		],
 		"description":""
