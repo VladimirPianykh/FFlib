@@ -948,7 +948,7 @@ public class ProjectGraph {
 		buttons.add(addButton);
 		tab.add(buttons,BorderLayout.SOUTH);
 		tab.add(sList,BorderLayout.NORTH);
-		for(ProjectNode node:nodes)if(node instanceof EditableNode)objList.add(new E((EditableNode)node));
+		for(ProjectNodeLegacy node:nodes)if(node instanceof EditableNode)objList.add(new E((EditableNode)node));
 	}
 	private void fillAccessTab(JPanel tab){
 		tab.setLayout(new GridLayout(1,2));
@@ -1072,7 +1072,7 @@ public class ProjectGraph {
 	}
 	private void fillNavigatorTab(JPanel tab){
 		tab.setLayout(new GridLayout());
-		Optional<ProjectNode>nodeOptional=nodes.stream().filter(n->n instanceof NavigatorNode).findAny();
+		Optional<ProjectNodeLegacy>nodeOptional=nodes.stream().filter(n->n instanceof NavigatorNode).findAny();
 		if(nodeOptional.isEmpty()){
 			//TODO: add "no helppath.cfg in this project" sign and a button to add it
 			tab.setLayout(new GridLayout(2,1));

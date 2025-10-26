@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.bpa4j.util.codegen.legacy.ProjectNodeLegacy;
+
 /**
  * Тест для демонстрации работы ProjectGraphV2 с JavaParser
  */
@@ -75,7 +77,7 @@ public class ProjectGraphV2Test {
         
         // Выводим информацию о найденных узлах
         System.out.println("Найдено узлов: " + projectGraph.nodes.size());
-        for (ProjectNode node : projectGraph.nodes) {
+        for (ProjectNodeLegacy node : projectGraph.nodes) {
             System.out.println("Узел: " + node.getClass().getSimpleName() + " в файле " + node.location.getName());
         }
         
