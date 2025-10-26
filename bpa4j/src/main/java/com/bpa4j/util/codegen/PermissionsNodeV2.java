@@ -7,14 +7,13 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import com.bpa4j.util.codegen.legacy.ProjectNodeLegacy;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
-public class PermissionsNodeV2 extends ProjectNodeLegacy {
+public class PermissionsNodeV2 extends ProjectNode {
 	public ArrayList<String> permissions;
 	
 	public PermissionsNodeV2(File file) {

@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.bpa4j.util.codegen.legacy.ProjectNodeLegacy;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
@@ -22,7 +21,7 @@ import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
-public class RolesNodeV2 extends ProjectNodeLegacy {
+public class RolesNodeV2 extends ProjectNode {
 	public static class RoleRepresentation {
 		public String name;
 		public Set<String> permissions;
