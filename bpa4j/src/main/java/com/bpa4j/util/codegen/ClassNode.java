@@ -8,36 +8,50 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import com.bpa4j.util.ParseUtils;
-import com.bpa4j.util.ParseUtils.StandardSkipper;
+import com.bpa4j.util.codegen.legacy.ProjectNodeLegacy;
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.expr.SimpleName;
 
-public abstract class ClassNode extends ProjectNode{
+public abstract class ClassNode extends ProjectNodeLegacy {
 	public String name;
-	public ClassNode(File location){
+	
+	public ClassNode(File location) {
 		super(location);
-		name=location.getName().substring(0,location.getName().lastIndexOf('.'));
+		name = location.getName().substring(0, location.getName().lastIndexOf('.'));
 	}
-	public synchronized void changeNameIn(ProjectGraph project,String name){
-		try{
-			if(this.name.equals(name))return;
-			File f=new File(location.getParent()+"/"+name+".java");
-			if(f.exists())return;
+	
+	public synchronized void changeNameIn(ProjectGraph project, String name) {
+		try {
+			if (this.name.equals(name)) return;
+			File f = new File(location.getParent() + "/" + name + ".java");
+			if (f.exists()) return;
 			location.renameTo(f);
-			location=f;
-			String prevName=this.name;
-			Files.walkFileTree(project.projectFolder.toPath(),new SimpleFileVisitor<Path>(){
-				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs)throws IOException{
-					if(file.toString().endsWith(".java")){
-						while(!Files.isWritable(file))Thread.onSpinWait();
-						Files.writeString(file,ParseUtils.replaceAll(Files.readString(file),Pattern.compile("(\\W)"+Pattern.quote(prevName)+"(\\W)"),"$1"+Matcher.quoteReplacement(name)+"$2",StandardSkipper.SYNTAX));
+			location = f;
+			String prevName = this.name;
+			
+			Files.walkFileTree(project.projectFolder.toPath(), new SimpleFileVisitor<Path>() {
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					if (file.toString().endsWith(".java")) {
+						while (!Files.isWritable(file)) Thread.onSpinWait();
+						CompilationUnit cu = StaticJavaParser.parse(file);
+						
+						// Найти все использования имени класса
+						cu.findAll(SimpleName.class).forEach(typeExpr -> {
+							if (typeExpr.getIdentifier().replaceAll(".*\\.","").equals(prevName)) {
+								typeExpr.setIdentifier(name); //TODO: check whether this is correct (it can be wrong, because type is sometimes a fully-qualified class name)
+							}
+						});
+						
+						Files.writeString(file, cu.toString());
 					}
 					return FileVisitResult.CONTINUE;
 				}
 			});
-			this.name=name;
-		}catch(IOException ex){throw new UncheckedIOException(ex);}
+			this.name = name;
+		} catch (IOException ex) {
+			throw new UncheckedIOException(ex);
+		}
 	}
 }

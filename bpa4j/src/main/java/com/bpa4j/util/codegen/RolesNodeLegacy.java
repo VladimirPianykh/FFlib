@@ -1,4 +1,4 @@
-package com.bpa4j.util.codegen;
+package com.bpa4j.util.codegen.legacy;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import com.bpa4j.util.ParseUtils;
 import com.bpa4j.util.ParseUtils.StandardSkipper;
 
-public class RolesNode extends ProjectNode{
+public class RolesNodeLegacy extends ProjectNodeLegacy{
 	public static class RoleRepresentation{
 		public String name;
 		public Set<String>permissions;
@@ -31,7 +31,7 @@ public class RolesNode extends ProjectNode{
 		}
 	}
 	public ArrayList<RoleRepresentation>roles=new ArrayList<>();
-	public RolesNode(File file,PermissionsNode p){
+	public RolesNodeLegacy(File file,PermissionsNodeLegacy p){
 		super(file);
 		try{
 			String roleClass=ParseUtils.findFirstBlock(

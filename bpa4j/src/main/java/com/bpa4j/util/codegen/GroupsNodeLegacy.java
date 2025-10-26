@@ -7,8 +7,10 @@ import java.nio.file.Files;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GroupsNode extends ProjectNode{
-	public GroupsNode(File file){
+import com.bpa4j.util.codegen.legacy.ProjectNodeLegacy;
+
+public class GroupsNodeLegacy extends ProjectNodeLegacy{
+	public GroupsNodeLegacy(File file){
 		super(file);
 		try{
 			StringBuilder s=new StringBuilder(Files.readString(file.toPath()));

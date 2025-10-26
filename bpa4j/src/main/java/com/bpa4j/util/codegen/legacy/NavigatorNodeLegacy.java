@@ -1,4 +1,4 @@
-package com.bpa4j.util.codegen;
+package com.bpa4j.util.codegen.legacy;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
-public class NavigatorNode extends ProjectNode{
+public class NavigatorNodeLegacy extends ProjectNodeLegacy{
 	public static class Instruction{
 		public static enum Type{
 			START,
@@ -41,7 +41,7 @@ public class NavigatorNode extends ProjectNode{
 		public String text;
 		public ArrayList<Instruction>instructions=new ArrayList<>();
 		public HelpEntry(String text){this.text=text;}
-		public void changeText(String text,NavigatorNode n){
+		public void changeText(String text,NavigatorNodeLegacy n){
 			try{
 				StringBuilder b=new StringBuilder();
 				for(String l:Files.readString(n.location.toPath()).split("\n")){
@@ -53,7 +53,7 @@ public class NavigatorNode extends ProjectNode{
 				this.text=text;
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
-		public void replaceInstruction(Instruction c,int index,NavigatorNode n){
+		public void replaceInstruction(Instruction c,int index,NavigatorNodeLegacy n){
 			try{
 				StringBuilder b=new StringBuilder();
 				for(String l:Files.readString(n.location.toPath()).split("\n")){
@@ -73,7 +73,7 @@ public class NavigatorNode extends ProjectNode{
 				instructions.set(index,c);
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
-		public void appendInstruction(Instruction c,NavigatorNode n){
+		public void appendInstruction(Instruction c,NavigatorNodeLegacy n){
 			try{
 				StringBuilder b=new StringBuilder();
 				for(String l:Files.readString(n.location.toPath()).split("\n")){
@@ -86,7 +86,7 @@ public class NavigatorNode extends ProjectNode{
 				instructions.add(c);
 			}catch(IOException ex){throw new UncheckedIOException(ex);}
 		}
-		public void deleteLastInstruction(NavigatorNode n){
+		public void deleteLastInstruction(NavigatorNodeLegacy n){
 			try{
 				StringBuilder b=new StringBuilder();
 				for(String l:Files.readString(n.location.toPath()).split("\n")){
@@ -103,7 +103,7 @@ public class NavigatorNode extends ProjectNode{
 		}
 	}
 	public ArrayList<HelpEntry>entries=new ArrayList<>();
-	public NavigatorNode(File file){
+	public NavigatorNodeLegacy(File file){
 		super(file);
 		try{
 			String str=Files.readString(file.toPath());
@@ -119,7 +119,7 @@ public class NavigatorNode extends ProjectNode{
 	/**
 	 * Creates a new NavigatorNode.
 	 */
-	public NavigatorNode(ProjectGraph project){
+	public NavigatorNodeLegacy(ProjectGraphLegacy project){
 		super(new File(project.projectFolder,"resources/helppath.cfg"));
 		try{location.createNewFile();}catch(IOException ex){throw new UncheckedIOException(ex);}
 	}

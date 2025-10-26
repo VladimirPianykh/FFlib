@@ -1,4 +1,4 @@
-package com.bpa4j.util.codegen;
+package com.bpa4j.util.codegen.legacy;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -35,8 +35,8 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 import com.bpa4j.core.Root;
 import com.bpa4j.ui.Message;
-import com.bpa4j.util.codegen.EditableNode.Property;
-import com.bpa4j.util.codegen.EditableNode.Property.PropertyType;
+import com.bpa4j.util.codegen.legacy.EditableNodeLegacy.Property;
+import com.bpa4j.util.codegen.legacy.EditableNodeLegacy.Property.PropertyType;
 
 /**
  * An effort towards parsing the task itself.
@@ -44,8 +44,8 @@ import com.bpa4j.util.codegen.EditableNode.Property.PropertyType;
  */
 public class TaskAnalyzer{
 	public static interface AnalysisResult{
-		public boolean checkCompletion(ProjectGraph project);
-		public boolean generate(String prompt,ProjectGraph project);
+		public boolean checkCompletion(ProjectGraphLegacy project);
+		public boolean generate(String prompt,ProjectGraphLegacy project);
 	}
 	public static class NewObjectResult implements AnalysisResult{
 		public ArrayList<Property>properties;
@@ -54,7 +54,7 @@ public class TaskAnalyzer{
 			this.objectName=objectName;
 			this.properties=new ArrayList<>(Arrays.asList(properties));
 		}
-		public boolean generate(String prompt,ProjectGraph project){
+		public boolean generate(String prompt,ProjectGraphLegacy project){
 			if(prompt.isBlank())return false;
 			if(objectName.isEmpty()){
 				String[]p=prompt.split("\s,?*");
@@ -63,8 +63,8 @@ public class TaskAnalyzer{
 			}else project.createEditableNode(prompt,objectName,properties.toArray(new Property[0])).location.toPath();
 			return true;
 		}
-		public boolean checkCompletion(ProjectGraph project){
-			for(ProjectNode n:project.nodes)if(n instanceof EditableNode&&objectName.equalsIgnoreCase(((EditableNode)n).objectName))return true;
+		public boolean checkCompletion(ProjectGraphLegacy project){
+			for(ProjectNodeLegacy n:project.nodes)if(n instanceof EditableNodeLegacy&&objectName.equalsIgnoreCase(((EditableNodeLegacy)n).objectName))return true;
 			return false;
 		}
 		public String toString(){
@@ -79,14 +79,14 @@ public class TaskAnalyzer{
 			this.property=property;
 			this.objectName=objectName;
 		}
-		private EditableNode findEditable(ProjectGraph project)throws IOException{
-			for(ProjectNode n:project.nodes)if(n instanceof EditableNode){
-				EditableNode e=(EditableNode)n;
+		private EditableNodeLegacy findEditable(ProjectGraphLegacy project)throws IOException{
+			for(ProjectNodeLegacy n:project.nodes)if(n instanceof EditableNodeLegacy){
+				EditableNodeLegacy e=(EditableNodeLegacy)n;
 				if(objectName.equalsIgnoreCase(e.objectName))return e;
 			}
 			throw new FileNotFoundException();
 		}
-		public boolean generate(String prompt,ProjectGraph project){
+		public boolean generate(String prompt,ProjectGraphLegacy project){
 			if(prompt.isBlank())return false;
 			try{
 				File f=findEditable(project).location;
@@ -100,7 +100,7 @@ public class TaskAnalyzer{
 			}
 			//TODO: add property into the file
 		}
-		public boolean checkCompletion(ProjectGraph project){
+		public boolean checkCompletion(ProjectGraphLegacy project){
 			try{
 				String s=Files.readString(findEditable(project).location.toPath());
 				return s.contains(property.name)&&(property.type==null||s.contains(property.type.toString()));
@@ -114,16 +114,16 @@ public class TaskAnalyzer{
 		private final String text;
 		public UndefinedResult(String text){this.text=text.indent(-100);}
 		public String toString(){return text;}
-		public boolean checkCompletion(ProjectGraph project){return false;}
-		public boolean generate(String prompt,ProjectGraph project){
+		public boolean checkCompletion(ProjectGraphLegacy project){return false;}
+		public boolean generate(String prompt,ProjectGraphLegacy project){
 			throw new UnsupportedOperationException("TaskAnalyzer cannot handle such tasks.");
 		}
 	}
 	private String text;
-	private final ProjectGraph project;
+	private final ProjectGraphLegacy project;
 	private final ArrayList<AnalysisResult>results=new ArrayList<>();
-	public TaskAnalyzer(ProjectGraph project,String text){this.project=project;this.text=preprocess(text);}
-	public TaskAnalyzer(ProjectGraph project,File f){
+	public TaskAnalyzer(ProjectGraphLegacy project,String text){this.project=project;this.text=preprocess(text);}
+	public TaskAnalyzer(ProjectGraphLegacy project,File f){
 		this.project=project;
 		try{
 			if(f.getName().endsWith(".txt"))text=Files.readString(f.toPath());

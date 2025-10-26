@@ -243,11 +243,17 @@ public final class ItemList<T extends Serializable>implements Feature{
 	 * AI-generated.
 	 */
 	public List<ImplementedInfo>getImplementedInfo(){
-		// Собираем информацию от всех редактируемых объектов и добавляем инструкцию о функции
-		return objects.stream()
-			.filter(obj -> obj instanceof Editable)
-			.flatMap(obj -> ((Editable) obj).getImplementedInfo().stream())
-			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
-			.collect(java.util.stream.Collectors.toList());
+		// Получаем информацию от типа объектов, а не от конкретных экземпляров
+		try{
+			T prototype=type.getDeclaredConstructor().newInstance();
+			if(prototype instanceof Editable){
+				return ((Editable)prototype).getImplementedInfo().stream()
+					.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+					.collect(java.util.stream.Collectors.toList());
+			}
+		}catch(ReflectiveOperationException ex){
+			throw new IllegalStateException(ex);
+		}
+		return List.of();
 	}
 }

@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.bpa4j.util.codegen.legacy.ProjectNodeLegacy;
+
 /**
  * Тест для демонстрации работы ProjectGraphV2 с JavaParser
  */
@@ -68,14 +70,14 @@ public class ProjectGraphV2Test {
         Files.writeString(srcMainJava.resolve("com/test/editables/Customer.java"), editableContent);
         
         // Создаем ProjectGraphV2 и тестируем парсинг
-        ProjectGraphV2 projectGraph = new ProjectGraphV2(srcMainJava.toFile());
+        ProjectGraph projectGraph = new ProjectGraph(srcMainJava.toFile());
         
         // Проверяем, что узлы были созданы
         assert projectGraph.nodes.size() >= 3 : "Должно быть создано минимум 3 узла";
         
         // Выводим информацию о найденных узлах
         System.out.println("Найдено узлов: " + projectGraph.nodes.size());
-        for (ProjectNode node : projectGraph.nodes) {
+        for (ProjectNodeLegacy node : projectGraph.nodes) {
             System.out.println("Узел: " + node.getClass().getSimpleName() + " в файле " + node.location.getName());
         }
         

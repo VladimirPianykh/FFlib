@@ -1,4 +1,4 @@
-package com.bpa4j.util.codegen;
+package com.bpa4j.util.codegen.legacy;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,9 +13,9 @@ import java.util.regex.Pattern;
 import com.bpa4j.util.ParseUtils;
 import com.bpa4j.util.ParseUtils.StandardSkipper;
 
-public class PermissionsNode extends ProjectNode{
+public class PermissionsNodeLegacy extends ProjectNodeLegacy{
 	public ArrayList<String>permissions;
-	public PermissionsNode(File file){
+	public PermissionsNodeLegacy(File file){
 		super(file);
 		try{
 			String s=ParseUtils.findFirstBlock(Pattern.compile("public enum \\w+ implements.*?Permission"),Files.readString(file.toPath()),'{','}',StandardSkipper.SYNTAX);
