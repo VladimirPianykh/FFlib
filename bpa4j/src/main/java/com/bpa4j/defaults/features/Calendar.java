@@ -156,12 +156,17 @@ public class Calendar<T extends Calendar.Event>implements Feature{
 	 * AI-generated.
 	 */
 	public List<ImplementedInfo>getImplementedInfo(){
-		// Собираем информацию от всех событий и добавляем инструкцию о функции
-		return events.values().stream()
-			.flatMap(List::stream)
-			.filter(event -> event instanceof com.bpa4j.core.Data.Editable)
-			.flatMap(event -> ((com.bpa4j.core.Data.Editable) event).getImplementedInfo().stream())
-			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
-			.collect(java.util.stream.Collectors.toList());
+		// Получаем информацию от типа объектов, а не от конкретных экземпляров
+		try{
+			T prototype=type.getDeclaredConstructor().newInstance();
+			if(prototype instanceof com.bpa4j.core.Data.Editable){
+				return ((com.bpa4j.core.Data.Editable)prototype).getImplementedInfo().stream()
+					.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+					.collect(java.util.stream.Collectors.toList());
+			}
+		}catch(ReflectiveOperationException ex){
+			throw new IllegalStateException(ex);
+		}
+		return List.of();
 	}
 }

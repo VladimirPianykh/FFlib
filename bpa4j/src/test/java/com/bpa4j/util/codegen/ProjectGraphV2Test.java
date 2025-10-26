@@ -68,7 +68,7 @@ public class ProjectGraphV2Test {
         Files.writeString(srcMainJava.resolve("com/test/editables/Customer.java"), editableContent);
         
         // Создаем ProjectGraphV2 и тестируем парсинг
-        ProjectGraphV2 projectGraph = new ProjectGraphV2(srcMainJava.toFile());
+        ProjectGraph projectGraph = new ProjectGraph(srcMainJava.toFile());
         
         // Проверяем, что узлы были созданы
         assert projectGraph.nodes.size() >= 3 : "Должно быть создано минимум 3 узла";

@@ -60,8 +60,8 @@ public final class HelpView{
 		}
 		public JLabel createLabel(Font font){
 			JLabel label=new JLabel();
-			label.setForeground(new Color(40,204,29));
 			label.setFont(font);
+			label.setBorder(BorderFactory.createMatteBorder(0,0,1,0,new Color(40,204,29)));
 			label.setText(ProgramStarter.authRequired?"Введите логин и пароль: \""+user.login+"\","+user.password+".":"Выберите пользователя \""+user.login+"\".");
 			return label;
 		}
@@ -69,7 +69,6 @@ public final class HelpView{
 			return 's';
 		}
 	}
-
 	public static class FeatureInstruction implements Instruction{
 		private final Feature feature;
 		public FeatureInstruction(Feature feature){
@@ -78,14 +77,13 @@ public final class HelpView{
 		public JLabel createLabel(Font font){
 			JLabel label=new JLabel("Перейдите на вкладку \""+feature.toString()+"\".");
 			label.setFont(font);
-			label.setForeground(new Color(43,214,197));
+			label.setBorder(BorderFactory.createMatteBorder(0,0,1,0,new Color(43,214,197)));
 			return label;
 		}
 		public char getType(){
 			return 'f';
 		}
 	}
-
 	public static class TextInstruction implements Instruction{
 		private final String text;
 		public TextInstruction(String text) {
@@ -94,14 +92,13 @@ public final class HelpView{
 		public JLabel createLabel(Font font){
 			JLabel label=new JLabel(text);
 			label.setFont(font);
-			label.setForeground(new Color(62,74,92));
+			label.setBorder(BorderFactory.createMatteBorder(0,0,1,0,new Color(62,74,92)));
 			return label;
 		}
 		public char getType(){
 			return 't';
 		}
 	}
-
 	public static class CommentInstruction implements Instruction{
 		private final String text;
 		public CommentInstruction(String text){
@@ -110,7 +107,7 @@ public final class HelpView{
 		public JLabel createLabel(Font font){
 			JLabel label=new JLabel(text);
 			label.setFont(font.deriveFont(Font.ITALIC));
-			label.setForeground(Color.GRAY);
+			label.setBorder(BorderFactory.createMatteBorder(0,0,1,0,Color.GRAY));
 			return label;
 		}
 		public char getType(){
@@ -179,7 +176,7 @@ public final class HelpView{
 			JScrollPane sList=new JScrollPane(list,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 			list.setLayout(new GridLayout(0,1));
 			list.setPreferredSize(new Dimension(getWidth(),getHeight()*s.size()/7));
-			for(Instruction in:s){
+			for(Instruction in:s.reversed()){
 				list.add(in.createLabel(font));
 			}
 			initial.add(sList);

@@ -176,11 +176,14 @@ public final class MappedList<T extends Editable,V extends Serializable>implemen
 	 * AI-generated.
 	 */
 	public List<ImplementedInfo>getImplementedInfo(){
-		// Собираем информацию от всех редактируемых объектов в группе и добавляем инструкцию о функции
-		EditableGroup<T> group = Data.getInstance().getGroup(type);
-		return group.stream()
-			.flatMap(obj -> obj.getImplementedInfo().stream())
-			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
-			.collect(java.util.stream.Collectors.toList());
+		// Получаем информацию от типа объектов, а не от конкретных экземпляров
+		try{
+			T prototype=type.getDeclaredConstructor().newInstance();
+			return prototype.getImplementedInfo().stream()
+				.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+				.collect(java.util.stream.Collectors.toList());
+		}catch(ReflectiveOperationException ex){
+			throw new IllegalStateException(ex);
+		}
 	}
 }

@@ -79,12 +79,6 @@ public final class FullTester{
 		@EditorEntry(translation="Величина 2")
 		public int value2=(int)(Math.random()*100);
 		public MyEditable3(){super("Новый объект");}
-		public List<ImplementedInfo>getImplementedInfo(){
-			ImplementedInfo info=new ImplementedInfo("Пункт ТЗ здесь")
-				.appendText("Порадуйтесь.")
-				.appendComment("Всё, вы нашли графики.");
-			return List.of(info);
-		}
 	}
 	public static class MyCustomer extends AbstractCustomer{}
 	public static class MyEditable2 extends Editable{
@@ -157,6 +151,12 @@ public final class FullTester{
 				new Stage("Депрессия",AppPermission.MANAGE_PROCESSABLE,AppPermission.MANAGE_PROCESSABLE,0),
 				new Stage("Принятие",AppPermission.MANAGE_PROCESSABLE,AppPermission.MANAGE_PROCESSABLE,0)
 			);
+		}
+		public List<ImplementedInfo>getImplementedInfo(){
+			ImplementedInfo info=new ImplementedInfo("Пункт ТЗ здесь")
+				.appendComment("Всё, вы нашли MyProcessable.")
+				.appendText("Порадуйтесь.");
+			return List.of(info);
 		}
 	}
 	public static class MyEvent implements Calendar.Event{

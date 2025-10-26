@@ -27,8 +27,6 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
@@ -52,73 +50,767 @@ import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Root;
 import com.bpa4j.ui.Message;
-import com.bpa4j.util.ParseUtils;
 import com.bpa4j.util.SprintUI;
 import com.bpa4j.util.codegen.EditableNode.Property;
-import com.bpa4j.util.codegen.NavigatorNode.HelpEntry;
-import com.bpa4j.util.codegen.NavigatorNode.Instruction;
-import com.bpa4j.util.codegen.RolesNode.RoleRepresentation;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.HelpEntry;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.Instruction;
+import com.bpa4j.util.codegen.RolesNodeV2.RoleRepresentation;
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
 /**
- * A java BPA project representation.
+ * A java BPA project representation using JavaParser.
  * Designed to provide low-code access.
  */
-public class ProjectGraph{
-	public static class Problem{
-		public static enum ProblemType{
+public class ProjectGraph {
+/* 	public static class PermissionsNodeV2 extends ProjectNode {
+		public ArrayList<String> permissions;
+		
+		public PermissionsNodeV2(File file) {
+			super(file);
+			try {
+				CompilationUnit cu = StaticJavaParser.parse(file);
+				
+				// Найти enum, который реализует интерфейс Permission
+				Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
+					.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
+						.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+							((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
+					.findFirst();
+				
+				if (permissionEnum.isPresent()) {
+					EnumDeclaration enumDecl = permissionEnum.get();
+					permissions = new ArrayList<>();
+					
+					// Извлечь константы enum
+					enumDecl.getEntries().forEach(constant -> {
+						permissions.add(constant.getNameAsString());
+					});
+					
+					permissions.sort((a1, a2) -> -1); // Сохраняем оригинальную сортировку
+				} else {
+					permissions = new ArrayList<>();
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+		
+		public void addPermission(String permission) {
+			try {
+				if (permissions.contains(permission)) {
+					throw new IllegalStateException(permission + " already exists.");
+				}
+				
+				while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
+				
+				CompilationUnit cu = StaticJavaParser.parse(location);
+				
+				// Найти enum Permission
+				Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
+					.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
+						.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+							((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
+					.findFirst();
+				
+				if (permissionEnum.isPresent()) {
+					EnumDeclaration enumDecl = permissionEnum.get();
+					
+					// Добавить новую константу
+					EnumConstantDeclaration newConstant = new EnumConstantDeclaration(permission);
+					enumDecl.addEntry(newConstant);
+					
+					Files.writeString(location.toPath(), cu.toString());
+					permissions.add(permission);
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+		
+		public void removePermission(String permission) {
+			try {
+				if (!permissions.contains(permission)) {
+					throw new IllegalStateException(permission + " does not exist.");
+				}
+				
+				while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
+				
+				CompilationUnit cu = StaticJavaParser.parse(location);
+				
+				// Найти enum Permission
+				Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
+					.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
+						.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+							((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
+					.findFirst();
+				
+				if (permissionEnum.isPresent()) {
+					EnumDeclaration enumDecl = permissionEnum.get();
+					
+					// Удалить константу
+					enumDecl.getEntries().removeIf(constant -> constant.getNameAsString().equals(permission));
+					
+					Files.writeString(location.toPath(), cu.toString());
+					permissions.remove(permission);
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+	}
+	
+	public static class RolesNodeV2 extends ProjectNode {
+		public static class RoleRepresentation {
+			public String name;
+			public java.util.Set<String> permissions;
+			public java.util.Set<String> features;
+			
+			public RoleRepresentation(String name, java.util.Set<String> permissions, java.util.Set<String> features) {
+				this.name = name;
+				this.permissions = permissions;
+				this.features = features;
+			}
+		}
+		
+		public ArrayList<RoleRepresentation> roles = new ArrayList<>();
+		
+		public RolesNodeV2(File file, PermissionsNodeV2 p) {
+			super(file);
+			try {
+				CompilationUnit cu = StaticJavaParser.parse(file);
+				
+				// Найти enum, который реализует интерфейс Role
+				Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
+					.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
+						.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+							((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
+					.findFirst();
+				
+				if (roleEnum.isPresent()) {
+					EnumDeclaration enumDecl = roleEnum.get();
+					
+					// Парсить каждую константу enum
+					enumDecl.getEntries().forEach(constant -> {
+						String name = constant.getNameAsString();
+						java.util.Set<String> permissions = new java.util.TreeSet<>();
+						java.util.Set<String> features = new java.util.TreeSet<>();
+						
+						// Парсить аргументы константы
+						if (constant.getArguments().size() >= 2) {
+							// Первый аргумент - лямбда для permissions
+							if (constant.getArguments().get(0) instanceof LambdaExpr) {
+								LambdaExpr permissionsLambda = (LambdaExpr) constant.getArguments().get(0);
+								permissions = parsePermissionsFromLambda(permissionsLambda, p);
+							}
+							
+							// Второй аргумент - лямбда для features (пока не обрабатываем)
+							// TO DO: parse features
+						}
+						
+						roles.add(new RoleRepresentation(name, permissions, features));
+					});
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+		
+		private java.util.Set<String> parsePermissionsFromLambda(LambdaExpr lambda, PermissionsNodeV2 p) {
+			java.util.Set<String> permissions = new java.util.TreeSet<>();
+			
+			// Проверить, является ли это вызовом Permission.values()
+			if (lambda.getBody() instanceof ExpressionStmt) {
+				ExpressionStmt stmt = (ExpressionStmt) lambda.getBody();
+				if (stmt.getExpression() instanceof MethodCallExpr) {
+					MethodCallExpr methodCall = (MethodCallExpr) stmt.getExpression();
+					if (methodCall.getNameAsString().equals("values") && 
+						methodCall.getScope().isPresent() && 
+						methodCall.getScope().get() instanceof NameExpr) {
+						NameExpr scope = (NameExpr) methodCall.getScope().get();
+						if (scope.getNameAsString().contains("Permission")) {
+							// Это Permission.values() - все разрешения
+							return new java.util.TreeSet<>(p.permissions);
+						}
+					}
+				}
+			}
+			
+			// Иначе ищем массив разрешений
+			if (lambda.getBody() instanceof ExpressionStmt) {
+				ExpressionStmt stmt = (ExpressionStmt) lambda.getBody();
+				if (stmt.getExpression() instanceof ArrayCreationExpr) {
+					ArrayCreationExpr array = (ArrayCreationExpr) stmt.getExpression();
+					array.getInitializer().ifPresent(init -> {
+						init.getValues().forEach(element -> {
+							if (element instanceof NameExpr) {
+								NameExpr nameExpr = (NameExpr) element;
+								permissions.add(nameExpr.getNameAsString());
+							}
+						});
+					});
+				}
+			}
+			
+			return permissions;
+		}
+		
+		public void addPermission(String roleName, String permission) {
+			for (RoleRepresentation r : roles) {
+				if (r.name.equals(roleName)) {
+					try {
+						if (r.permissions.contains(permission)) {
+							throw new IllegalStateException(r.name + " already has permission " + permission + ".");
+						}
+						
+						while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
+						
+						CompilationUnit cu = StaticJavaParser.parse(location);
+						
+						// Найти enum Role
+						Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
+							.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
+								.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+									((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
+							.findFirst();
+						
+						if (roleEnum.isPresent()) {
+							EnumDeclaration enumDecl = roleEnum.get();
+							
+							// Найти константу роли
+							Optional<EnumConstantDeclaration> roleConstant = enumDecl.getEntries().stream()
+								.filter(constant -> constant.getNameAsString().equals(roleName))
+								.findFirst();
+							
+							if (roleConstant.isPresent()) {
+								EnumConstantDeclaration constant = roleConstant.get();
+								
+								// Добавить разрешение в массив permissions
+								if (constant.getArguments().size() >= 1 && 
+									constant.getArguments().get(0) instanceof LambdaExpr) {
+									LambdaExpr permissionsLambda = (LambdaExpr) constant.getArguments().get(0);
+									
+									if (permissionsLambda.getBody() instanceof ExpressionStmt) {
+										ExpressionStmt stmt = (ExpressionStmt) permissionsLambda.getBody();
+										if (stmt.getExpression() instanceof ArrayCreationExpr) {
+											ArrayCreationExpr array = (ArrayCreationExpr) stmt.getExpression();
+											array.getInitializer().ifPresent(init -> {
+												init.getValues().add(new NameExpr(permission));
+											});
+										}
+									}
+								}
+								
+								Files.writeString(location.toPath(), cu.toString());
+								r.permissions.add(permission);
+								return;
+							}
+						}
+					} catch (IOException ex) {
+						throw new UncheckedIOException(ex);
+					}
+				}
+			}
+			throw new IllegalArgumentException("There is no role " + roleName + ".");
+		}
+		
+		public void removePermission(String roleName, String permission) {
+			for (RoleRepresentation r : roles) {
+				if (r.name.equals(roleName)) {
+					try {
+						if (r.permissions.contains(permission)) {
+							while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
+							
+							CompilationUnit cu = StaticJavaParser.parse(location);
+							
+							// Найти enum Role
+							Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
+								.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
+									.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+										((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
+								.findFirst();
+							
+							if (roleEnum.isPresent()) {
+								EnumDeclaration enumDecl = roleEnum.get();
+								
+								// Найти константу роли
+								Optional<EnumConstantDeclaration> roleConstant = enumDecl.getEntries().stream()
+									.filter(constant -> constant.getNameAsString().equals(roleName))
+									.findFirst();
+								
+								if (roleConstant.isPresent()) {
+									EnumConstantDeclaration constant = roleConstant.get();
+									
+									// Удалить разрешение из массива permissions
+									if (constant.getArguments().size() >= 1 && 
+										constant.getArguments().get(0) instanceof LambdaExpr) {
+										LambdaExpr permissionsLambda = (LambdaExpr) constant.getArguments().get(0);
+										
+										if (permissionsLambda.getBody() instanceof ExpressionStmt) {
+											ExpressionStmt stmt = (ExpressionStmt) permissionsLambda.getBody();
+											if (stmt.getExpression() instanceof ArrayCreationExpr) {
+												ArrayCreationExpr array = (ArrayCreationExpr) stmt.getExpression();
+												array.getInitializer().ifPresent(init -> {
+													init.getValues().removeIf(element -> 
+														element instanceof NameExpr && 
+														((NameExpr) element).getNameAsString().equals(permission));
+												});
+											}
+										}
+									}
+									
+									Files.writeString(location.toPath(), cu.toString());
+									r.permissions.remove(permission);
+									return;
+								}
+							}
+						} else {
+							throw new IllegalStateException(r.name + " does not have permission " + permission);
+						}
+					} catch (IOException ex) {
+						throw new UncheckedIOException(ex);
+					}
+				}
+			}
+			throw new IllegalArgumentException("There is no role " + roleName);
+		}
+		
+		public RoleRepresentation addRole(String name, String... permissions) {
+			try {
+				RoleRepresentation r = new RoleRepresentation(name, new java.util.TreeSet<>(java.util.Arrays.asList(permissions)), null);
+				
+				while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
+				
+				CompilationUnit cu = StaticJavaParser.parse(location);
+				
+				// Найти enum Role
+				Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
+					.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
+						.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+							((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
+					.findFirst();
+				
+				if (roleEnum.isPresent()) {
+					EnumDeclaration enumDecl = roleEnum.get();
+					
+					// Создать новую константу enum
+					EnumConstantDeclaration newConstant = new EnumConstantDeclaration(name);
+					
+					enumDecl.addEntry(newConstant);
+					
+					Files.writeString(location.toPath(), cu.toString());
+					roles.add(r);
+					return r;
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+			return null;
+		}
+		
+		public void removeRole(String name) {
+			try {
+				while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
+				
+				CompilationUnit cu = StaticJavaParser.parse(location);
+				
+				// Найти enum Role
+				Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
+					.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
+						.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+							((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
+					.findFirst();
+				
+				if (roleEnum.isPresent()) {
+					EnumDeclaration enumDecl = roleEnum.get();
+					
+					// Удалить константу роли
+					enumDecl.getEntries().removeIf(constant -> constant.getNameAsString().equals(name));
+					
+					Files.writeString(location.toPath(), cu.toString());
+					roles.removeIf(r -> r.name.equals(name));
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+	}
+ */	
+	public static class NavigatorNode extends ProjectNode {
+		public static class Instruction {
+			public static enum Type {
+				START,
+				FEATURE,
+				TEXT,
+				COMMENT;
+				
+				public char toChar() {
+					return switch (this) {
+						case START -> 's';
+						case FEATURE -> 'f';
+						case TEXT -> 't';
+						case COMMENT -> 'c';
+						default -> throw new AssertionError("This method does not know other constants.");
+					};
+				}
+				
+				public static Type toType(char c) {
+					return switch (c) {
+						case 's' -> Instruction.Type.START;
+						case 'f' -> Instruction.Type.FEATURE;
+						case 't' -> Instruction.Type.TEXT;
+						case 'c' -> Instruction.Type.COMMENT;
+						default -> throw new IllegalArgumentException("Char '" + c + "' does not correspond to any constant.");
+					};
+				}
+			}
+			
+			public String text;
+			public Type type;
+			
+			public Instruction(String text, Type type) {
+				this.text = text;
+				this.type = type;
+			}
+		}
+		
+		public static class HelpEntry {
+			public String text;
+			public ArrayList<Instruction> instructions = new ArrayList<>();
+			
+			public HelpEntry(String text) {
+				this.text = text;
+			}
+			
+			public void changeText(String text, NavigatorNode n) {
+				try {
+					StringBuilder b = new StringBuilder();
+					for (String l : Files.readString(n.location.toPath()).split("\n")) {
+						String[] s = l.split(" ", 2);
+						if (s[1].equals(this.text)) s[1] = text;
+						b.append(s[0]).append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(n.location.toPath(), b);
+					this.text = text;
+				} catch (IOException ex) {
+					throw new UncheckedIOException(ex);
+				}
+			}
+			
+			public void replaceInstruction(Instruction c, int index, NavigatorNode n) {
+				try {
+					StringBuilder b = new StringBuilder();
+					for (String l : Files.readString(n.location.toPath()).split("\n")) {
+						String[] s = l.split(" ", 2);
+						if (text.equals(s[1])) {
+							String[] t = s[0].split("\\.");
+							int i = 0;
+							for (; i < index; ++i) b.append(t[i]).append('.');
+							b.append(c.type.toChar()).append(c.text).append('.');
+							++i;
+							for (; i < t.length; ++i) b.append(t[i]).append('.');
+							b.deleteCharAt(b.length() - 1);
+						} else b.append(s[0]);
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(n.location.toPath(), b);
+					instructions.set(index, c);
+				} catch (IOException ex) {
+					throw new UncheckedIOException(ex);
+				}
+			}
+			
+			public void appendInstruction(Instruction c, NavigatorNode n) {
+				try {
+					StringBuilder b = new StringBuilder();
+					for (String l : Files.readString(n.location.toPath()).split("\n")) {
+						String[] s = l.split(" ", 2);
+						b.append(s[0]);
+						if (s[1].equals(text)) b.append('.').append(c.type.toChar()).append(c.text);
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(n.location.toPath(), b);
+					instructions.add(c);
+				} catch (IOException ex) {
+					throw new UncheckedIOException(ex);
+				}
+			}
+			
+			public void deleteLastInstruction(NavigatorNode n) {
+				try {
+					StringBuilder b = new StringBuilder();
+					for (String l : Files.readString(n.location.toPath()).split("\n")) {
+						String[] s = l.split(" ", 2);
+						if (text.equals(s[1])) {
+							String[] t = s[0].split("\\.");
+							for (int j = 0; j < t.length - 1; ++j) b.append(t[j]);
+						} else b.append(s[0]);
+						if (!(b.isEmpty() || Character.isWhitespace(b.charAt(b.length() - 1)))) b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(n.location.toPath(), b);
+					instructions.removeLast();
+				} catch (IOException ex) {
+					throw new UncheckedIOException(ex);
+				}
+			}
+		}
+		
+		public ArrayList<HelpEntry> entries = new ArrayList<>();
+		
+		public NavigatorNode(File file) {
+			super(file);
+			try {
+				String str = Files.readString(file.toPath());
+				if (str.isBlank()) return;
+				for (String l : str.split("\n")) {
+					String[] s = l.split(" ", 2);
+					HelpEntry e = new HelpEntry(s[1]);
+					e.instructions.addAll(Stream.of(s[0].split("\\.")).map(t -> new Instruction(t.substring(1), Instruction.Type.toType(t.charAt(0)))).toList());
+					entries.add(e);
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+		
+		/**
+		 * Creates a new NavigatorNode.
+		 */
+		public NavigatorNode(ProjectGraph project) {
+			super(new File(project.projectFolder, "resources/helppath.cfg"));
+			try {
+				location.createNewFile();
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+		
+		public void deleteEntry(String text) {
+			HelpEntry e = entries.stream().filter(entry -> entry.text.equals(text)).findAny().get();
+			try {
+				StringBuilder b = new StringBuilder();
+				for (String l : Files.readString(location.toPath()).split("\n")) {
+					String[] s = l.split(" ", 2);
+					if (!s[1].equals(e.text)) b.append(s[0]).append(' ').append(s[1]).append('\n');
+				}
+				Files.writeString(location.toPath(), b);
+				entries.remove(e);
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+	}
+	
+	public static class Problem {
+		public static enum ProblemType {
 			ERROR,
 			WARNING,
 			INFO;
 		}
+		
 		public final String message;
 		public final ProblemType type;
 		public final Runnable solver;
-		public Problem(String message,ProblemType type){
-			this.message=message;
-			this.type=type;
-			solver=null;
+		
+		public Problem(String message, ProblemType type) {
+			this.message = message;
+			this.type = type;
+			solver = null;
 		}
-		public Problem(String message,ProblemType type,Runnable solver){
-			this.message=message;
-			this.type=type;
-			this.solver=solver;
+		
+		public Problem(String message, ProblemType type, Runnable solver) {
+			this.message = message;
+			this.type = type;
+			this.solver = solver;
 		}
 	}
-	public ArrayList<ProjectNode>nodes=new ArrayList<>();
+	
+	private JavaParser parser=new JavaParser();
+	public ArrayList<ProjectNode> nodes = new ArrayList<>();
 	public File projectFolder;
+	
 	/**
 	 * @param projectFolder - the project folder. It is recommended to pass <b>src/main/java</b> path:
 	 */
-	public ProjectGraph(File projectFolder){
-		this.projectFolder=projectFolder;
+	public ProjectGraph(File projectFolder) {
+		this.projectFolder = projectFolder;
 		projectFolder.mkdirs();
-		try{
-			Files.walkFileTree(projectFolder.toPath(),new SimpleFileVisitor<Path>(){
-				private final Pattern editablePattern=Pattern.compile("\\W?Editable\\W?");
-				private final Pattern processablePattern=Pattern.compile("\\WProcessable\\W");
-				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs)throws IOException{
-					if(file.toString().endsWith(".java")){
-						//TODO: scan the java-file
-						Matcher m=ParseUtils.classDefPattern.matcher(Files.readString(file));
-						if(m.find()){
-							if(m.group(1).equals("Main")){
-								nodes.add(new PermissionsNode(file.toFile()));
-								nodes.add(new RolesNode(file.toFile(),(PermissionsNode)nodes.getLast()));
-							// }else if(m.group(2)!=null&&processablePattern.matcher(m.group(2)).find())nodes.add(new EditableNode(file.toFile())); //TODO: add ProcessableNode
-							}else if(m.group(2)!=null&&editablePattern.matcher(m.group(2)).find())nodes.add(new EditableNode(file.toFile()));
-							System.err.println("Parsed: "+m.group(1));
+		try {
+			Files.walkFileTree(projectFolder.toPath(), new SimpleFileVisitor<Path>() {
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					if (file.toString().endsWith(".java")) {
+						CompilationUnit cu = parser.parse(file).getResult().get();
+						
+						// Найти класс Main
+						Optional<ClassOrInterfaceDeclaration> mainClass = cu.findAll(ClassOrInterfaceDeclaration.class).stream()
+							.filter(clazz -> clazz.getNameAsString().equals("Main"))
+							.findFirst();
+						
+						if (mainClass.isPresent()) {
+							nodes.add(new PermissionsNodeV2(file.toFile()));
+							nodes.add(new RolesNodeV2(file.toFile(), (PermissionsNodeV2) nodes.getLast()));
+						} else {
+							// Проверить, является ли класс Editable
+							Optional<ClassOrInterfaceDeclaration> editableClass = cu.findAll(ClassOrInterfaceDeclaration.class).stream()
+								.filter(clazz -> clazz.getExtendedTypes().stream()
+									.anyMatch(type -> type instanceof ClassOrInterfaceType && 
+										((ClassOrInterfaceType) type).getNameAsString().contains("Editable")))
+								.findFirst();
+							
+							if (editableClass.isPresent()) {
+								nodes.add(new EditableNode(file.toFile()));
+							}
 						}
-					}else if(file.getFileName().toString().equals("helppath.cfg")){
+						
+						System.err.println("Parsed: " + cu.getPrimaryTypeName().orElse("Unknown"));
+					} else if (file.getFileName().toString().equals("helppath.cfg")) {
 						nodes.add(new NavigatorNode(file.toFile()));
 					}
 					return FileVisitResult.CONTINUE;
 				}
 			});
 			System.err.println("Parsing completed!");
-		}catch(IOException ex){throw new UncheckedIOException(ex);}
+		} catch (IOException ex) {
+			throw new UncheckedIOException(ex);
+		}
+	}
+	
+	public EditableNode createEditableNode(String name, String objectName, EditableNode.Property... properties) {
+		File file = new File(projectFolder, "com");
+		if (file.isDirectory()) {
+			file = new File(Stream.of(file.listFiles()).filter(f -> f.isDirectory()).findAny().get(), "editables/registered/" + name + ".java");
+		} else {
+			file = new File(projectFolder, name + ".java");
+		}
+		file.getParentFile().mkdirs();
+		EditableNode n = new EditableNode(file, objectName, properties);
+		nodes.add(n);
+		return n;
+	}
+	
+	public void deleteNode(ProjectNode n) {
+		n.location.delete();
+		nodes.remove(n);
+	}
+	
+	public ArrayList<Problem> findProblems() {
+		ArrayList<Problem> a = new ArrayList<>();
+		// TODO: find problems
+		return a;
+	}
+	
+	/**
+	 * Shows low-code programming UI.
+	 */
+	public void show() {
+		try{
+			UIManager.setLookAndFeel(new NimbusLookAndFeel());
+		}catch(UnsupportedLookAndFeelException ex){throw new AssertionError("The BPALookAndFeel must be supported.",ex);}
+		JFrame f=new JFrame();
+		f.setUndecorated(true);
+		f.setSize(Root.SCREEN_SIZE);
+		f.setLayout(null);
+		JPanel buttons=new JPanel();
+		buttons.setBounds(0,f.getHeight()*9/10,f.getWidth()/4,f.getHeight()/15);
+		buttons.setLayout(new BoxLayout(buttons,BoxLayout.Y_AXIS));
+		// JButton analyze=new JButton("Анализ");
+		// Wrapper<TaskAnalyzer>analyzer=new Wrapper<>(null);
+		// analyze.addActionListener(e->{
+		// 	if(analyzer.var==null){
+		// 		JFileChooser fc=new JFileChooser(new File(System.getProperty("user.home")+"/Downloads"));
+		// 		fc.showOpenDialog(f);
+		// 		analyzer.var=new TaskAnalyzer(this,fc.getSelectedFile());
+		// 		analyzer.var.analyze();
+		// 	}
+		// 	analyzer.var.show();
+		// });
+		// analyze.setBackground(Color.DARK_GRAY);
+		// analyze.setForeground(Color.WHITE);
+		// buttons.add(analyze);
+		JButton parse=new JButton("Создать из разметки");
+		parse.addActionListener(e->{
+			JFileChooser fc=new JFileChooser(new File(System.getProperty("user.home")+"/Downloads"));
+			fc.showOpenDialog(f);
+			File file=fc.getSelectedFile();
+			if(file!=null){
+				int answer=JOptionPane.showConfirmDialog(f,"Включить в проект "+file.getName()+"?","Применить файл разметки?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.QUESTION_MESSAGE);
+				if(answer==JOptionPane.OK_OPTION){
+					//Ask to think twice if the file is `.used` or if file has incorrect format
+					if(file.getName().endsWith(".bpamarkup.used"))answer=JOptionPane.showConfirmDialog(f,"Вы пытаетесь ПОВТОРНО включить в проект "+file.getName()+". Продолжить?","Файл уже использован!",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE);
+					else if(!file.getName().endsWith(".bpamarkup"))answer=JOptionPane.showConfirmDialog(f,"Действительно использовать НЕ помеченный как bpamarkup файл "+file.getName()+".","Файл имеет не то расширение!",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE);
+				}
+				if(answer==JOptionPane.OK_OPTION){
+					BPAMarkupParser.parse(file,this);
+					if(file.getName().endsWith(".bpamarkup"))file.renameTo(new File(file+".used"));
+					else if(!file.getName().endsWith(".bpamarkup.used"))JOptionPane.showMessageDialog(f,"Файл не будет помечен как использованный.","Файл не отмечен",JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+		});
+		parse.setBackground(Color.DARK_GRAY);
+		parse.setForeground(Color.WHITE);
+		buttons.add(parse);
+		JButton saveState=new JButton("Сохранить состояние");
+		saveState.addActionListener(e->{
+			if(new File(Root.folder+"Data.ser"+ProgramStarter.version).exists())try{
+				new File(projectFolder+"/resources/initial/").mkdirs();
+				Files.copy(Path.of(Root.folder+"Data.ser"+ProgramStarter.version),Path.of(projectFolder+"/resources/initial/Data.ser"),StandardCopyOption.REPLACE_EXISTING);
+				Files.copy(Path.of(Root.folder+"Users.ser"+ProgramStarter.version),Path.of(projectFolder+"/resources/initial/Users.ser"),StandardCopyOption.REPLACE_EXISTING);
+			}catch(IOException ex){throw new UncheckedIOException(ex);}
+		});
+		buttons.add(saveState);
+		f.add(buttons);
+		JTabbedPane p=new JTabbedPane();
+		p.setSize(f.getWidth(),f.getHeight()*4/5);
+		JPanel objects=new JPanel();
+		objects.addComponentListener(new ComponentAdapter(){
+			public void componentShown(ComponentEvent e){
+				objects.removeAll();
+				fillObjectsTab(objects);
+			}
+		});	
+		p.addTab("Объекты",objects);
+		JPanel access=new JPanel();
+		access.addComponentListener(new ComponentAdapter(){
+			public void componentShown(ComponentEvent e){
+				access.removeAll();
+				fillAccessTab(access);
+			}
+		});	
+		p.addTab("Доступ",access);
+		JPanel navigator=new JPanel();
+		navigator.addComponentListener(new ComponentAdapter(){
+			public void componentShown(ComponentEvent e){
+				navigator.removeAll();
+				fillNavigatorTab(navigator);
+			}
+		});	
+		p.addTab("Навигатор",navigator);
+		JPanel problems=new JPanel();
+		problems.setBackground(Color.BLACK);
+		JScrollPane sProblems=SprintUI.createList(10,problems);
+		sProblems.setBounds(f.getWidth()/4,f.getHeight()*4/5,f.getWidth()*3/4,f.getHeight()/5);
+		class P extends JButton{
+			public P(Problem p){
+				setText(p.message);
+				setBackground(Color.BLACK);
+				setForeground(switch(p.type){
+					case ERROR->Color.RED;
+					case WARNING->Color.YELLOW;
+					case INFO->Color.GREEN;
+				});
+				problems.add(this);
+			}
+		}
+		f.add(sProblems);
+		f.add(p);
+		f.setVisible(true);
+		while(f.isVisible())Thread.onSpinWait();
+		System.exit(0);
 	}
 	private void fillObjectsTab(JPanel tab){
-		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
+		PermissionsNodeV2 pn=(PermissionsNodeV2)nodes.parallelStream().filter(n->n instanceof PermissionsNodeV2).findAny().get();
 		tab.setLayout(new BorderLayout());
 		class B extends JPanel{
 			public B(Property p,EditableNode n){
@@ -260,8 +952,8 @@ public class ProjectGraph{
 	}
 	private void fillAccessTab(JPanel tab){
 		tab.setLayout(new GridLayout(1,2));
-		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
-		RolesNode rn=(RolesNode)nodes.parallelStream().filter(n->n instanceof RolesNode).findAny().get();
+		PermissionsNodeV2 pn=(PermissionsNodeV2)nodes.parallelStream().filter(n->n instanceof PermissionsNodeV2).findAny().get();
+		RolesNodeV2 rn=(RolesNodeV2)nodes.parallelStream().filter(n->n instanceof RolesNodeV2).findAny().get();
 		class P extends JPanel{
 			public P(String permission){
 				setLayout(new GridBagLayout());
@@ -470,130 +1162,5 @@ public class ProjectGraph{
 		for(HelpEntry e:n.entries)panel.add(new E(e));
 		tab.add(SprintUI.createList(15,panel));
 	}
-	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties){
-		File file=new File(projectFolder,"com");
-		if(file.isDirectory())file=new File(Stream.of(file.listFiles()).filter(f->f.isDirectory()).findAny().get(),"editables/registered/"+name+".java");
-		else file=new File(projectFolder,name+".java");
-		file.getParentFile().mkdirs();
-		EditableNode n=new EditableNode(file,objectName,properties);
-		nodes.add(n);
-		return n;
-	}
-	public void deleteNode(ProjectNode n){
-		n.location.delete();
-		nodes.remove(n);
-	}
-	public ArrayList<Problem>findProblems(){
-		ArrayList<Problem>a=new ArrayList<>();
-		//TODO: find problems
-		return a;
-	}
-	/**
-	 * Shows low-code programming UI.
-	 */
-	public void show(){
-		try{
-			UIManager.setLookAndFeel(new NimbusLookAndFeel());
-		}catch(UnsupportedLookAndFeelException ex){throw new AssertionError("The BPALookAndFeel must be supported.",ex);}
-		JFrame f=new JFrame();
-		f.setUndecorated(true);
-		f.setSize(Root.SCREEN_SIZE);
-		f.setLayout(null);
-		JPanel buttons=new JPanel();
-		buttons.setBounds(0,f.getHeight()*9/10,f.getWidth()/4,f.getHeight()/15);
-		buttons.setLayout(new BoxLayout(buttons,BoxLayout.Y_AXIS));
-		// JButton analyze=new JButton("Анализ");
-		// Wrapper<TaskAnalyzer>analyzer=new Wrapper<>(null);
-		// analyze.addActionListener(e->{
-		// 	if(analyzer.var==null){
-		// 		JFileChooser fc=new JFileChooser(new File(System.getProperty("user.home")+"/Downloads"));
-		// 		fc.showOpenDialog(f);
-		// 		analyzer.var=new TaskAnalyzer(this,fc.getSelectedFile());
-		// 		analyzer.var.analyze();
-		// 	}
-		// 	analyzer.var.show();
-		// });
-		// analyze.setBackground(Color.DARK_GRAY);
-		// analyze.setForeground(Color.WHITE);
-		// buttons.add(analyze);
-		JButton parse=new JButton("Создать из разметки");
-		parse.addActionListener(e->{
-			JFileChooser fc=new JFileChooser(new File(System.getProperty("user.home")+"/Downloads"));
-			fc.showOpenDialog(f);
-			File file=fc.getSelectedFile();
-			if(file!=null){
-				int answer=JOptionPane.showConfirmDialog(f,"Включить в проект "+file.getName()+"?","Применить файл разметки?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.QUESTION_MESSAGE);
-				if(answer==JOptionPane.OK_OPTION){
-					//Ask to think twice if the file is `.used` or if file has incorrect format
-					if(file.getName().endsWith(".bpamarkup.used"))answer=JOptionPane.showConfirmDialog(f,"Вы пытаетесь ПОВТОРНО включить в проект "+file.getName()+". Продолжить?","Файл уже использован!",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE);
-					else if(!file.getName().endsWith(".bpamarkup"))answer=JOptionPane.showConfirmDialog(f,"Действительно использовать НЕ помеченный как bpamarkup файл "+file.getName()+".","Файл имеет не то расширение!",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE);
-				}
-				if(answer==JOptionPane.OK_OPTION){
-					BPAMarkupParser.parse(file,this);
-					if(file.getName().endsWith(".bpamarkup"))file.renameTo(new File(file+".used"));
-					else if(!file.getName().endsWith(".bpamarkup.used"))JOptionPane.showMessageDialog(f,"Файл не будет помечен как использованный.","Файл не отмечен",JOptionPane.INFORMATION_MESSAGE);
-				}
-			}
-		});
-		parse.setBackground(Color.DARK_GRAY);
-		parse.setForeground(Color.WHITE);
-		buttons.add(parse);
-		JButton saveState=new JButton("Сохранить состояние");
-		saveState.addActionListener(e->{
-			if(new File(Root.folder+"Data.ser"+ProgramStarter.version).exists())try{
-				new File(projectFolder+"/resources/initial/").mkdirs();
-				Files.copy(Path.of(Root.folder+"Data.ser"+ProgramStarter.version),Path.of(projectFolder+"/resources/initial/Data.ser"),StandardCopyOption.REPLACE_EXISTING);
-				Files.copy(Path.of(Root.folder+"Users.ser"+ProgramStarter.version),Path.of(projectFolder+"/resources/initial/Users.ser"),StandardCopyOption.REPLACE_EXISTING);
-			}catch(IOException ex){throw new UncheckedIOException(ex);}
-		});
-		buttons.add(saveState);
-		f.add(buttons);
-		JTabbedPane p=new JTabbedPane();
-		p.setSize(f.getWidth(),f.getHeight()*4/5);
-		JPanel objects=new JPanel();
-		objects.addComponentListener(new ComponentAdapter(){
-			public void componentShown(ComponentEvent e){
-				objects.removeAll();
-				fillObjectsTab(objects);
-			}
-		});	
-		p.addTab("Объекты",objects);
-		JPanel access=new JPanel();
-		access.addComponentListener(new ComponentAdapter(){
-			public void componentShown(ComponentEvent e){
-				access.removeAll();
-				fillAccessTab(access);
-			}
-		});	
-		p.addTab("Доступ",access);
-		JPanel navigator=new JPanel();
-		navigator.addComponentListener(new ComponentAdapter(){
-			public void componentShown(ComponentEvent e){
-				navigator.removeAll();
-				fillNavigatorTab(navigator);
-			}
-		});	
-		p.addTab("Навигатор",navigator);
-		JPanel problems=new JPanel();
-		problems.setBackground(Color.BLACK);
-		JScrollPane sProblems=SprintUI.createList(10,problems);
-		sProblems.setBounds(f.getWidth()/4,f.getHeight()*4/5,f.getWidth()*3/4,f.getHeight()/5);
-		class P extends JButton{
-			public P(Problem p){
-				setText(p.message);
-				setBackground(Color.BLACK);
-				setForeground(switch(p.type){
-					case ERROR->Color.RED;
-					case WARNING->Color.YELLOW;
-					case INFO->Color.GREEN;
-				});
-				problems.add(this);
-			}
-		}
-		f.add(sProblems);
-		f.add(p);
-		f.setVisible(true);
-		while(f.isVisible())Thread.onSpinWait();
-		System.exit(0);
-	}
+	
 }
