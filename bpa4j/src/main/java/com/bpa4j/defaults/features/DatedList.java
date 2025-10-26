@@ -14,6 +14,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -26,15 +27,17 @@ import javax.swing.JScrollPane;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
+import com.bpa4j.Dater;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Data;
-import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.User.Feature;
-import com.bpa4j.Dater;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.modules.FormModule;
+import com.bpa4j.navigation.HelpView.FeatureInstruction;
+import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.ui.HButton;
 
 @SuppressWarnings("unchecked")
@@ -60,6 +63,7 @@ public final class DatedList<T extends Editable>implements Feature{
 		((HashMap<String,DatedList<?>>)Data.getInstance().ftrInstances.get(DatedList.class.getName())).put(name,b);
 		return b;
 	}
+	@SuppressWarnings("null")
 	private JComponent createTableEntry(T t,JPanel tab,Font font){
 		Wrapper<LocalDate>date=new Wrapper<>(LocalDate.now());
 		if(objects.get(t)==null)objects.put(t,dateProvider.get());
@@ -188,4 +192,14 @@ public final class DatedList<T extends Editable>implements Feature{
 		tab.add(s);
 	}
 	public String toString(){return name;}
+	/**
+	 * AI-generated.
+	 */
+	public List<ImplementedInfo>getImplementedInfo(){
+		// Собираем информацию от всех редактируемых объектов и добавляем инструкцию о функции
+		return objects.keySet().stream()
+			.flatMap(obj -> obj.getImplementedInfo().stream())
+			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+			.collect(java.util.stream.Collectors.toList());
+	}
 }

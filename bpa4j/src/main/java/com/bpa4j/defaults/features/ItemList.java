@@ -29,16 +29,18 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
-import javax.swing.JList;
 
 import com.bpa4j.core.Data;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.User.Feature;
 import com.bpa4j.editor.EditorEntry;
+import com.bpa4j.navigation.HelpView.FeatureInstruction;
+import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.ui.AutoLayout;
 import com.bpa4j.ui.HButton;
 
@@ -236,4 +238,16 @@ public final class ItemList<T extends Serializable>implements Feature{
 		g2.drawLine(s/6,s*3/4,s*2/3,s*3/4);
 	}
 	public String toString(){return name;}
+	
+	/**
+	 * AI-generated.
+	 */
+	public List<ImplementedInfo>getImplementedInfo(){
+		// Собираем информацию от всех редактируемых объектов и добавляем инструкцию о функции
+		return objects.stream()
+			.filter(obj -> obj instanceof Editable)
+			.flatMap(obj -> ((Editable) obj).getImplementedInfo().stream())
+			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+			.collect(java.util.stream.Collectors.toList());
+	}
 }

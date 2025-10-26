@@ -29,6 +29,7 @@ import java.util.HashSet;
 import javax.swing.JButton;
 
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.navigation.TaskLoc;
 import com.bpa4j.ui.HButton;
 import com.bpa4j.ui.Message;
 import com.bpa4j.ui.PathIcon;
@@ -40,7 +41,7 @@ public final class Data implements Serializable{
 	private static Data instance;
 	/**
 	 * An array with icons (icons are optional).
-	 * To change display buttons in the model editing tab, redefine {@code createElementButton} and {@code createAddButton}
+	 * To change display buttons in the model editing tab, redefine {@code createElementButton} and {@code createAddButton}.
 	 */
 	public static class EditableGroup<T extends Editable>extends ArrayList<T>{
 		public Class<T>type;
@@ -111,7 +112,11 @@ public final class Data implements Serializable{
 		@SuppressWarnings("rawtypes")
 		public boolean equals(Object o){return o instanceof EditableGroup&&((EditableGroup)o).type.equals(type);}
 	}
-	public static abstract class Editable implements Serializable{
+	/**
+	 * An arbitrary object. Takes main place in the bpa4j system.
+	 * Override {@link #getImplementedInfo()} to insert navigation info.
+	 */
+	public static abstract class Editable implements Serializable,TaskLoc{
 		public static class ActionRecord implements Serializable{
 			public String text;
 			public User source;
@@ -189,6 +194,9 @@ public final class Data implements Serializable{
 	}
 	public static synchronized<T extends Editable>EditableGroup<T>group(Class<T>type){return instance.getGroup(type);}
 	@SuppressWarnings("unchecked")
+	/**
+	 * Feature class -> all features for this class.
+	 */
 	public <T extends Feature>HashMap<String,T>getFtrInstances(Class<T>type){
 		return(HashMap<String,T>)ftrInstances.get(type.getName());
 	}

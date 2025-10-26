@@ -15,7 +15,9 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.EventObject;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
+
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -24,15 +26,17 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
 import com.bpa4j.core.Data;
-import com.bpa4j.core.ProgramStarter;
-import com.bpa4j.core.Registrator;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.Data.EditableGroup;
+import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.core.Registrator;
 import com.bpa4j.core.User.Feature;
 import com.bpa4j.defaults.table.FieldCellRenderer;
 import com.bpa4j.defaults.table.FieldCellValue;
 import com.bpa4j.defaults.table.FormCellEditor;
 import com.bpa4j.editor.EditorEntry;
+import com.bpa4j.navigation.HelpView.FeatureInstruction;
+import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.ui.HButton;
 
 @SuppressWarnings({"unchecked","PMD.ReplaceVectorWithList"})
@@ -167,4 +171,16 @@ public final class MappedList<T extends Editable,V extends Serializable>implemen
 		for(int y=h/10;y<h*9/10;y+=h/10)g2.drawLine(h/10,y,h*9/10,y);
 	}
 	public String toString(){return name;}
+	
+	/**
+	 * AI-generated.
+	 */
+	public List<ImplementedInfo>getImplementedInfo(){
+		// Собираем информацию от всех редактируемых объектов в группе и добавляем инструкцию о функции
+		EditableGroup<T> group = Data.getInstance().getGroup(type);
+		return group.stream()
+			.flatMap(obj -> obj.getImplementedInfo().stream())
+			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+			.collect(java.util.stream.Collectors.toList());
+	}
 }

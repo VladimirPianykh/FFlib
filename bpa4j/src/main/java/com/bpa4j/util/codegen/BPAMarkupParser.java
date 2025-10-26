@@ -12,4 +12,11 @@ public final class BPAMarkupParser{
 	public static void parse(File markup,ProjectGraph graph){
 		//TODO: parse BPAMarkup
 	}
+	
+	/**
+	 * Parses a markup file into the designated project (V2)
+	 */
+	public static void parse(File markup,ProjectGraphV2 graph){
+		//TODO: parse BPAMarkup
+	}
 }

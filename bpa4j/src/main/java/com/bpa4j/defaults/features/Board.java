@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Vector;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -38,6 +39,8 @@ import com.bpa4j.core.User.Feature;
 import com.bpa4j.defaults.table.FieldCellValue;
 import com.bpa4j.defaults.table.FormCellEditor;
 import com.bpa4j.editor.EditorEntry;
+import com.bpa4j.navigation.HelpView.FeatureInstruction;
+import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.ui.AutoLayout;
 import com.bpa4j.ui.HButton;
 
@@ -46,7 +49,7 @@ import com.bpa4j.ui.HButton;
  * Similar classes are called Board-like.
  * </p>
  * Generally an editable table,
- * which can be supplemented with configuration components: filters, sorters, etc.
+ * which can be supplemented with configuration components: filterrs, etc.
  */
 @SuppressWarnings("unchecked")
 public final class Board<T extends Serializable>implements Feature{
@@ -236,4 +239,15 @@ public final class Board<T extends Serializable>implements Feature{
         g2.fillOval(s/3,s/3,s/3,s/3);
 	}
 	public String toString(){return name;}
+	/**
+	 * AI-generated.
+	 */
+	public List<ImplementedInfo>getImplementedInfo(){
+		// Собираем информацию от всех редактируемых объектов и добавляем инструкцию о функции
+		return objects.stream()
+			.filter(obj -> obj instanceof Editable)
+			.flatMap(obj -> ((Editable) obj).getImplementedInfo().stream())
+			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+			.collect(java.util.stream.Collectors.toList());
+	}
 }

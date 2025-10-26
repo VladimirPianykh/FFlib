@@ -23,6 +23,8 @@ import javax.swing.JPanel;
 import com.bpa4j.Dater;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.navigation.HelpView.FeatureInstruction;
+import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.ui.HButton;
 import com.bpa4j.ui.PathIcon;
 
@@ -150,4 +152,16 @@ public class Calendar<T extends Calendar.Event>implements Feature{
 		fillForMonth(panel,w.var);
 	}
 	public String toString(){return name;}
+	/**
+	 * AI-generated.
+	 */
+	public List<ImplementedInfo>getImplementedInfo(){
+		// Собираем информацию от всех событий и добавляем инструкцию о функции
+		return events.values().stream()
+			.flatMap(List::stream)
+			.filter(event -> event instanceof com.bpa4j.core.Data.Editable)
+			.flatMap(event -> ((com.bpa4j.core.Data.Editable) event).getImplementedInfo().stream())
+			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+			.collect(java.util.stream.Collectors.toList());
+	}
 }

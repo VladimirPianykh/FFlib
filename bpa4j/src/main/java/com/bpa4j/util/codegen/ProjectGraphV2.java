@@ -207,7 +207,7 @@ public class ProjectGraphV2 {
 							}
 							
 							// Второй аргумент - лямбда для features (пока не обрабатываем)
-							// TODO: parse features
+							// TO DO: parse features
 						}
 						
 						roles.add(new RoleRepresentation(name, permissions, features));
@@ -731,7 +731,21 @@ public class ProjectGraphV2 {
 		JButton parse=new JButton("Создать из разметки");
 		parse.addActionListener(e->{
 			JFileChooser fc=new JFileChooser(new File(System.getProperty("user.home")+"/Downloads"));
-			//Dummy
+			fc.showOpenDialog(f);
+			File file=fc.getSelectedFile();
+			if(file!=null){
+				int answer=JOptionPane.showConfirmDialog(f,"Включить в проект "+file.getName()+"?","Применить файл разметки?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.QUESTION_MESSAGE);
+				if(answer==JOptionPane.OK_OPTION){
+					//Ask to think twice if the file is `.used` or if file has incorrect format
+					if(file.getName().endsWith(".bpamarkup.used"))answer=JOptionPane.showConfirmDialog(f,"Вы пытаетесь ПОВТОРНО включить в проект "+file.getName()+". Продолжить?","Файл уже использован!",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE);
+					else if(!file.getName().endsWith(".bpamarkup"))answer=JOptionPane.showConfirmDialog(f,"Действительно использовать НЕ помеченный как bpamarkup файл "+file.getName()+".","Файл имеет не то расширение!",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE);
+				}
+				if(answer==JOptionPane.OK_OPTION){
+					BPAMarkupParser.parse(file,this);
+					if(file.getName().endsWith(".bpamarkup"))file.renameTo(new File(file+".used"));
+					else if(!file.getName().endsWith(".bpamarkup.used"))JOptionPane.showMessageDialog(f,"Файл не будет помечен как использованный.","Файл не отмечен",JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
 		});
 		parse.setBackground(Color.DARK_GRAY);
 		parse.setForeground(Color.WHITE);
@@ -937,7 +951,7 @@ public class ProjectGraphV2 {
 	}
 	private void fillAccessTab(JPanel tab){
 		tab.setLayout(new GridLayout(1,2));
-		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
+		PermissionsNodeV2 pn=(PermissionsNodeV2)nodes.parallelStream().filter(n->n instanceof PermissionsNodeV2).findAny().get();
 		RolesNodeV2 rn=(RolesNodeV2)nodes.parallelStream().filter(n->n instanceof RolesNodeV2).findAny().get();
 		class P extends JPanel{
 			public P(String permission){

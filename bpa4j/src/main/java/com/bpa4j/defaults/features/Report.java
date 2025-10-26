@@ -9,6 +9,7 @@ import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -16,6 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.ui.AutoLayout;
 
 public class Report implements Feature{
@@ -76,4 +78,14 @@ public class Report implements Feature{
 		tab.add(panel,BorderLayout.SOUTH);
 	}
 	public String toString(){return name;}
+	
+	/**
+	 * AI-generated.
+	 */
+	public List<ImplementedInfo>getImplementedInfo(){
+		// Report не содержит редактируемых объектов напрямую,
+		// поэтому возвращаем пустой список
+		//TODO: think about report navigation
+		return List.of();
+	}
 }

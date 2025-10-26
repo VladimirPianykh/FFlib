@@ -8,14 +8,16 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.JPanel;
 
 import com.bpa4j.Wrapper;
-import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.ui.HButton;
 
 public class DisposableDocument<T extends Editable>implements Feature{
@@ -90,4 +92,13 @@ public class DisposableDocument<T extends Editable>implements Feature{
 		
 	}
 	public String toString(){return name;}
+	
+	/**
+	 * AI-generated.
+	 */
+	public List<ImplementedInfo>getImplementedInfo(){
+		// DisposableDocument работает с временными документами,
+		// поэтому возвращаем пустой список
+		return List.of();
+	}
 }

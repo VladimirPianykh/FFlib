@@ -1,6 +1,8 @@
 package com.bpa4j.core;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.core.User.Feature;
@@ -21,5 +23,37 @@ public abstract class Registrator{
         register(p);
         User.permissions.put(r,p);
         WorkFrame.ftrMap.put(r,f);
+    }
+    
+    /**
+     * Gets a list of all registered roles
+     * @return list of roles
+     */
+    public static List<Role> getRegisteredRoles(){
+        return new ArrayList<>(User.registeredRoles);
+    }
+    
+    /**
+     * Gets a list of all registered features
+     * @return list of features
+     */
+    public static List<Feature> getRegisteredFeatures(){
+        return new ArrayList<>(User.registeredFeatures);
+    }
+    
+    /**
+     * Gets a list of all registered permissions
+     * @return list of permissions
+     */
+    public static List<Permission> getRegisteredPermissions(){
+        return new ArrayList<>(User.registeredPermissions);
+    }
+    
+    /**
+     * Gets a list of all registered editable groups
+     * @return list of EditableGroup instances
+     */
+    public static List<EditableGroup<?>> getRegisteredEditableGroups(){
+        return new ArrayList<>(Data.getInstance().editables);
     }
 }

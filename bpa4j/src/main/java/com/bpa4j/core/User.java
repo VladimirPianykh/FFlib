@@ -21,13 +21,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import javax.swing.JPanel;
 
+import com.bpa4j.Wrapper;
 import com.bpa4j.defaults.DefaultPermission;
 import com.bpa4j.defaults.DefaultRole;
 import com.bpa4j.defaults.features.DefaultFeature;
+import com.bpa4j.navigation.HelpView.StartInstruction;
+import com.bpa4j.navigation.ImplementedInfo;
+import com.bpa4j.navigation.TaskLoc;
 import com.bpa4j.ui.Message;
 
 public class User implements Serializable{
@@ -46,8 +52,18 @@ public class User implements Serializable{
 		}
 		public void writeLogout(){outTime=LocalDateTime.now();}
 	}
-	public static interface Role extends Serializable{}
-	public static interface Feature extends Serializable{
+	public static interface Role extends Serializable,TaskLoc{
+		default List<ImplementedInfo>getImplementedInfo(){
+			Wrapper<User>user=new Wrapper<>(null);
+			for(User u:User.userMap.values())if(u.role.equals(this))user.var=u;
+			if(user.var==null)return List.of();
+			return Stream.of(WorkFrame.ftrMap.get(this))
+				.<ImplementedInfo>mapMulti((p,out)->p.getImplementedInfo().forEach(out))
+				.<ImplementedInfo>map(info->info.appendInstruction(new StartInstruction(user.var)))
+				.toList();
+		}
+	}
+	public static interface Feature extends Serializable,TaskLoc{
 		public void paint(Graphics2D g2,BufferedImage image,int h);
 		public void fillTab(JPanel content,JPanel tab,Font font);
 	}

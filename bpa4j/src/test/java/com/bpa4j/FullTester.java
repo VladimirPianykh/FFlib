@@ -1,9 +1,9 @@
 package com.bpa4j;
 
-import java.io.File;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -13,13 +13,12 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
-import com.bpa4j.core.Navigator;
+import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Registrator;
 import com.bpa4j.core.Root;
 import com.bpa4j.core.User;
-import com.bpa4j.core.Data.Editable;
-import com.bpa4j.core.Data.EditableGroup;
 import com.bpa4j.core.User.Feature;
 import com.bpa4j.core.User.Permission;
 import com.bpa4j.core.User.Role;
@@ -33,8 +32,8 @@ import com.bpa4j.defaults.features.ItemList;
 import com.bpa4j.defaults.features.Report;
 import com.bpa4j.defaults.ftr_attributes.data_renderers.AnswerDataRenderer;
 import com.bpa4j.defaults.ftr_attributes.data_renderers.ChartDataRenderer;
-import com.bpa4j.defaults.ftr_attributes.data_renderers.TableDataRenderer;
 import com.bpa4j.defaults.ftr_attributes.data_renderers.ChartDataRenderer.ChartMode;
+import com.bpa4j.defaults.ftr_attributes.data_renderers.TableDataRenderer;
 import com.bpa4j.defaults.ftr_attributes.daters.EventDater;
 import com.bpa4j.defaults.ftr_attributes.element_suppliers.ChartDataConverter;
 import com.bpa4j.defaults.ftr_attributes.element_suppliers.GroupElementSupplier;
@@ -50,9 +49,9 @@ import com.bpa4j.editor.modules.FormModule;
 import com.bpa4j.editor.modules.LimitToModule;
 import com.bpa4j.editor.modules.LogWatchModule;
 import com.bpa4j.editor.modules.StageApprovalModule;
+import com.bpa4j.navigation.ImplementedInfo;
+import com.bpa4j.navigation.Navigator;
 import com.bpa4j.ui.PathIcon;
-import com.bpa4j.util.codegen.ProjectGraph;
-import com.bpa4j.util.codegen.ProjectGraphV2;
 import com.bpa4j.util.testgen.TestGen;
 
 public final class FullTester{
@@ -80,6 +79,12 @@ public final class FullTester{
 		@EditorEntry(translation="Величина 2")
 		public int value2=(int)(Math.random()*100);
 		public MyEditable3(){super("Новый объект");}
+		public List<ImplementedInfo>getImplementedInfo(){
+			ImplementedInfo info=new ImplementedInfo("Пункт ТЗ здесь")
+				.appendText("Порадуйтесь.")
+				.appendComment("Всё, вы нашли графики.");
+			return List.of(info);
+		}
 	}
 	public static class MyCustomer extends AbstractCustomer{}
 	public static class MyEditable2 extends Editable{
@@ -196,7 +201,7 @@ public final class FullTester{
 	}
 	private FullTester(){}
 	public static void main(String[]args)throws ReflectiveOperationException,URISyntaxException{
-		new ProjectGraphV2(new File("C:/Users/user/Desktop/IT/Java/1C/NTO training/team/T1/NTO_TRAINING/src/main/java")).show();
+		// new ProjectGraphV2(new File("C:/Users/user/Desktop/IT/Java/1C/NTO training/team/T1/NTO_TRAINING/src/main/java")).show();
 		Navigator.init();
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;

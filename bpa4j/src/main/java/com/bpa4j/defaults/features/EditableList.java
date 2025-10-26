@@ -10,6 +10,7 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.JComponent;
@@ -17,11 +18,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import com.bpa4j.core.Data;
-import com.bpa4j.core.ProgramStarter;
-import com.bpa4j.core.Registrator;
 import com.bpa4j.core.Data.Editable;
 import com.bpa4j.core.Data.EditableGroup;
+import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.core.Registrator;
 import com.bpa4j.core.User.Feature;
+import com.bpa4j.navigation.HelpView.FeatureInstruction;
+import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.ui.HButton;
 
 /**
@@ -132,4 +135,16 @@ public class EditableList<T extends Editable>implements Feature{
 		tab.add(s);
 	}
 	public String toString(){return name;}
+	
+	/**
+	 * AI-generated.
+	 */
+	public List<ImplementedInfo>getImplementedInfo(){
+		// Собираем информацию от всех редактируемых объектов в группе и добавляем инструкцию о функции
+		EditableGroup<T> group = Data.getInstance().getGroup(type);
+		return group.stream()
+			.flatMap(obj -> obj.getImplementedInfo().stream())
+			.<ImplementedInfo>map(info -> info.appendInstruction(new FeatureInstruction(this)))
+			.collect(java.util.stream.Collectors.toList());
+	}
 }

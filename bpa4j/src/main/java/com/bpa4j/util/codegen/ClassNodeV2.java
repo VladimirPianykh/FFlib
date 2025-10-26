@@ -11,10 +11,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.SimpleName;
-import com.github.javaparser.ast.expr.TypeExpr;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
 public abstract class ClassNodeV2 extends ProjectNode {
 	public String name;
