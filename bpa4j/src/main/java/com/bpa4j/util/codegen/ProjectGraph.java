@@ -54,7 +54,8 @@ import com.bpa4j.util.SprintUI;
 import com.bpa4j.util.codegen.EditableNode.Property;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.HelpEntry;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.Instruction;
-import com.bpa4j.util.codegen.RolesNodeV2.RoleRepresentation;
+import com.bpa4j.util.codegen.RolesNode.RoleRepresentation;
+import com.bpa4j.util.codegen.server.ProjectServer;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -626,9 +627,17 @@ public class ProjectGraph {
 			this.solver = solver;
 		}
 	}
-	
+	public static interface DiagnosticService{
+		ArrayList<Problem>findProblems(ProjectGraph graph);
+	}
+	private static ArrayList<DiagnosticService>diagnosticServices=new ArrayList<>();
+	static{
+		// diagnosticServices.add();
+		//TODO: add diagnostic services
+	}
 	private JavaParser parser=new JavaParser();
-	public ArrayList<ProjectNode> nodes = new ArrayList<>();
+	private ArrayList<Problem>problemsCache;
+	public ArrayList<ProjectNode>nodes=new ArrayList<>();
 	public File projectFolder;
 	
 	/**
@@ -649,8 +658,8 @@ public class ProjectGraph {
 							.findFirst();
 						
 						if (mainClass.isPresent()) {
-							nodes.add(new PermissionsNodeV2(file.toFile()));
-							nodes.add(new RolesNodeV2(file.toFile(), (PermissionsNodeV2) nodes.getLast()));
+							nodes.add(new PermissionsNode(file.toFile()));
+							nodes.add(new RolesNode(file.toFile(), (PermissionsNode) nodes.getLast()));
 						} else {
 							// Проверить, является ли класс Editable
 							Optional<ClassOrInterfaceDeclaration> editableClass = cu.findAll(ClassOrInterfaceDeclaration.class).stream()
@@ -695,9 +704,9 @@ public class ProjectGraph {
 		nodes.remove(n);
 	}
 	
-	public ArrayList<Problem> findProblems() {
-		ArrayList<Problem> a = new ArrayList<>();
-		// TODO: find problems
+	public ArrayList<Problem>findProblems(){
+		ArrayList<Problem>a=new ArrayList<>();
+		for(DiagnosticService d:diagnosticServices)a.addAll(d.findProblems(this));
 		return a;
 	}
 	
@@ -761,8 +770,8 @@ public class ProjectGraph {
 		});
 		buttons.add(saveState);
 		f.add(buttons);
-		JTabbedPane p=new JTabbedPane();
-		p.setSize(f.getWidth(),f.getHeight()*4/5);
+		JTabbedPane t=new JTabbedPane();
+		t.setSize(f.getWidth(),f.getHeight()*4/5);
 		JPanel objects=new JPanel();
 		objects.addComponentListener(new ComponentAdapter(){
 			public void componentShown(ComponentEvent e){
@@ -770,7 +779,7 @@ public class ProjectGraph {
 				fillObjectsTab(objects);
 			}
 		});	
-		p.addTab("Объекты",objects);
+		t.addTab("Объекты",objects);
 		JPanel access=new JPanel();
 		access.addComponentListener(new ComponentAdapter(){
 			public void componentShown(ComponentEvent e){
@@ -778,7 +787,7 @@ public class ProjectGraph {
 				fillAccessTab(access);
 			}
 		});	
-		p.addTab("Доступ",access);
+		t.addTab("Доступ",access);
 		JPanel navigator=new JPanel();
 		navigator.addComponentListener(new ComponentAdapter(){
 			public void componentShown(ComponentEvent e){
@@ -786,7 +795,7 @@ public class ProjectGraph {
 				fillNavigatorTab(navigator);
 			}
 		});	
-		p.addTab("Навигатор",navigator);
+		t.addTab("Навигатор",navigator);
 		JPanel problems=new JPanel();
 		problems.setBackground(Color.BLACK);
 		JScrollPane sProblems=SprintUI.createList(10,problems);
@@ -803,14 +812,19 @@ public class ProjectGraph {
 				problems.add(this);
 			}
 		}
+		problemsCache=findProblems();
+		for(Problem p:problemsCache)new P(p);
 		f.add(sProblems);
-		f.add(p);
+		f.add(t);
 		f.setVisible(true);
 		while(f.isVisible())Thread.onSpinWait();
 		System.exit(0);
 	}
+	public void runServer(long port){
+		new ProjectServer(this,port);
+	}
 	private void fillObjectsTab(JPanel tab){
-		PermissionsNodeV2 pn=(PermissionsNodeV2)nodes.parallelStream().filter(n->n instanceof PermissionsNodeV2).findAny().get();
+		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
 		tab.setLayout(new BorderLayout());
 		class B extends JPanel{
 			public B(Property p,EditableNode n){
@@ -952,8 +966,8 @@ public class ProjectGraph {
 	}
 	private void fillAccessTab(JPanel tab){
 		tab.setLayout(new GridLayout(1,2));
-		PermissionsNodeV2 pn=(PermissionsNodeV2)nodes.parallelStream().filter(n->n instanceof PermissionsNodeV2).findAny().get();
-		RolesNodeV2 rn=(RolesNodeV2)nodes.parallelStream().filter(n->n instanceof RolesNodeV2).findAny().get();
+		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
+		RolesNode rn=(RolesNode)nodes.parallelStream().filter(n->n instanceof RolesNode).findAny().get();
 		class P extends JPanel{
 			public P(String permission){
 				setLayout(new GridBagLayout());
@@ -1074,7 +1088,6 @@ public class ProjectGraph {
 		tab.setLayout(new GridLayout());
 		Optional<ProjectNode>nodeOptional=nodes.stream().filter(n->n instanceof NavigatorNode).findAny();
 		if(nodeOptional.isEmpty()){
-			//TODO: add "no helppath.cfg in this project" sign and a button to add it
 			tab.setLayout(new GridLayout(2,1));
 			tab.add(new JLabel("helppath.cfg отсутствует в проекте."));
 			JButton add=new JButton();

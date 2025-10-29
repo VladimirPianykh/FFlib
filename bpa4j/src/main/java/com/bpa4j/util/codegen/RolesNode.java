@@ -21,7 +21,7 @@ import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
-public class RolesNodeV2 extends ProjectNode {
+public class RolesNode extends ProjectNode {
 	public static class RoleRepresentation {
 		public String name;
 		public Set<String> permissions;
@@ -36,7 +36,7 @@ public class RolesNodeV2 extends ProjectNode {
 	
 	public ArrayList<RoleRepresentation> roles = new ArrayList<>();
 	
-	public RolesNodeV2(File file, PermissionsNodeV2 p) {
+	public RolesNode(File file, PermissionsNode p) {
 		super(file);
 		try {
 			CompilationUnit cu = StaticJavaParser.parse(file);
@@ -77,7 +77,7 @@ public class RolesNodeV2 extends ProjectNode {
 		}
 	}
 	
-	private Set<String> parsePermissionsFromLambda(LambdaExpr lambda, PermissionsNodeV2 p) {
+	private Set<String> parsePermissionsFromLambda(LambdaExpr lambda, PermissionsNode p) {
 		Set<String> permissions = new TreeSet<>();
 		
 		// Проверить, является ли это вызовом Permission.values()

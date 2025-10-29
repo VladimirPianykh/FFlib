@@ -39,7 +39,7 @@ public abstract class ClassNode extends ProjectNode {
 						// Найти все использования имени класса
 						cu.findAll(SimpleName.class).forEach(typeExpr -> {
 							if (typeExpr.getIdentifier().replaceAll(".*\\.","").equals(prevName)) {
-								typeExpr.setIdentifier(name); //TODO: check whether this is correct (it can be wrong, because type is sometimes a fully-qualified class name)
+								typeExpr.setIdentifier(name);
 							}
 						});
 						

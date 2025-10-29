@@ -247,7 +247,7 @@ public class EditableNode extends ClassNode {
 						}
 					});
 				
-				// Найти TODO-комментарии для свойств
+				// Найти TO DO-комментарии для свойств
 				cu.findAll(LineComment.class).stream()
 					.filter(comment -> comment.getContent().contains("TODO: add property"))
 					.forEach(comment -> {

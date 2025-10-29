@@ -13,10 +13,10 @@ import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
-public class PermissionsNodeV2 extends ProjectNode {
+public class PermissionsNode extends ProjectNode {
 	public ArrayList<String> permissions;
 	
-	public PermissionsNodeV2(File file) {
+	public PermissionsNode(File file) {
 		super(file);
 		try {
 			CompilationUnit cu = StaticJavaParser.parse(file);

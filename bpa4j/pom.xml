@@ -141,5 +141,26 @@
 			<artifactId>javaparser-core</artifactId>
 			<version>3.25.7</version>
 		</dependency>
+		<!-- REST API: Jersey (Jakarta REST) with Grizzly HTTP server; JSON via Gson -->
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-server</artifactId>
+			<version>3.1.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.containers</groupId>
+			<artifactId>jersey-container-grizzly2-http</artifactId>
+			<version>3.1.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.inject</groupId>
+			<artifactId>jersey-hk2</artifactId>
+			<version>3.1.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.11.0</version>
+		</dependency>
 	</dependencies>
 </project>

@@ -80,9 +80,9 @@ public class ProjectGraphV2Test {
         }
         
         // Тестируем работу с permissions
-        PermissionsNodeV2 permissionsNode = projectGraph.nodes.stream()
-            .filter(node -> node instanceof PermissionsNodeV2)
-            .map(node -> (PermissionsNodeV2) node)
+        PermissionsNode permissionsNode = projectGraph.nodes.stream()
+            .filter(node -> node instanceof PermissionsNode)
+            .map(node -> (PermissionsNode) node)
             .findFirst()
             .orElse(null);
         
@@ -94,15 +94,15 @@ public class ProjectGraphV2Test {
         }
         
         // Тестируем работу с roles
-        RolesNodeV2 rolesNode = projectGraph.nodes.stream()
-            .filter(node -> node instanceof RolesNodeV2)
-            .map(node -> (RolesNodeV2) node)
+        RolesNode rolesNode = projectGraph.nodes.stream()
+            .filter(node -> node instanceof RolesNode)
+            .map(node -> (RolesNode) node)
             .findFirst()
             .orElse(null);
         
         if (rolesNode != null) {
             System.out.println("Найдены роли: " + rolesNode.roles.size());
-            for (RolesNodeV2.RoleRepresentation role : rolesNode.roles) {
+            for (RolesNode.RoleRepresentation role : rolesNode.roles) {
                 System.out.println("Роль: " + role.name + " с разрешениями: " + role.permissions);
             }
         }

@@ -49,6 +49,7 @@ public class Report implements Feature{
 	public Report addConfigurator(Function<Runnable,JComponent>configurator){configurators.add(configurator);return this;}
 	public void paint(Graphics2D g2,BufferedImage image,int h){
 		//TODO: paint report icon
+		
 	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
 		tab.setLayout(new BorderLayout());
