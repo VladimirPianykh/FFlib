@@ -341,7 +341,7 @@ public class GraphResource{
 	public List<Map<String,Object>>features(@QueryParam("detailed") boolean detailed){
 		return graph.nodes.stream().filter(n->n instanceof FeatureConfigNode).map(n->{
 			Map<String,Object>m=new HashMap<>();
-			m.put("name",n.name);
+			m.put("name",((FeatureConfigNode)n).getFeatureName());
 			m.put("location",n.location==null?null:n.location.getPath());
 			if(detailed)m.put("type",n.getClass().getSimpleName());
 			return m;
@@ -374,7 +374,7 @@ public class GraphResource{
 	public List<Map<String,Object>>implFeatures(@QueryParam("detailed") boolean detailed){
 		return graph.nodes.stream().filter(n->n instanceof FeatureNode).map(n->{
 			Map<String,Object>m=new HashMap<>();
-			m.put("name",n.name);
+			m.put("name",((FeatureNode)n).name);
 			m.put("location",n.location==null?null:n.location.getPath());
 			if(detailed)m.put("type",n.getClass().getSimpleName());
 			return m;
