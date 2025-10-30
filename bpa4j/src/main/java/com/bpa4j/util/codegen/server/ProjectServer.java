@@ -35,7 +35,7 @@ public class ProjectServer{
 				protected void configure(){bind(graph).to(ProjectGraph.class);} 
 			})
 			.register(GsonJsonProvider.class)
-			.packages("com.bpa4j.util.codegen.rest");
+			.packages("com.bpa4j.util.codegen.server");
 		server=GrizzlyHttpServerFactory.createHttpServer(URI.create("http://0.0.0.0:"+port+"/"),rc);
 		Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
 	}
