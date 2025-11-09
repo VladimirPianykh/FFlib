@@ -2,7 +2,7 @@ package com.bpa4j.util;
 
 import javax.imageio.ImageIO;
 
-import com.bpa4j.ui.PathIcon;
+import com.bpa4j.ui.swing.util.PathIcon;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

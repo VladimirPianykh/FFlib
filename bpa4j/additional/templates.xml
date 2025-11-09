@@ -30,7 +30,7 @@
 <variable name="REP" expression="" defaultValue="" alwaysStopAt="true" />
 <variable name="T" expression="" defaultValue="" alwaysStopAt="true" />
 </template>
-<template name="edapproles" value="public enum AppRole implements Role{&#10;    $1$(&#10;        ()-&gt;new Permission[]{},&#10;        ()-&gt;new Feature[]{}&#10;    );&#10;    private AppRole(Supplier&lt;Permission[]&gt; p, Supplier&lt;Feature[]&gt; f) {&#10;        SwingUtilities.invokeLater(() -&gt; Registrator.register(this, f.get(), p.get()));&#10;    }&#10;}&#10;&#10;public enum AppPermission implements Permission{&#10;    $2$;&#10;    private AppPermission() {&#10;        Registrator.register(this);&#10;    }&#10;}&#10;" toReformat="false" toShortenFQNames="true">
+<template name="edapproles" value="public enum AppRole implements Role{&#10;    $1$(&#10;        ()-&gt;new Permission[]{},&#10;        ()-&gt;new Feature[]{}&#10;    );&#10;    private AppRole(Supplier&lt;Permission[]&gt; p, Supplier&lt;Feature[]&gt; f) {&#10;        SwingUtilities.invokeLater(() -&gt; ProgramStarter.register(this, f.get(), p.get()));&#10;    }&#10;}&#10;&#10;public enum AppPermission implements Permission{&#10;    $2$;&#10;    private AppPermission() {&#10;        ProgramStarter.register(this);&#10;    }&#10;}&#10;" toReformat="false" toShortenFQNames="true">
 <variable name="1" expression="" defaultValue="" alwaysStopAt="true" />
 <variable name="2" expression="" defaultValue="" alwaysStopAt="true" />
 </template>

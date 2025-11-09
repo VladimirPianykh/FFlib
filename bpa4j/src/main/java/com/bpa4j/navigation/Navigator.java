@@ -17,7 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import com.bpa4j.core.Root;
-import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.swing.util.HButton;
 
 /**
  * Displays the list of all program functions designated in the {@code helppath.cfg}.

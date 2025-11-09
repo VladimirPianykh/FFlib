@@ -16,8 +16,8 @@ import javax.swing.table.DefaultTableModel;
 
 import com.bpa4j.defaults.table.EmptyCellEditor;
 import com.bpa4j.editor.EditorEntry;
-import com.bpa4j.ui.HButton;
-import com.bpa4j.ui.Message;
+import com.bpa4j.ui.swing.util.HButton;
+import com.bpa4j.ui.swing.util.Message;
 import com.bpa4j.util.excel.ExcelUtils;
 
 /**

@@ -10,7 +10,7 @@ import javax.swing.JLabel;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.EditableDemo;
 import com.bpa4j.editor.EditorEntryBase;
-import com.bpa4j.editor.modules.FormModule;
+import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
 
 /**
  * An editor that displays the function/supplier return value
@@ -19,7 +19,7 @@ public class FunctionEditor implements EditorEntryBase{
 	@SuppressWarnings({"rawtypes","unchecked"})
 	public JComponent createEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo){
 		saver.var=new EmptySaver();
-		return FormModule.wrapEditorComponent(new JLabel(){
+		return SwingFormModuleRenderer.wrapEditorComponent(new JLabel(){
 			public String getText(){
 				try{
 					if(demo.var==null)return "Ошибка!";

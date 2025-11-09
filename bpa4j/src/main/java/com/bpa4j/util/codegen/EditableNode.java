@@ -32,6 +32,9 @@ import com.github.javaparser.ast.stmt.ExplicitConstructorInvocationStmt;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
 @SuppressWarnings("PMD.ExceptionAsFlowControl")
+/**
+ * Most methods are AI-generated.
+ */
 public class EditableNode extends ClassNode {
 	public static class Property {
 		public static enum PropertyType {
@@ -208,12 +211,13 @@ public class EditableNode extends ClassNode {
 						if(argExpr.isStringLiteralExpr()){
 							StringLiteralExpr arg = argExpr.asStringLiteralExpr();
 							String superArg = arg.asString();
-							// Удалить префикс "нов " если есть
-							if (superArg.toLowerCase().startsWith("нов ")) {
-								superArg = superArg.substring(4);
-							}
+							// Удалить префикс "нов" если есть
+							if (superArg.toLowerCase().startsWith("нов")) {
+								superArg = superArg.substring(superArg.indexOf(' '));
+							}else System.err.print(file+" "+superArg);
 							// Удалить специальные символы
 							objectName = superArg.replaceAll("[!@#$%&*]", "").trim();
+							if(objectName.isEmpty())objectName=null;
 						}
 					}
 				}
@@ -267,7 +271,8 @@ public class EditableNode extends ClassNode {
 	 */
 	public EditableNode(File file, String objectName, Property... properties) {
 		super(file);
-		this.objectName = objectName;
+		this.objectName = objectName.replaceAll("[!@#$%&*]", "").trim();
+		if(objectName.isEmpty())objectName=null;
 		this.properties.addAll(Arrays.asList(properties));
 		try {
 			file.createNewFile();
@@ -286,7 +291,7 @@ public class EditableNode extends ClassNode {
 						super("Нов %s");
 					}
 				}
-				""", name, name, objectName);
+				""", name, name, objectName==null?"":objectName);
 			Files.writeString(file.toPath(), s);
 		} catch (IOException ex) {
 			throw new UncheckedIOException(ex);
@@ -420,7 +425,7 @@ public class EditableNode extends ClassNode {
 					.findFirst();
 				
 				if (superCall.isPresent() && superCall.get().getArguments().size() > 0) {
-					superCall.get().getArguments().set(0, new StringLiteralExpr(objectName));
+					superCall.get().getArguments().set(0, new StringLiteralExpr(objectName==null?"":objectName));
 				}
 			}
 			

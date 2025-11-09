@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import com.bpa4j.core.Data.Editable;
 import com.bpa4j.defaults.input.EmptySaver;
 import com.bpa4j.editor.EditorEntry;
 

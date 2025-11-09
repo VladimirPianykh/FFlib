@@ -8,10 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import com.bpa4j.core.Data;
-import com.bpa4j.core.Data.Editable;
-import com.bpa4j.core.Data.EditableGroup;
+import com.bpa4j.core.Editable;
+import com.bpa4j.core.EditableGroup;
+import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.defaults.editables.AbstractCustomer;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.Input;
@@ -174,7 +173,7 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 				if(skipFields.contains(f.getName()))continue;
 				if(Editable.class.isAssignableFrom(f.getType())&&f.isAnnotationPresent(EditorEntry.class)){
 					try{
-						EditableGroup<?> fieldGroup=Data.getInstance().getGroup((Class<? extends Editable>)f.getType());
+						EditableGroup<?> fieldGroup=ProgramStarter.getStorageManager().getStorage().getGroup((Class<? extends Editable>)f.getType());
 						f.set(e,fieldGroup.get(currentIndex%fieldGroup.size()));
 					}catch(IllegalArgumentException ex){}
 				}
@@ -190,7 +189,7 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 					if(defaultSources.containsKey(fieldType)){
 						f.set(e,defaultSources.get(fieldType).get());
 					}else{
-						Supplier<?> defaultSource=DefaultSourceRegistry.getDefaultSource(fieldType);
+						Supplier<?> defaultSource=DefaultTestSourceRegistry.getDefaultSource(fieldType);
 						if(defaultSource!=null){
 							f.set(e,defaultSource.get());
 						}
@@ -201,7 +200,7 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 			else if(nameSupplier instanceof Supplier)e.name=((Supplier<String>)nameSupplier).get();
 			else if(nameSupplier instanceof String)e.name=(String)nameSupplier;
 			else if(namePattern!=null)e.name=String.format(namePattern,currentIndex);
-			else if(e instanceof AbstractCustomer)e.name=DefaultSourceRegistry.names[currentIndex%DefaultSourceRegistry.names.length];
+			else if(e instanceof AbstractCustomer)e.name=DefaultTestSourceRegistry.names[currentIndex%DefaultTestSourceRegistry.names.length];
 			else e.name+=" #"+(int)(Math.random()*1000000);
 			if(v!=null){
 				String verdict=v.verify(e,e,true);
@@ -262,7 +261,7 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 				Editable e=g.type.getDeclaredConstructor().newInstance();
 				for(Field f:g.type.getFields())if(Editable.class.isAssignableFrom(f.getType())&&f.isAnnotationPresent(EditorEntry.class)){
 					try{
-						EditableGroup<?>fieldGroup=Data.getInstance().getGroup((Class<? extends Editable>)f.getType());
+						EditableGroup<?>fieldGroup=ProgramStarter.getStorageManager().getStorage().getGroup((Class<? extends Editable>)f.getType());
 						f.set(e,fieldGroup.get(i%fieldGroup.size()));
 					}catch(IllegalArgumentException ex){}
 				}

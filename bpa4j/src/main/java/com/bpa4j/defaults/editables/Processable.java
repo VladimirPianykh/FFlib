@@ -1,10 +1,9 @@
 package com.bpa4j.defaults.editables;
 
 import java.io.Serializable;
-
-import com.bpa4j.core.User;
 import com.bpa4j.SerializableFunction;
-import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.Editable;
+import com.bpa4j.core.User;
 import com.bpa4j.core.User.Permission;
 
 public abstract class Processable extends Editable{

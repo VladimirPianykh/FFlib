@@ -1,6 +1,6 @@
 package com.bpa4j;
 
-import com.bpa4j.ui.PathIcon;
+import com.bpa4j.ui.swing.util.PathIcon;
 import com.bpa4j.util.ImageRenderer;
 
 import org.junit.jupiter.api.Disabled;

@@ -66,7 +66,7 @@ ProgramStarter.runProgram();           // запуск UI
 ```java
 enum AppPermission implements User.Permission {
 	READ_X, CREATE_X;
-	AppPermission() { Registrator.register(this); }
+	AppPermission() { ProgramStarter.register(this); }
 }
 
 enum AppRole implements User.Role {
@@ -74,7 +74,7 @@ enum AppRole implements User.Role {
 		() -> new User.Feature[]{ DefaultFeature.MODEL_EDITING })
 	;
 	AppRole(Supplier<User.Permission[]> p, Supplier<User.Feature[]> f) {
-		SwingUtilities.invokeLater(() -> Registrator.register(this, f.get(), p.get()));
+		SwingUtilities.invokeLater(() -> ProgramStarter.register(this, f.get(), p.get()));
 	}
 }
 
@@ -98,7 +98,7 @@ EditableGroup<MyEditable> group = new EditableGroup<>(
 	new PathIcon("ui/right.png", h, h),
 	MyEditable.class
 );
-Registrator.register(group);
+ProgramStarter.register(group);
 ```
 
 4) Фичи (экраны приложения)
@@ -210,7 +210,7 @@ Report.getReport("report")
 ## Лучшие практики
 - Держите поля, помеченные `@EditorEntry`, публичными — иначе они не появятся в редакторе.
 - Убедитесь, что хотя бы одно право из `enum` реально используется (класс загружен), иначе система посчитает права не определёнными.
-- Регистрации (`Registrator.register(...)`) выполняйте рано при старте (часто в статическом инициализаторе роли/прав).
+- Регистрации (`ProgramStarter.register(...)`) выполняйте рано при старте (часто в статическом инициализаторе роли/прав).
 - Для наглядности храните `helppath.cfg` рядом с исполняемым файлом/рабочей директорией.
 
 ## Частые проблемы

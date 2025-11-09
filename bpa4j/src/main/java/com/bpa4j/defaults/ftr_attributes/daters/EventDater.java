@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
@@ -17,10 +16,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.border.TitledBorder;
-
 import com.bpa4j.Dater;
-import com.bpa4j.defaults.features.Calendar;
-import com.bpa4j.defaults.features.Calendar.Event;
+import com.bpa4j.defaults.features.transmission_contracts.Calendar;
+import com.bpa4j.defaults.features.transmission_contracts.Calendar.Event;
 import com.bpa4j.editor.EditorEntry;
 
 /**

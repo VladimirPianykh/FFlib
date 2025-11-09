@@ -78,7 +78,7 @@ public class GraphResource{
 			EditableNode e=(EditableNode)n;
 			Map<String,Object>m=new HashMap<>();
 			m.put("name",e.name);
-			m.put("objectName",e.objectName);
+			m.put("objectName",e.objectName==null?"<no-name>":e.objectName);
 			m.put("location",e.location==null?null:e.location.getPath());
 			if(detailed){
 				List<Map<String,Object>>props=new ArrayList<>();
@@ -99,6 +99,7 @@ public class GraphResource{
 	public Map<String,Object>createEditable(Map<String,Object>body){
 		String name=(String)body.get("name");
 		String objectName=(String)body.get("objectName");
+		if(name.contains(" ")||name.isBlank())return Map.of("status","error","error","Name mustn't be blank.");
 		List<?>rawProps=(List<?>)body.getOrDefault("properties",List.of());
 		List<Map<String,String>>props=new ArrayList<>();
 		for(Object o:rawProps)if(o instanceof Map<?,?> m){
@@ -113,7 +114,7 @@ public class GraphResource{
 			properties.add(new Property(pn,pt==null?null:PropertyType.valueOf(pt)));
 		}
 		EditableNode en=graph.createEditableNode(name,objectName,properties.toArray(new Property[0]));
-		return Map.of("status","ok","name",en.name);
+		return Map.of("status","ok","location",en.location.getPath());
 	}
 
 	@DELETE
@@ -348,18 +349,18 @@ public class GraphResource{
 		}).toList();
 	}
 
-	@POST
-	@Path("/save-initial-state")
-	public Map<String,Object>saveInitialState(){
-		try{
-			java.nio.file.Files.createDirectories(java.nio.file.Path.of(graph.projectFolder+"/resources/initial/"));
-			java.nio.file.Files.copy(java.nio.file.Path.of(Root.folder+"Data.ser"+ProgramStarter.version),java.nio.file.Path.of(graph.projectFolder+"/resources/initial/Data.ser"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-			java.nio.file.Files.copy(java.nio.file.Path.of(Root.folder+"Users.ser"+ProgramStarter.version),java.nio.file.Path.of(graph.projectFolder+"/resources/initial/Users.ser"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-			return Map.of("status","ok");
-		}catch(java.io.IOException ex){
-			throw new IllegalStateException(ex);
-		}
-	}
+	// @POST
+	// @Path("/save-initial-state")
+	// public Map<String,Object>saveInitialState(){
+	// 	try{
+	// 		java.nio.file.Files.createDirectories(java.nio.file.Path.of(graph.projectFolder+"/resources/initial/"));
+	// 		java.nio.file.Files.copy(java.nio.file.Path.of(Root.folder+"Data.ser"+ProgramStarter.version),java.nio.file.Path.of(graph.projectFolder+"/resources/initial/Data.ser"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+	// 		java.nio.file.Files.copy(java.nio.file.Path.of(Root.folder+"Users.ser"+ProgramStarter.version),java.nio.file.Path.of(graph.projectFolder+"/resources/initial/Users.ser"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+	// 		return Map.of("status","ok");
+	// 	}catch(java.io.IOException ex){
+	// 		throw new IllegalStateException(ex);
+	// 	}
+	// }
 
 	@POST
 	@Path("/reload")

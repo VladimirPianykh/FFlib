@@ -11,7 +11,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JList;
 import javax.swing.JPanel;
 
-import com.bpa4j.ui.HButton;
+import com.bpa4j.ui.swing.util.HButton;
 
 public class FeatureOptionManager<T>{
 	public Consumer<List<T>>collectiveAction;

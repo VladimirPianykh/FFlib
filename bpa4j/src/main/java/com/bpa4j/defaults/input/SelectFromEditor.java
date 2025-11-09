@@ -12,10 +12,10 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import com.bpa4j.Wrapper;
-import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.Editable;
 import com.bpa4j.core.EditableDemo;
 import com.bpa4j.editor.EditorEntryBase;
-import com.bpa4j.ui.LazyPanel;
+import com.bpa4j.ui.swing.util.LazyPanel;
 import com.bpa4j.util.SprintUI;
 
 /**

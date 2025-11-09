@@ -20,7 +20,7 @@ import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 
-import com.bpa4j.ui.AutoLayout;
+import com.bpa4j.ui.swing.util.AutoLayout;
 
 /**
  * A utility class designed to accelerate UI development.

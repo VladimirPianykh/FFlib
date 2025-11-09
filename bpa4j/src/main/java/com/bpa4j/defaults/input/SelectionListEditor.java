@@ -11,10 +11,10 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import com.bpa4j.Wrapper;
-import com.bpa4j.core.Data;
+import com.bpa4j.core.Editable;
 import com.bpa4j.core.EditableDemo;
-import com.bpa4j.core.Data.Editable;
-import com.bpa4j.core.Data.EditableGroup;
+import com.bpa4j.core.EditableGroup;
+import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.editor.EditorEntryBase;
 
 /**
@@ -26,7 +26,7 @@ public class SelectionListEditor implements EditorEntryBase{
 		if(f.getType()!=Selectable.class)throw new IllegalArgumentException("The field must have type Selectable<?>, but the actual type is "+f.getType()+".");
 		try{
 			Selectable<?>s=(Selectable<?>)((Selectable<?>)f.get(o)).clone();
-			EditableGroup<?>group=(EditableGroup<?>)Data.getInstance().getGroup(s.type);
+			EditableGroup<?>group=(EditableGroup<?>)ProgramStarter.getStorageManager().getStorage().getGroup(s.type);
 			JMenu menu=new JMenu();
 			for(Editable e:group){
 				JCheckBoxMenuItem item=new JCheckBoxMenuItem(new AbstractAction(){

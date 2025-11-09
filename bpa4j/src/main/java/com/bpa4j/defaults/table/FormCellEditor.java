@@ -15,7 +15,7 @@ import javax.swing.table.TableCellEditor;
 
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Root;
-import com.bpa4j.editor.modules.FormModule;
+import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
 
 public class FormCellEditor implements TableCellEditor{
 	private ArrayList<CellEditorListener>a=new ArrayList<>();
@@ -37,7 +37,7 @@ public class FormCellEditor implements TableCellEditor{
 	public void removeCellEditorListener(CellEditorListener l){SwingUtilities.invokeLater(()->a.remove(l));}
 	public Component getTableCellEditorComponent(JTable table,Object value,boolean isSelected,int row,int column){
 		v=(FieldCellValue)value;
-		editor=FormModule.wrapEditorComponent(FormModule.createEditorBase(v.o,v.f,saver),new Font(Font.DIALOG,Font.PLAIN,Root.SCREEN_SIZE.height/50));
+		editor=SwingFormModuleRenderer.wrapEditorComponent(SwingFormModuleRenderer.createEditorBase(v.o,v.f,saver),new Font(Font.DIALOG,Font.PLAIN,Root.SCREEN_SIZE.height/50));
 		return editor;
 	}
 }

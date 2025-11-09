@@ -15,20 +15,18 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-
 import javax.swing.BorderFactory;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.Root;
 import com.bpa4j.core.User;
-import com.bpa4j.core.User.Feature;
 import com.bpa4j.core.User.Role;
-import com.bpa4j.ui.HButton;
+import com.bpa4j.feature.Feature;
+import com.bpa4j.ui.swing.util.HButton;
 
 /**
  * <p>Displays Instruction-by Instruction guide for reaching some functions.</p>
@@ -70,9 +68,9 @@ public final class HelpView{
 		}
 	}
 	public static class FeatureInstruction implements Instruction{
-		private final Feature feature;
-		public FeatureInstruction(Feature feature){
-			this.feature=feature;
+		private final Feature<?> feature;
+		public FeatureInstruction(Feature<?> f){
+			this.feature=f;
 		}
 		public JLabel createLabel(Font font){
 			JLabel label=new JLabel("Перейдите на вкладку \""+feature.toString()+"\".");
@@ -199,7 +197,7 @@ public final class HelpView{
 				}
 				case 'f'->{
 					boolean found = false;
-					for(Feature f:User.registeredFeatures)if(f.toString().replace(' ','_').equalsIgnoreCase(text)){
+					for(Feature<?>f:User.registeredFeatures)if(f.getName().replace(' ','_').equalsIgnoreCase(text)){
 						list.add(new FeatureInstruction(f));
 						found = true;
 						break;

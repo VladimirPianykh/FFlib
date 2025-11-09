@@ -2,7 +2,7 @@ package com.bpa4j.defaults.input;
 
 import java.lang.reflect.Field;
 
-import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.Editable;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.Verifier;
 

@@ -13,7 +13,7 @@ import javax.swing.JPanel;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.EditableDemo;
 import com.bpa4j.editor.EditorEntryBase;
-import com.bpa4j.editor.modules.FormModule;
+import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
 
 /**
  * An editor wrapper that displays a flag (checkbox), indicating whether this field actually exists.
@@ -43,7 +43,7 @@ public class FlagWEditor implements EditorEntryBase{
 			JCheckBox b=new JCheckBox();
 			boolean disabled=Objects.equals(f.get(o),d);
 			if(disabled)f.set(o,init);
-			JComponent c=editor==null?FormModule.wrapEditorComponent(FormModule.createEditorBase(o,f,subSaver),null):editor.createEditorBase(o,f,subSaver,demo);
+			JComponent c=editor==null?SwingFormModuleRenderer.wrapEditorComponent(SwingFormModuleRenderer.createEditorBase(o,f,subSaver),null):editor.createEditorBase(o,f,subSaver,demo);
 			if(disabled)f.set(o,d);
 			b.addActionListener(e->{
 				if(b.isSelected())p.add(c);

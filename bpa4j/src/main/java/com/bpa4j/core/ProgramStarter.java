@@ -1,40 +1,15 @@
 package com.bpa4j.core;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RadialGradientPaint;
-import java.awt.Stroke;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.net.URL;
+import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.ToolTipManager;
-import com.bpa4j.ui.Switcher;
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.User.Permission;
+import com.bpa4j.core.User.Role;
+import com.bpa4j.data.file.FileStorageManager;
 import com.bpa4j.editor.IEditor;
 import com.bpa4j.editor.ModularEditor;
-import com.bpa4j.ui.HButton;
-import com.bpa4j.ui.Message;
+import com.bpa4j.feature.Feature;
+import com.bpa4j.ui.swing.SwingRenderingManager;
 
 /**
  * Entry point of the program.
@@ -47,21 +22,42 @@ import com.bpa4j.ui.Message;
  * 	  <li>{@code welcomeMessage}</li>
  * 	</ul>
  */
-
 public final class ProgramStarter{
-	public static final boolean firstLaunch;
-	public static final String version;
-	static{
-		URL url=Root.CL.getResource("resources/initial/Data.ser");
-		if(url==null)url=Root.RCL.getResource("resources/initial/Data.ser");
-		InputStream is=Root.CL.getResourceAsStream("resources/version.txt");
-		if(is==null)is=Root.RCL.getResourceAsStream("resources/version.txt");
-		try{
-			version=is==null?"":new String(is.readAllBytes());
-		}catch(IOException ex){throw new UncheckedIOException(ex);}
-		firstLaunch=(!new File(Root.folder+"Data.ser"+version).exists()&&url==null);
+	public static class StarterContext{
+		public String getWelcomeMessage(){
+			return welcomeMessage;
+		}
+		public boolean isAuthRequired(){
+			return authRequired;
+		}
+		/**
+		 * @return 0 if logined/registered successfully, 1 if failed to login due to invalid input, 2 if failed for security reasons (wrong password)
+		 */
+		public int login(String login,String pass,boolean newUser){
+			if(newUser){
+				if(User.hasUser(login))return 1;
+				else{
+					User.register(login,pass);
+					showWorkFrame();
+					return 0;
+				}
+			}else{
+				if(User.hasUser(login)){
+					if(User.getUser(login).login(pass)){
+						frame=new WorkFrame(User.getActiveUser());
+						return 0;
+					}else return 2;
+				}else return 1;
+			}
+		}
+		public void enterWithoutAuth(User user){
+			user.login(user.password);
+			showWorkFrame();
+		}
 	}
-	public static WorkFrame frame;
+	private static WorkFrame frame;
+	private static RenderingManager renderingManager;
+	private static StorageManager storageManager;
 	public static IEditor editor=new ModularEditor();
 	public static String welcomeMessage;
 	/**
@@ -69,124 +65,68 @@ public final class ProgramStarter{
 	 */
 	public static boolean authRequired=true;
 	private ProgramStarter(){}
-	public static void constructEditor(Editable editable,boolean isNew){constructEditor(editable,isNew,null);}
-	public static void constructEditor(Editable editable,boolean isNew,Runnable deleter){editor.constructEditor(editable,isNew,deleter);}
+	/*public static void constructEditor(Editable editable,boolean isNew){
+		constructEditor(editable,isNew,null);
+	}
+	public static void constructEditor(Editable editable,boolean isNew,Runnable deleter){
+		editor.constructEditor(editable,isNew,deleter);
+	}*/
 	public static void runProgram(){
-		new File(Root.folder).mkdirs();
-		FlatDarkLaf.setup();
-		ToolTipManager.sharedInstance().setInitialDelay(0);
-		Dimension d=Root.SCREEN_SIZE;
-		Color[]c1={new Color(114,130,46),new Color(79,79,29)},c2={new Color(102,102,77),new Color(69,63,48)};
-		Font font=new Font(Font.DIALOG,Font.PLAIN,d.height/35);
-		JFrame f=new JFrame();
-		f.setContentPane(new JPanel(){
-			public void paintComponent(Graphics g){
-				Graphics2D g2=(Graphics2D)g;
-				g2.setPaint(new RadialGradientPaint(getWidth(),0,getWidth(),new float[]{0,1},c1));
-				g2.fillRect(0,0,getWidth(),getHeight());
-				Stroke s=g2.getStroke();
-				g2.setStroke(new BasicStroke(getHeight()/100));
-				g2.setPaint(new RadialGradientPaint(getWidth(),0,getWidth(),new float[]{0,1},c2));
-				g2.drawRect(0,0,getWidth(),getHeight());
-				g2.setStroke(s);
-			}
-		});
-		f.setUndecorated(true);
-		f.setSize(d);
-		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		f.setLayout(null);
-		HButton confirm=new HButton(){
-			public void paintComponent(Graphics g){
-				Graphics2D g2=(Graphics2D)g;
-				g2.setPaint(new GradientPaint(getWidth()*3/4,getHeight()/4,new Color(74+scale,58+scale,21+scale),getWidth()*3/4+1,getHeight()/4+2,new Color(64+scale,50+scale,18+scale)));
-				g2.fillRect(0,0,getWidth(),getHeight());
-				g2.setColor(Color.BLACK);
-				g2.setFont(getFont());
-				FontMetrics tfm=g2.getFontMetrics();
-				g2.drawString("ПОДТВЕРДИТЬ",(getWidth()-tfm.stringWidth("ПОДТВЕРДИТЬ"))/2,(getHeight()+tfm.getLeading()+tfm.getAscent()-tfm.getDescent())/2);
-			}
-		};
-		confirm.setFont(new Font(Font.DIALOG_INPUT,Font.BOLD,font.getSize()*2));
-		confirm.setBounds(d.width*3/10,d.height*9/10,d.width*2/5,d.height/10);
-		JTextArea a=new JTextArea(welcomeMessage);
-		a.setBounds(d.width/5,d.height/5,d.width*3/5,d.height/5);
-		a.setEditable(false);
-		a.setFocusable(false);
-		a.setOpaque(false);
-		a.setBorder(null);
-		a.setLineWrap(true);
-		a.setWrapStyleWord(true);
-		a.setFont(font.deriveFont(Font.ITALIC));
-		a.setForeground(Color.BLACK);
-		f.add(a);
-		if(authRequired){
-			Switcher reg=new Switcher();
-			JLabel regText=new JLabel("Зарегистрировать нового пользователя");
-			regText.setFont(font);
-			regText.setForeground(Color.BLACK);
-			FontMetrics fm=regText.getFontMetrics(font);
-			reg.setBounds(d.width/2+d.width/60,d.height*2/3-d.height/60,d.width/25,d.height/30);
-			regText.setBounds(d.width/2-(fm.stringWidth("Зарегистрировать нового пользователя")+d.width/30),d.height*2/3-d.height/60,fm.stringWidth("Зарегистрировать нового пользователя")+d.width/60,d.height/30);
-			JTextField log=new JTextField(),pass=new JTextField();
-			JLabel logLabel=new JLabel("Логин"),passLabel=new JLabel("Пароль");
-			logLabel.setFont(font);passLabel.setFont(font);
-			logLabel.setForeground(Color.BLACK);passLabel.setForeground(Color.BLACK);
-			log.setBounds(d.width/2+d.width/60,d.height/2-(d.height/25+d.height/60),d.width/5,d.height/30);
-			pass.setBounds(d.width/2+d.width/60,d.height/2-d.height/60,d.width/5,d.height/30);
-			logLabel.setBounds(d.width/2-(fm.stringWidth("Логин")+d.width/30),d.height/2-(d.height/25+d.height/60),fm.stringWidth("Логин")+d.width/60,d.height/30);
-			passLabel.setBounds(d.width/2-(fm.stringWidth("Пароль")+d.width/30),d.height/2-d.height/60,fm.stringWidth("Пароль")+d.width/60,d.height/30);
-			AbstractAction action=new AbstractAction(){
-				public void actionPerformed(ActionEvent e){
-					if(log.getText().isBlank()||pass.getText().isBlank())return;
-					if(reg.on){
-						if(User.hasUser(log.getText()))new Message("Аккаунт уже существует.",Color.RED);
-						else{
-							User.register(log.getText(),pass.getText());
-							ProgramStarter.frame=new WorkFrame(User.getActiveUser());
-							new Message("Пользователь зарегистрирован.",Color.GREEN);
-							f.dispose();
-						}
-					}else{
-						if(User.hasUser(log.getText())){
-							if(User.getUser(log.getText()).login(pass.getText())){
-								frame=new WorkFrame(User.getActiveUser());
-								new Message("Вход выполнен.",Color.GREEN);
-								f.dispose();
-							}else new Message("Неверный пароль.",Color.RED);
-						}else new Message("Неизвестный пользователь.",Color.RED);
-					}
-				}
-			};
-			log.addActionListener(new ActionListener(){
-				public void actionPerformed(ActionEvent e){log.transferFocus();}
-			});
-			pass.setAction(action);
-			confirm.setAction(action);
-			f.add(reg);f.add(regText);
-			f.add(log);f.add(logLabel);
-			f.add(pass);f.add(passLabel);
-		}else{
-			JComboBox<User>c=new JComboBox<User>();
-			c.setBounds(d.width*3/10,d.height*9/20,d.width*2/5,d.height/10);
-			c.setBackground(Color.DARK_GRAY);
-			c.setForeground(Color.WHITE);
-			c.setFont(confirm.getFont());
-			User.forEachUser(u->c.addItem(u));
-			AbstractAction action=new AbstractAction(){
-				public void actionPerformed(ActionEvent e){
-					((User)c.getSelectedItem()).login(((User)c.getSelectedItem()).password);
-					frame=new WorkFrame(User.getActiveUser());
-					f.dispose();
-				}
-			};
-			c.addActionListener(action);
-			c.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0),"confirm");
-			c.getActionMap().put("confirm",action);
-			f.add(c);
-			confirm.addActionListener(action);
-		}
-		f.add(confirm);
-		f.setVisible(true);
-		while(f.isVisible())Thread.onSpinWait();
+		if(renderingManager==null)renderingManager=new SwingRenderingManager();
+		if(storageManager==null)storageManager=new FileStorageManager(new File(Root.folder));
+		getRegScreen().show(new StarterContext());
+	}
+	public static RegScreen getRegScreen(){
+		return renderingManager.getRegistrationScreen();
+	}
+	public static void showWorkFrame(){
+		frame=new WorkFrame(User.getActiveUser());
+		frame.show();
+	}
+	public static void exit(){
+		getRenderingManager().close();
+		System.exit(0);
+	}
+
+	public static RenderingManager getRenderingManager(){
+		return renderingManager;
+	}
+	public static void setRenderingManager(RenderingManager renderingManager){
+		ProgramStarter.renderingManager=renderingManager;
+	}
+	public static StorageManager getStorageManager(){
+		return storageManager;
+	}
+	public static void setStorageManager(StorageManager storageManager){
+		ProgramStarter.storageManager=storageManager;
+	}
+	
+	public static void register(Role...r){
+		getStorageManager().getStorage().register(r);
+	}
+	public static void register(Feature<?>...r){
+		getStorageManager().getStorage().register(r);
+	}
+	public static void register(Permission...r){
+		getStorageManager().getStorage().register(r);
+	}
+	public static void register(EditableGroup<?>...r){
+		getStorageManager().getStorage().register(r);
+	}
+	public static void register(Role r,Feature<?>[]f,Permission[]p){
+		getStorageManager().getStorage().register(r, f, p);
+	}
+
+	public static List<Role>getRegisteredRoles(){
+		return getStorageManager().getStorage().getRegisteredRoles();
+	}	
+	public static List<Feature<?>>getRegisteredFeatures(){
+		return getStorageManager().getStorage().getRegisteredFeatures();
+	}
+	public static List<Permission>getRegisteredPermissions(){
+		return getStorageManager().getStorage().getRegisteredPermissions();
+	}
+	public static List<EditableGroup<?>>getRegisteredEditableGroups(){
+		return getStorageManager().getStorage().getRegisteredEditableGroups();
 	}
 }

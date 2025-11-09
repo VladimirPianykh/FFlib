@@ -4,7 +4,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * An annotation to mark editable fields into {@link com.bpa4j.core.Data.Editable Editables}.
+ * An annotation to mark editable fields into {@link com.bpa4j.core.Editable Editables}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EditorEntry{

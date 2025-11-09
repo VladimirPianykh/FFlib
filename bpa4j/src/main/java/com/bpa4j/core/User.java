@@ -1,23 +1,10 @@
 package com.bpa4j.core;
 
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.io.UncheckedIOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,16 +12,14 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import javax.swing.JPanel;
-
 import com.bpa4j.Wrapper;
 import com.bpa4j.defaults.DefaultPermission;
 import com.bpa4j.defaults.DefaultRole;
-import com.bpa4j.defaults.features.DefaultFeature;
+import com.bpa4j.feature.Feature;
 import com.bpa4j.navigation.HelpView.StartInstruction;
 import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.navigation.TaskLoc;
-import com.bpa4j.ui.Message;
+import com.bpa4j.ui.swing.util.Message;
 
 public class User implements Serializable{
 	public static class Authorization implements Serializable{
@@ -57,15 +42,11 @@ public class User implements Serializable{
 			Wrapper<User>user=new Wrapper<>(null);
 			for(User u:User.userMap.values())if(u.role.equals(this))user.var=u;
 			if(user.var==null)return List.of();
-			return Stream.of(WorkFrame.ftrMap.get(this))
+			return Stream.of(User.ftrMap.get(this))
 				.<ImplementedInfo>mapMulti((p,out)->p.getImplementedInfo().forEach(out))
 				.<ImplementedInfo>map(info->info.appendInstruction(new StartInstruction(user.var)))
 				.toList();
 		}
-	}
-	public static interface Feature extends Serializable,TaskLoc{
-		public void paint(Graphics2D g2,BufferedImage image,int h);
-		public void fillTab(JPanel content,JPanel tab,Font font);
 	}
 	public static interface Permission extends Serializable{
 		public String name();
@@ -73,11 +54,10 @@ public class User implements Serializable{
 	private static HashMap<String,User>userMap;
 	public static ArrayList<Role>registeredRoles=new ArrayList<>();
 	public static ArrayList<Permission>registeredPermissions=new ArrayList<>();
-	public static ArrayList<Feature>registeredFeatures=new ArrayList<>();
+	public static ArrayList<Feature<?>>registeredFeatures=new ArrayList<>();
 	public static HashMap<Role,Permission[]>permissions=new HashMap<>();
 	static{
 		for(Role r:DefaultRole.values())registeredRoles.add(r);
-		for(Feature f:DefaultFeature.values())registeredFeatures.add(f);
 		for(Permission f:DefaultPermission.values())registeredPermissions.add(f);
 		permissions.put(DefaultRole.EMPTY,new Permission[]{});
 		permissions.put(DefaultRole.ADMIN,registeredPermissions.toArray(new Permission[0]));
@@ -87,33 +67,8 @@ public class User implements Serializable{
 	public Role role;
 	public int passTries,tries;
 	public LocalDateTime lockTime=null;
-	public ArrayDeque<Authorization>history=new ArrayDeque<Authorization>();
-	@SuppressWarnings("unchecked")
-	private static void load(){
-		try{
-			FileInputStream fIS=new FileInputStream(Root.folder+"Users.ser"+ProgramStarter.version);
-			ObjectInputStream oIS=new ObjectInputStream(fIS);
-			userMap=(HashMap<String,User>)oIS.readObject();
-			oIS.close();fIS.close();
-		}catch(FileNotFoundException ex){
-			try{
-				InputStream is=Root.CL.getResourceAsStream("resources/initial/Users.ser");
-				if(is==null)is=Root.RCL.getResourceAsStream("resources/initial/Users.ser");
-				if(is==null)userMap=new HashMap<String,User>();
-				else{
-					ObjectInputStream oIS=new ObjectInputStream(is);
-					userMap=(HashMap<String,User>)oIS.readObject();
-					oIS.close();
-				}
-			}catch(IOException ex2){throw new UncheckedIOException(ex2);}
-			catch(ClassNotFoundException ex2){throw new IllegalStateException(ex2);}
-		}catch(IOException ex){throw new UncheckedIOException(ex);}
-		catch(ClassNotFoundException ex){throw new IllegalStateException("FATAL ERROR: Users corrupted");}
-		for(User u:userMap.values())if(u.lockTime!=null){
-			if(u.lockTime.until(LocalDateTime.now(),ChronoUnit.MINUTES)<5)System.exit(1);
-			else u.lockTime=null;
-		}
-	}
+	public ArrayDeque<Authorization>history=new ArrayDeque<>();
+	public static HashMap<Role,Feature<?>[]>ftrMap=new HashMap<>();
 	public static User register(String login,String pass){
 		if(userMap==null)load();
 		currentUser=new User(login,pass,userMap.isEmpty()?DefaultRole.ADMIN:DefaultRole.EMPTY);
@@ -150,14 +105,11 @@ public class User implements Serializable{
 		if(userMap==null)load();
 		for(User u:userMap.values())c.accept(u);
 	}
+	private static void load(){
+		userMap=ProgramStarter.getStorageManager().getUserSaver().loadUsers();
+	}
 	public static void save(){
-		try{
-			new File(Root.folder).mkdirs();
-			FileOutputStream fOS=new FileOutputStream(Root.folder+"Users.ser"+ProgramStarter.version);
-			ObjectOutputStream oOS=new ObjectOutputStream(fOS);
-			oOS.writeObject(User.userMap);
-			oOS.close();fOS.close();
-		}catch(IOException ex){ex.printStackTrace();}
+		ProgramStarter.getStorageManager().getUserSaver().saveUsers(userMap);;
 	}
 	private User(String login,String password,Role role){
 		this.login=login;this.password=password;this.role=role;

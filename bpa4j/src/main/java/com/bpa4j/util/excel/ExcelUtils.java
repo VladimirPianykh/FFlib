@@ -1,10 +1,10 @@
 package com.bpa4j.util.excel;
 
-import com.bpa4j.core.Data;
-import com.bpa4j.core.Data.Editable;
-import com.bpa4j.core.Data.EditableGroup;
+import com.bpa4j.core.Editable;
+import com.bpa4j.core.EditableGroup;
+import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.editor.EditorEntry;
-import com.bpa4j.ui.Message;
+import com.bpa4j.ui.swing.util.Message;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -56,7 +56,7 @@ public final class ExcelUtils{
 			for(ExcelConfig c:list){
 				f.setDialogTitle(c.dialogDescription);
 				f.showOpenDialog(Window.getWindows()[0]);
-				EditableGroup<?>g=Data.getInstance().getGroup(c.type);
+				EditableGroup<?>g=ProgramStarter.getStorageManager().getStorage().getGroup(c.type);
 				for(Editable e:ExcelUtils.createInstancesOf(f.getSelectedFile().toString(),c.type,c.parseName))g.add(e);
 			}
 			new Message("Готово! Файлы загружены из Excel!",Color.GREEN);
@@ -76,7 +76,7 @@ public final class ExcelUtils{
      *
      * @param path - path to the file
      * @param type - class whose objects will be created
-     * @param parseName - whether to parse the "name" field if object is instanceof {@link com.bpa4j.core.Data.Editable Editable}
+     * @param parseName - whether to parse the "name" field if object is instanceof {@link com.bpa4j.core.Editable Editable}
      * @param <T> the same class type (needed for creating the list)
      * @return list of created objects
      */
@@ -126,7 +126,7 @@ public final class ExcelUtils{
 				if(targetType.isEnum()){
 					for(var constant:targetType.getEnumConstants())
 						if(constant.toString().equalsIgnoreCase(stringValue))return constant;
-				}else if(Editable.class.isAssignableFrom(targetType))return Data.getInstance().getGroup((Class<? extends Editable>)targetType).stream().filter(e->e.name.equalsIgnoreCase(stringValue)).findAny().orElseThrow(()->new IllegalStateException("There is no element of \""+stringValue+"\"."));
+				}else if(Editable.class.isAssignableFrom(targetType))return ProgramStarter.getStorageManager().getStorage().getGroup((Class<? extends Editable>)targetType).stream().filter(e->e.name.equalsIgnoreCase(stringValue)).findAny().orElseThrow(()->new IllegalStateException("There is no element of \""+stringValue+"\"."));
 				else if(targetType==LocalDate.class)return LocalDate.parse(cell.getStringCellValue(),dateFormatter);
 				if(targetType!=String.class)throw new IllegalStateException("Value \""+cell.getStringCellValue()+"\" cannot be treated as "+targetType.getName());
 				return stringValue;

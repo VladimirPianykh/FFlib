@@ -1,11 +1,11 @@
 package com.bpa4j.defaults.editables.processable_attributes;
 
 import com.bpa4j.SerializableFunction;
-import com.bpa4j.core.Data.Editable;
+import com.bpa4j.core.Editable;
 import com.bpa4j.core.User;
 import com.bpa4j.core.User.Permission;
 import com.bpa4j.defaults.editables.Processable;
-import com.bpa4j.ui.Message;
+import com.bpa4j.ui.swing.util.Message;
 
 import lombok.AllArgsConstructor;
 
