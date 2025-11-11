@@ -23,9 +23,9 @@ import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 import com.bpa4j.ui.swing.util.PathIcon;
 
-public class CalendarRenderer<T extends Calendar.Event> implements FeatureRenderer<Calendar<T>>{
+public class SwingCalendarRenderer<T extends Calendar.Event> implements FeatureRenderer<Calendar<T>>{
     private Calendar<T> contract;
-    public CalendarRenderer(Calendar<T> contract){
+    public SwingCalendarRenderer(Calendar<T> contract){
         this.contract=contract;
     }
     public Calendar<T> getTransmissionContract(){

@@ -18,9 +18,9 @@ import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.WorkTabButton;
 
-public class HistoryRenderer implements FeatureRenderer<History>{
+public class SwingHistoryRenderer implements FeatureRenderer<History>{
     private History contract;
-    public HistoryRenderer(History contract){
+    public SwingHistoryRenderer(History contract){
         this.contract=contract;
     }
     public History getTransmissionContract(){

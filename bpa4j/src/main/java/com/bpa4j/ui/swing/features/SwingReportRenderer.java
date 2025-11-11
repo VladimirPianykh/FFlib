@@ -18,9 +18,9 @@ import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.AutoLayout;
 
-public class ReportRenderer implements FeatureRenderer<Report>{
+public class SwingReportRenderer implements FeatureRenderer<Report>{
 	private Report contract;
-	public ReportRenderer(Report contract){
+	public SwingReportRenderer(Report contract){
 		this.contract=contract;
 	}
 	public Report getTransmissionContract(){

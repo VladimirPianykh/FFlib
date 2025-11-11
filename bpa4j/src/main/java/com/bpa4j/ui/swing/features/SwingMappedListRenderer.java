@@ -36,12 +36,13 @@ import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 
 @SuppressWarnings({"unchecked","PMD.ReplaceVectorWithList"})
-public class MappedListRenderer<T extends Editable,V extends Serializable> implements FeatureRenderer<MappedList<T,V>>{
+public class SwingMappedListRenderer<T extends Editable,V extends Serializable> implements FeatureRenderer<MappedList<T,V>>{
 	private MappedList<T,V> contract;
 	private MappedListModel<T,V> model;
+	@SuppressWarnings("unused")
 	private Class<T> type;
 	private Class<V> vType;
-	public MappedListRenderer(MappedList<T,V> contract,MappedListModel<T,V> model,Class<T> type,Class<V> vType){
+	public SwingMappedListRenderer(MappedList<T,V> contract,MappedListModel<T,V> model,Class<T> type,Class<V> vType){
 		this.contract=contract;
 		this.model=model;
 		this.type=type;

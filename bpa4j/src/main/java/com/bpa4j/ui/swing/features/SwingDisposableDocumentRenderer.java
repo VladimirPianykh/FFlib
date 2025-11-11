@@ -18,9 +18,9 @@ import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 
-public class DisposableDocumentRenderer<T extends Editable> implements FeatureRenderer<DisposableDocument<T>>{
+public class SwingDisposableDocumentRenderer<T extends Editable> implements FeatureRenderer<DisposableDocument<T>>{
 	private DisposableDocument<T> contract;
-	public DisposableDocumentRenderer(DisposableDocument<T> contract){
+	public SwingDisposableDocumentRenderer(DisposableDocument<T> contract){
 		this.contract=contract;
 	}
 	public DisposableDocument<T> getTransmissionContract(){

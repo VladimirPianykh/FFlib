@@ -1,5 +1,6 @@
 package com.bpa4j.editor;
 
+import com.bpa4j.core.RenderingContext;
 import com.bpa4j.feature.FeatureRenderingContext;
 
 /**
@@ -10,7 +11,7 @@ public interface ModularEditorRenderer extends EditorRenderer<ModularEditor>{
 	/**
 	 * Context for rendering all modules of one modular editor.
 	 */
-	public static interface ModulesRenderingContext{}
+	public static interface ModulesRenderingContext extends RenderingContext{}
 	public <M extends EditorModule> ModuleRenderer<M> getModuleRenderer(M m);
     public ModulesRenderingContext getModulesRenderingContext(FeatureRenderingContext context);
 }

@@ -12,21 +12,20 @@ public class EditableListModel<T extends Editable> implements FeatureModel<Edita
 	private EditableList<T> ftc;
 	private transient Function<T,JComponent> componentProvider;
 	private transient boolean canCreate;
-	private Class<T> type;
-	public EditableListModel(EditableList<T> ftc,Class<T> type){
+	@SuppressWarnings("null")
+	public EditableListModel(EditableList<T> ftc){
 		this.ftc=ftc;
-		this.type=type;
-		ftc.setGetGroupOp(()->getGroup());
-		ftc.setSetComponentProviderOp((provider)->setComponentProvider(provider));
-		ftc.setGetCanCreateOp(()->getCanCreate());
-		ftc.setSetCanCreateOp((canCreate)->setCanCreate(canCreate));
-		ftc.setGetComponentProviderOp(()->getComponentProvider());
+		ftc.setGetGroupOp(this::getGroup);
+		ftc.setSetComponentProviderOp(this::setComponentProvider);
+		ftc.setGetCanCreateOp(this::getCanCreate);
+		ftc.setSetCanCreateOp(this::setCanCreate);
+		ftc.setGetComponentProviderOp(this::getComponentProvider);
 	}
 	public EditableList<T> getTransmissionContract(){
 		return ftc;
 	}
 	public EditableGroup<T> getGroup(){
-		return ProgramStarter.getStorageManager().getStorage().getGroup(type);
+		return ProgramStarter.getStorageManager().getStorage().getGroup(getTransmissionContract().getType());
 	}
 	public void setComponentProvider(Function<T,JComponent> provider){
 		this.componentProvider=provider;

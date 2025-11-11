@@ -22,9 +22,9 @@ import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.WorkTabButton;
 
-public class RoleSettingRenderer implements FeatureRenderer<RoleSetting>{
+public class SwingRoleSettingRenderer implements FeatureRenderer<RoleSetting>{
     private RoleSetting contract;
-    public RoleSettingRenderer(RoleSetting contract){
+    public SwingRoleSettingRenderer(RoleSetting contract){
         this.contract=contract;
     }
     public RoleSetting getTransmissionContract(){

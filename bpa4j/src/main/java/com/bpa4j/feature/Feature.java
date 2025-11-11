@@ -6,6 +6,7 @@ import com.bpa4j.navigation.ImplementedInfo;
 
 /**
  * {@code Feature} is an item with it's own user-available functionality, which is accessible from the {@link WorkFrame} UI.
+ * Consists of {@link FeatureTransmissionContract}, {@link FeatureModel}, {@link FeatureRenderer} and {@link FeatureSaver}.
  */
 public class Feature<F extends FeatureTransmissionContract>{
     private F contract;

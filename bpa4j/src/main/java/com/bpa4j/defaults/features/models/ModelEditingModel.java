@@ -9,12 +9,13 @@ import com.bpa4j.feature.FeatureModel;
 
 public class ModelEditingModel implements FeatureModel<ModelEditing>{
 	private ModelEditing ftc;
+	@SuppressWarnings("null")
 	public ModelEditingModel(ModelEditing ftc){
 		this.ftc=ftc;
-		ftc.setCreateOp((groupIndex,e)->create(groupIndex,e));
-		ftc.setEditOp((e)->edit(e));
-		ftc.setDeleteOp((groupIndex,e)->delete(groupIndex,e));
-		ftc.setGetGroupsOp(()->getGroups());
+		ftc.setCreateOp(this::create);
+		ftc.setEditOp(this::edit);
+		ftc.setDeleteOp(this::delete);
+		ftc.setGetGroupsOp(this::getGroups);
 	}
 	public ModelEditing getTransmissionContract(){
 		return ftc;

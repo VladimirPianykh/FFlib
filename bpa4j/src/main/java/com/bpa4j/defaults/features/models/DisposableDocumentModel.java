@@ -8,13 +8,10 @@ import com.bpa4j.feature.FeatureModel;
 public class DisposableDocumentModel<T extends Editable> implements FeatureModel<DisposableDocument<T>>{
     private DisposableDocument<T> ftc;
     private transient Consumer<T> processor;
-    private Class<T> type;
-    public DisposableDocumentModel(DisposableDocument<T> ftc,Class<T> type){
+    public DisposableDocumentModel(DisposableDocument<T> ftc){
         this.ftc=ftc;
-        this.type=type;
-        ftc.setSetProcessorOp((processor)->setProcessor(processor));
-        ftc.setProcessDocumentOp((document)->processDocument(document));
-        ftc.setGetTypeOp(()->getType());
+        ftc.setSetProcessorOp(this::setProcessor);
+        ftc.setProcessDocumentOp(this::processDocument);
     }
     public DisposableDocument<T> getTransmissionContract(){
         return ftc;
@@ -24,8 +21,5 @@ public class DisposableDocumentModel<T extends Editable> implements FeatureModel
     }
     public void processDocument(T document){
         if(processor!=null) processor.accept(document);
-    }
-    public Class<T> getType(){
-        return type;
     }
 }

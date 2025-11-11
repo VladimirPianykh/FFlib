@@ -60,7 +60,7 @@ public class SwingWorkFrameRenderer extends JFrame implements WorkFrameRenderer{
 					g2.fillRect(0,0,getWidth(),getHeight());
 				}
 			};
-			Font font=new Font(Font.DIALOG,Font.PLAIN,content.getHeight()/20);
+			// Font font=new Font(Font.DIALOG,Font.PLAIN,content.getHeight()/20);
 			addComponentListener(new ComponentListener(){
 				public void componentMoved(ComponentEvent e){}
 				public void componentResized(ComponentEvent e){

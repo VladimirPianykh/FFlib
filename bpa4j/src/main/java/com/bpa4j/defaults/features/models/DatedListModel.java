@@ -14,12 +14,12 @@ public class DatedListModel<T extends Editable> implements FeatureModel<DatedLis
     private transient Supplier<Dater<T>> dateProvider;
     public DatedListModel(DatedList<T> ftc){
         this.ftc=ftc;
-        ftc.setGetObjectsOp(()->getObjects());
-        ftc.setGetObjectsWithDatersOp(()->getObjectsWithDaters());
-        ftc.setSetDateProviderOp((provider)->setDateProvider(provider));
-        ftc.setRemoveObjectOp((object)->removeObject(object));
-        ftc.setPutObjectOp((object,dater)->putObject(object,dater));
-        ftc.setGetDateProviderOp(()->getDateProvider());
+        ftc.setGetObjectsOp(this::getObjects);
+        ftc.setGetObjectsWithDatersOp(this::getObjectsWithDaters);
+        ftc.setSetDateProviderOp(this::setDateProvider);
+        ftc.setRemoveObjectOp(this::removeObject);
+        ftc.setPutObjectOp(this::putObject);
+        ftc.setGetDateProviderOp(this::getDateProvider);
     }
     public DatedList<T> getTransmissionContract(){
         return ftc;

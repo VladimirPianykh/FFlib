@@ -17,6 +17,7 @@ public class DatedList<T extends Editable> implements FeatureTransmissionContrac
 	public BiConsumer<T,Dater<T>> putObjectOp;
 	public Consumer<Supplier<Dater<T>>> setDateProviderOp;
 	public Supplier<Supplier<Dater<T>>> getDateProviderOp;
+	public Runnable clearObjectsOp;
 	private String name;
 	public DatedList(String name){
 		this.name=name;
@@ -42,6 +43,9 @@ public class DatedList<T extends Editable> implements FeatureTransmissionContrac
 	public void setGetDateProviderOp(Supplier<Supplier<Dater<T>>> getDateProviderOp){
 		this.getDateProviderOp=getDateProviderOp;
 	}
+	public void setClearObjectsOp(Runnable clearObjectsOp){
+		this.clearObjectsOp=clearObjectsOp;
+	}
 	public Set<T> getObjects(){
 		return getObjectsOp.get();
 	}
@@ -62,6 +66,9 @@ public class DatedList<T extends Editable> implements FeatureTransmissionContrac
 	}
 	public Supplier<Dater<T>> getDateProvider(){
 		return getDateProviderOp.get();
+	}
+	public void clearObjects(){
+		clearObjectsOp.run();
 	}
 	public String getFeatureName(){
 		return name;

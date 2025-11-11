@@ -9,8 +9,8 @@ import com.bpa4j.feature.FeatureModel;
 
 public class ReportModel implements FeatureModel<Report>{
     private Report ftc;
-    private ArrayList<Supplier<JComponent>> dataRenderers=new ArrayList<>();
-    private ArrayList<Function<Runnable,JComponent>> configurators=new ArrayList<>();
+    private transient ArrayList<Supplier<JComponent>> dataRenderers=new ArrayList<>();
+    private transient ArrayList<Function<Runnable,JComponent>> configurators=new ArrayList<>();
     public ReportModel(Report ftc){
         this.ftc=ftc;
         ftc.setGetDataRenderersOp(()->getDataRenderers());

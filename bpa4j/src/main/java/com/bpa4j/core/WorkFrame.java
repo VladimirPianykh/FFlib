@@ -24,6 +24,7 @@ public class WorkFrame{
 		User.ftrMap.put(DefaultRole.ADMIN,User.registeredFeatures.toArray(Feature[]::new));
 		User.ftrMap.put(DefaultRole.EMPTY,new Feature[0]);
 	}
+	@SuppressWarnings("unused")
 	private FeatureEntry<?>currentFeature;
 	private WorkFrameRenderer renderer;
 	private User user;

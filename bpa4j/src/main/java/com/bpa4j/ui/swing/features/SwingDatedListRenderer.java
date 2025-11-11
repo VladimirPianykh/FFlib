@@ -35,9 +35,9 @@ import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
 import com.bpa4j.ui.swing.util.HButton;
 
-public class DatedListRenderer<T extends Editable> implements FeatureRenderer<DatedList<T>>{
+public class SwingDatedListRenderer<T extends Editable> implements FeatureRenderer<DatedList<T>>{
 	private DatedList<T> contract;
-	public DatedListRenderer(DatedList<T> contract){
+	public SwingDatedListRenderer(DatedList<T> contract){
 		this.contract=contract;
 	}
 	public DatedList<T> getTransmissionContract(){

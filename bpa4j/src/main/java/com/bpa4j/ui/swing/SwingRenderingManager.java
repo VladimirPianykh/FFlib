@@ -14,27 +14,35 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.feature.FeatureTransmissionContract;
 import java.util.Map;
+import java.util.Objects;
 import java.util.HashMap;
 
 public class SwingRenderingManager implements RenderingManager{
 	private Map<Class<?>,Supplier<? extends FeatureRenderer<?>>> featureRenderers=new HashMap<>();
 	private Map<Class<?>,Supplier<? extends EditorRenderer<?>>> editorRenderers=new HashMap<>();
 	private Map<Class<?>,Supplier<? extends ModuleRenderer<?>>> moduleRenderers=new HashMap<>();
+
 	private SwingWorkFrameRenderer wfr;
 	public SwingRenderingManager(){
 		//TODO: load defaults
 	}
 	@SuppressWarnings("unchecked")
 	public <F extends FeatureTransmissionContract> FeatureRenderer<F> getFeatureRenderer(F feature){
-		return (FeatureRenderer<F>)featureRenderers.get(feature.getClass()).get();
+		Supplier<? extends FeatureRenderer<?>> renderer=featureRenderers.get(feature.getClass());
+		Objects.requireNonNull(renderer);
+		return (FeatureRenderer<F>)renderer.get();
 	}
 	@SuppressWarnings("unchecked")
 	public <E extends IEditor> EditorRenderer<E> getEditorRenderer(E editor){
-		return (EditorRenderer<E>)editorRenderers.get(editor.getClass()).get();
+		Supplier<? extends EditorRenderer<?>> renderer=editorRenderers.get(editor.getClass());
+		Objects.requireNonNull(renderer);
+		return (EditorRenderer<E>)renderer.get();
 	}
 	@SuppressWarnings("unchecked")
 	public <M extends EditorModule> ModuleRenderer<M> getModuleRenderer(M module){
-		return (ModuleRenderer<M>)moduleRenderers.get(module.getClass()).get();
+		Supplier<? extends ModuleRenderer<?>> renderer=moduleRenderers.get(module.getClass());
+		Objects.requireNonNull(renderer);
+		return (ModuleRenderer<M>)renderer.get();
 	}
 	public WorkFrameRenderer getWorkFrameRenderer(WorkFrame wf){
 		return wfr=new SwingWorkFrameRenderer(wf);
@@ -45,6 +53,10 @@ public class SwingRenderingManager implements RenderingManager{
 	public void close(){
 		if(wfr!=null) wfr.dispose();
 	}
+	public FeatureRenderingContext getDetachedFeatureRenderingContext(){
+		return new SwingFeatureRenderingContext(null,new JPanel());
+	}
+
 	public <F extends FeatureTransmissionContract> void putFeatureRenderer(Class<F> e,Supplier<FeatureRenderer<F>> renderer){
 		featureRenderers.put(e,renderer);
 	}
@@ -53,8 +65,5 @@ public class SwingRenderingManager implements RenderingManager{
 	}
 	public <M extends EditorModule> void putModuleRenderer(Class<M> e,Supplier<ModuleRenderer<M>> renderer){
 		moduleRenderers.put(e,renderer);
-	}
-	public FeatureRenderingContext getDetachedFeatureRenderingContext(){
-		return new SwingFeatureRenderingContext(null,new JPanel());
 	}
 }

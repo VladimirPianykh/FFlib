@@ -23,9 +23,9 @@ import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.WorkTabButton;
 
-public class ModelEditingRenderer implements FeatureRenderer<ModelEditing>{
+public class SwingModelEditingRenderer implements FeatureRenderer<ModelEditing>{
     private ModelEditing contract;
-    public ModelEditingRenderer(ModelEditing contract){
+    public SwingModelEditingRenderer(ModelEditing contract){
         this.contract=contract;
     }
     public void paint(Graphics2D g2,BufferedImage image,int h){

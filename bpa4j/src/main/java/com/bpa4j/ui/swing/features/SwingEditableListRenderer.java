@@ -22,10 +22,10 @@ import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 
-public class EditableListRenderer<T extends Editable> implements FeatureRenderer<EditableList<T>>{
+public class SwingEditableListRenderer<T extends Editable> implements FeatureRenderer<EditableList<T>>{
 	private EditableList<T> contract;
 	private EditableListModel<T> model;
-	public EditableListRenderer(EditableList<T> contract,EditableListModel<T> model){
+	public SwingEditableListRenderer(EditableList<T> contract,EditableListModel<T> model){
 		this.contract=contract;
 		this.model=model;
 	}

@@ -12,34 +12,37 @@ import java.awt.image.BufferedImage;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Vector;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.ListSelectionModel;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
-import com.bpa4j.defaults.features.transmission_contracts.Board;
-import com.bpa4j.defaults.table.FieldCellValue;
-import com.bpa4j.defaults.table.FormCellEditor;
+import com.bpa4j.defaults.features.models.ItemListModel;
+import com.bpa4j.defaults.features.transmission_contracts.ItemList;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
+import com.bpa4j.ui.swing.features.SwingBoardRenderer.SwingConfiguratorRenderingContext;
 import com.bpa4j.ui.swing.util.AutoLayout;
 import com.bpa4j.ui.swing.util.HButton;
 
-public class BoardRenderer<T extends Serializable> implements FeatureRenderer<Board<T>>{
-	private Board<T> contract;
+public class SwingItemListRenderer<T extends Serializable> implements FeatureRenderer<ItemList<T>>{
+	private ItemList<T> contract;
+	private ItemListModel<T> model;
 	private Class<T> type;
-	public BoardRenderer(Board<T> contract,Class<T> type){
+	public SwingItemListRenderer(ItemList<T> contract,ItemListModel<T> model,Class<T> type){
 		this.contract=contract;
+		this.model=model;
 		this.type=type;
 	}
-	public Board<T> getTransmissionContract(){
+	public ItemList<T> getTransmissionContract(){
 		return contract;
 	}
 	public void render(FeatureRenderingContext ctx){
@@ -61,11 +64,10 @@ public class BoardRenderer<T extends Serializable> implements FeatureRenderer<Bo
 		g2.dispose();
 	}
 	public void paint(Graphics2D g2,BufferedImage image,int s){
-		g2.setStroke(new BasicStroke(s/10));
-		g2.drawRect(s/10,s/5,s*4/5,s*3/5);
-		g2.setStroke(new BasicStroke(s/20));
-		g2.drawPolygon(new int[]{s/2,s/4,s/2,s/3,s/2,s/2,s/2,s*2/3,s/2,s*3/4,s/2,s*2/3,s/2,s/2,s/2,s/3,s/2},new int[]{s/2,s/2,s/2,s/3,s/2,s/4,s/2,s/3,s/2,s/2,s/2,s*2/3,s/2,s*3/4,s/2,s*2/3,s/2},16);
-		g2.fillOval(s/3,s/3,s/3,s/3);
+		g2.setStroke(new BasicStroke(s/40));
+		g2.drawLine(s/6,s/4,s*5/6,s/4);
+		g2.drawLine(s/6,s/2,s/2,s/2);
+		g2.drawLine(s/6,s*3/4,s*2/3,s*3/4);
 	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
 		ArrayList<T> objects=contract.getObjects();
@@ -73,30 +75,40 @@ public class BoardRenderer<T extends Serializable> implements FeatureRenderer<Bo
 		tab.setBorder(BorderFactory.createEmptyBorder(tab.getHeight()/300,tab.getWidth()/300,tab.getHeight()/300,tab.getWidth()/300));
 		JPanel config=null;
 		JComponent filterConfig=null,sorterConfig=null;
-		JTable t=new JTable();
+		JList<T> t=new JList<T>();
 		t.setBackground(Color.DARK_GRAY);
 		t.setForeground(Color.WHITE);
-		t.setRowHeight(tab.getHeight()/10);
-		t.getTableHeader().setFont(new Font(Font.DIALOG,Font.ITALIC,tab.getHeight()/30));
-		t.setFillsViewportHeight(true);
-		t.setDefaultEditor(Object.class,new FormCellEditor());
+		t.setFixedCellHeight(tab.getHeight()/10);
+		t.setFont(new Font(Font.DIALOG,Font.ITALIC,tab.getHeight()/30));
 		JScrollPane sPane=new JScrollPane(t);
 		sPane.setBorder(BorderFactory.createTitledBorder(null,"Задания",0,0,new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/50),Color.WHITE));
 		ArrayList<String> s=new ArrayList<>();
 		for(Field f:type.getFields())
 			if(f.isAnnotationPresent(EditorEntry.class)) s.add(f.getAnnotation(EditorEntry.class).translation());
-		DefaultTableModel m=new DefaultTableModel(s.toArray(new String[0]),0);
-		if(filterConfig!=null){
-			// Filter config would go here
-		}
-		if(sorterConfig!=null){
-			// Sorter config would go here
-		}
-		if(contract.getAllowCreation()||filterConfig!=null||sorterConfig!=null){
+		DefaultListModel<T> m=new DefaultListModel<>();
+		if(contract.getAllowCreation()||filterConfig!=null||sorterConfig!=null||!model.getSingularActions().isEmpty()||!model.getCollectiveActions().isEmpty()){
 			config=new JPanel(new AutoLayout());
 			config.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/9));
+			SwingConfiguratorRenderingContext ctx=new SwingConfiguratorRenderingContext(config);
+			getTransmissionContract().renderSorter(ctx);
+			getTransmissionContract().renderFilter(ctx);
 			if(filterConfig!=null) config.add(filterConfig);
 			if(sorterConfig!=null) config.add(sorterConfig);
+			if(!model.getSingularActions().isEmpty()){
+				for(var a:model.getSingularActions()){
+					JButton b=new HButton();
+					b.addActionListener(e->a.accept(t.getSelectedValue()));
+					config.add(b);
+				}
+			}
+			if(!model.getCollectiveActions().isEmpty()){
+				for(var a:model.getCollectiveActions()){
+					JButton b=new HButton();
+					b.addActionListener(e->a.accept(t.getSelectedValuesList()));
+					config.add(b);
+				}
+				t.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+			}
 			if(contract.getAllowCreation()){
 				HButton create=new HButton(){
 					public void paint(Graphics g){
@@ -115,7 +127,7 @@ public class BoardRenderer<T extends Serializable> implements FeatureRenderer<Bo
 							Editable editable=(Editable)o;
 							ProgramStarter.editor.constructEditor(editable,true,()->contract.removeObject(o),null);
 						}
-						m.setRowCount(0);
+						m.clear();
 						fillTable(m,objects);
 						tab.revalidate();
 					}catch(ReflectiveOperationException ex){
@@ -131,13 +143,8 @@ public class BoardRenderer<T extends Serializable> implements FeatureRenderer<Bo
 		tab.add(sPane,BorderLayout.SOUTH);
 		if(config!=null) tab.add(config,BorderLayout.NORTH);
 	}
-	@SuppressWarnings("PMD.ReplaceVectorWithList")
-	private void fillTable(DefaultTableModel m,ArrayList<T> objects){
-		for(T t:objects){
-			Vector<Object> values=new Vector<>();
-			for(Field f:type.getFields())
-				if(f.isAnnotationPresent(EditorEntry.class)) values.add(new FieldCellValue(f,t));
-			m.addRow(values);
-		}
+	private void fillTable(DefaultListModel<T> m,ArrayList<T> objects){
+		for(T t:objects)
+			m.addElement(t);
 	}
 }
