@@ -60,6 +60,7 @@ public class EditableList<T extends Editable> implements FeatureTransmissionCont
 		setCanCreateOp.accept(canCreate);
 	}
 	public Function<T,JComponent> getComponentProvider(){
+		//TODO: split from model
 		return getComponentProviderOp.get();
 	}
 	public void setGroupSupplier(Supplier<EditableGroup<T>> supplier){

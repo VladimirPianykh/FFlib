@@ -44,10 +44,8 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
     	}
     }
     private Board<T> contract;
-	private Class<T> type;
-	public SwingBoardRenderer(Board<T> contract,Class<T> type){
+	public SwingBoardRenderer(Board<T> contract){
 		this.contract=contract;
-		this.type=type;
 	}
 	public Board<T> getTransmissionContract(){
 		return contract;
@@ -93,7 +91,7 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 		JScrollPane sPane=new JScrollPane(t);
 		sPane.setBorder(BorderFactory.createTitledBorder(null,"Задания",0,0,new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/50),Color.WHITE));
 		ArrayList<String> s=new ArrayList<>();
-		for(Field f:type.getFields())
+		for(Field f:getType().getFields())
 			if(f.isAnnotationPresent(EditorEntry.class)) s.add(f.getAnnotation(EditorEntry.class).translation());
 		DefaultTableModel m=new DefaultTableModel(s.toArray(new String[0]),0);
 		if(contract.getAllowCreation()||filterConfig!=null||sorterConfig!=null){
@@ -116,7 +114,7 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 				};
 				create.addActionListener(e->{
 					try{
-						T o=type.getDeclaredConstructor().newInstance();
+						T o=getType().getDeclaredConstructor().newInstance();
 						contract.addObject(o);
 						if(o instanceof Editable){
 							Editable editable=(Editable)o;
@@ -142,9 +140,12 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 	private void fillTable(DefaultTableModel m,ArrayList<T> objects){
 		for(T t:objects){
 			Vector<Object> values=new Vector<>();
-			for(Field f:type.getFields())
+			for(Field f:getType().getFields())
 				if(f.isAnnotationPresent(EditorEntry.class)) values.add(new FieldCellValue(f,t));
 			m.addRow(values);
 		}
+	}
+	private Class<T> getType(){
+		return getTransmissionContract().getType();
 	}
 }

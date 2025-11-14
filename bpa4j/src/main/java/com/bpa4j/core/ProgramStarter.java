@@ -72,8 +72,6 @@ public final class ProgramStarter{
 		editor.constructEditor(editable,isNew,deleter);
 	}*/
 	public static void runProgram(){
-		if(renderingManager==null)renderingManager=new SwingRenderingManager();
-		if(storageManager==null)storageManager=new FileStorageManager(new File(Root.folder));
 		getRegScreen().show(new StarterContext());
 	}
 	public static RegScreen getRegScreen(){
@@ -87,14 +85,19 @@ public final class ProgramStarter{
 		getRenderingManager().close();
 		System.exit(0);
 	}
+	public static boolean isFirstLaunch(){
+		return getStorageManager().isFirstLaunch();
+	}
 
 	public static RenderingManager getRenderingManager(){
+		if(renderingManager==null)renderingManager=new SwingRenderingManager();
 		return renderingManager;
 	}
 	public static void setRenderingManager(RenderingManager renderingManager){
 		ProgramStarter.renderingManager=renderingManager;
 	}
 	public static StorageManager getStorageManager(){
+		if(storageManager==null)storageManager=new FileStorageManager(new File(Root.folder));
 		return storageManager;
 	}
 	public static void setStorageManager(StorageManager storageManager){

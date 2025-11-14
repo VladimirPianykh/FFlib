@@ -12,6 +12,8 @@ import java.awt.image.BufferedImage;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -22,7 +24,6 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
-import com.bpa4j.defaults.features.models.ItemListModel;
 import com.bpa4j.defaults.features.transmission_contracts.ItemList;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.feature.FeatureRenderer;
@@ -35,12 +36,8 @@ import com.bpa4j.ui.swing.util.HButton;
 
 public class SwingItemListRenderer<T extends Serializable> implements FeatureRenderer<ItemList<T>>{
 	private ItemList<T> contract;
-	private ItemListModel<T> model;
-	private Class<T> type;
-	public SwingItemListRenderer(ItemList<T> contract,ItemListModel<T> model,Class<T> type){
+	public SwingItemListRenderer(ItemList<T> contract){
 		this.contract=contract;
-		this.model=model;
-		this.type=type;
 	}
 	public ItemList<T> getTransmissionContract(){
 		return contract;
@@ -83,10 +80,10 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 		JScrollPane sPane=new JScrollPane(t);
 		sPane.setBorder(BorderFactory.createTitledBorder(null,"Задания",0,0,new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/50),Color.WHITE));
 		ArrayList<String> s=new ArrayList<>();
-		for(Field f:type.getFields())
+		for(Field f:getType().getFields())
 			if(f.isAnnotationPresent(EditorEntry.class)) s.add(f.getAnnotation(EditorEntry.class).translation());
 		DefaultListModel<T> m=new DefaultListModel<>();
-		if(contract.getAllowCreation()||filterConfig!=null||sorterConfig!=null||!model.getSingularActions().isEmpty()||!model.getCollectiveActions().isEmpty()){
+		if(contract.getAllowCreation()||filterConfig!=null||sorterConfig!=null||!getSingularActions().isEmpty()||!getCollectiveActions().isEmpty()){
 			config=new JPanel(new AutoLayout());
 			config.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/9));
 			SwingConfiguratorRenderingContext ctx=new SwingConfiguratorRenderingContext(config);
@@ -94,15 +91,15 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 			getTransmissionContract().renderFilter(ctx);
 			if(filterConfig!=null) config.add(filterConfig);
 			if(sorterConfig!=null) config.add(sorterConfig);
-			if(!model.getSingularActions().isEmpty()){
-				for(var a:model.getSingularActions()){
+			if(!getSingularActions().isEmpty()){
+				for(var a:getSingularActions()){
 					JButton b=new HButton();
 					b.addActionListener(e->a.accept(t.getSelectedValue()));
 					config.add(b);
 				}
 			}
-			if(!model.getCollectiveActions().isEmpty()){
-				for(var a:model.getCollectiveActions()){
+			if(!getTransmissionContract().getCollectiveActions().isEmpty()){
+				for(var a:getCollectiveActions()){
 					JButton b=new HButton();
 					b.addActionListener(e->a.accept(t.getSelectedValuesList()));
 					config.add(b);
@@ -121,7 +118,7 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 				};
 				create.addActionListener(e->{
 					try{
-						T o=type.getDeclaredConstructor().newInstance();
+						T o=getType().getDeclaredConstructor().newInstance();
 						contract.addObject(o);
 						if(o instanceof Editable){
 							Editable editable=(Editable)o;
@@ -142,6 +139,15 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 		t.setModel(m);
 		tab.add(sPane,BorderLayout.SOUTH);
 		if(config!=null) tab.add(config,BorderLayout.NORTH);
+	}
+	private List<Consumer<List<T>>> getCollectiveActions(){
+		return getTransmissionContract().getCollectiveActions();
+	}
+	private List<Consumer<T>> getSingularActions(){
+		return getTransmissionContract().getSingularActions();
+	}
+	private Class<T> getType(){
+		return getTransmissionContract().getType();
 	}
 	private void fillTable(DefaultListModel<T> m,ArrayList<T> objects){
 		for(T t:objects)

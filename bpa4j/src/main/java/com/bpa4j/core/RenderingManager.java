@@ -1,6 +1,6 @@
 package com.bpa4j.core;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 import com.bpa4j.editor.EditorRenderer;
 import com.bpa4j.editor.IEditor;
 import com.bpa4j.feature.FeatureRenderer;
@@ -12,9 +12,9 @@ import com.bpa4j.feature.FeatureTransmissionContract;
  */
 public interface RenderingManager{
 	<F extends FeatureTransmissionContract>FeatureRenderer<F>getFeatureRenderer(F feature);
-	<F extends FeatureTransmissionContract>void putFeatureRenderer(Class<F>e,Supplier<FeatureRenderer<F>>renderer);
+	<F extends FeatureTransmissionContract>void putFeatureRenderer(Class<F>e,Function<F,? extends FeatureRenderer<F>>renderer);
 	<E extends IEditor>EditorRenderer<E>getEditorRenderer(E editor);
-	<E extends IEditor>void putEditorRenderer(Class<E>e,Supplier<EditorRenderer<E>>renderer);
+	<E extends IEditor>void putEditorRenderer(Class<E>e,Function<E,? extends EditorRenderer<E>>renderer);
 	WorkFrameRenderer getWorkFrameRenderer(WorkFrame wf);
 	RegScreen getRegistrationScreen();
 	void close();

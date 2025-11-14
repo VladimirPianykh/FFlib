@@ -3,13 +3,23 @@ package com.bpa4j.defaults.features.transmission_contracts;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import com.bpa4j.Dater;
+import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class Calendar<T extends Calendar.Event> implements FeatureTransmissionContract{
+	private static final Map<String,Feature<?>> registeredCalendars;
+	static{
+		HashMap<String,Feature<?>>reg=new HashMap<>();
+		ProgramStarter.getStorageManager().getStorage().putGlobal("BL:Calendar",reg);
+		registeredCalendars=reg;
+	}
+	
 	public static interface Event{}
 	public Supplier<HashMap<LocalDate,List<T>>> getEventsOp;
 	public BiFunction<LocalDate,List<T>,List<T>> getEventListOp;
@@ -52,11 +62,13 @@ public class Calendar<T extends Calendar.Event> implements FeatureTransmissionCo
 	public void clearEvents(){
 		clearEventsOp.accept(getEvents());
 	}
-	public void setEventFiller(Consumer<HashMap<LocalDate,List<T>>> eventFiller){
+	public Calendar<T> setEventFiller(Consumer<HashMap<LocalDate,List<T>>> eventFiller){
 		setEventFillerOp.accept(eventFiller);
+		return this;
 	}
-	public void setDater(Dater<List<T>> dater){
+	public Calendar<T> setDater(Dater<List<T>> dater){
 		setDaterOp.accept(dater);
+		return this;
 	}
 	public Consumer<HashMap<LocalDate,List<T>>> getEventFiller(){
 		return getEventFillerOp.get();
@@ -66,5 +78,21 @@ public class Calendar<T extends Calendar.Event> implements FeatureTransmissionCo
 	}
 	public String getFeatureName(){
 		return name;
+	}
+	
+	public static <T extends Calendar.Event> Feature<Calendar<T>> registerCalendar(String name, Class<T> eventClass) {
+		Calendar<T> calendar = new Calendar<>(name);
+		Feature<Calendar<T>> feature = new Feature<>(calendar);
+		registeredCalendars.put(name, feature);
+		return feature;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T extends Calendar.Event> Calendar<T> getCalendar(String name) {
+		Feature<?> feature = registeredCalendars.get(name);
+		if (feature == null) {
+			throw new IllegalArgumentException("Calendar with name '" + name + "' not found. Make sure to register it first.");
+		}
+		return (Calendar<T>) feature.getContract();
 	}
 }

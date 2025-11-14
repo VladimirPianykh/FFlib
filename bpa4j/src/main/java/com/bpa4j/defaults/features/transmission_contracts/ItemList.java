@@ -2,16 +2,27 @@ package com.bpa4j.defaults.features.transmission_contracts;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.RenderingContext;
+import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 import com.bpa4j.ui.swing.features.SwingBoardRenderer.SwingConfiguratorRenderingContext;
 
 public class ItemList<T extends Serializable> implements FeatureTransmissionContract{
+	private static final Map<String,Feature<?>> registeredLists;
+	static{
+		HashMap<String,Feature<?>> reg=new HashMap<>();
+		ProgramStarter.getStorageManager().getStorage().putGlobal("BL:ItemList",reg);
+		registeredLists=reg;
+	}
+
 	public Supplier<ArrayList<T>> getObjectsOp;
 	public Supplier<T> createObjectOp;
 	public Consumer<T> addObjectOp;
@@ -26,10 +37,14 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	public Consumer<Board.Filter<T>> setFilterOp;
 	private Consumer<RenderingContext> renderFilterOp;
 	private Consumer<RenderingContext> renderSorterOp;
+	private Supplier<List<Consumer<List<T>>>> getCollectiveActionsOp;
+	private Supplier<List<Consumer<T>>> getSingularActionsOp;
 
 	private String name;
-	public ItemList(String name){
+	private Class<T> type;
+	public ItemList(String name,Class<T> type){
 		this.name=name;
+		this.type=type;
 	}
 
 	public void setGetObjectsOp(Supplier<ArrayList<T>> getObjectsOp){
@@ -68,11 +83,17 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	public void addSetFilterOp(Consumer<Board.Filter<T>> setFilterOp){
 		this.setFilterOp=setFilterOp;
 	}
-	public void addRenderSorterOp(Consumer<RenderingContext>renderSorterOp){
+	public void addRenderSorterOp(Consumer<RenderingContext> renderSorterOp){
 		this.renderSorterOp=renderSorterOp;
 	}
-	public void addRenderFilterOp(Consumer<RenderingContext>renderFilterOp){
+	public void addRenderFilterOp(Consumer<RenderingContext> renderFilterOp){
 		this.renderFilterOp=renderFilterOp;
+	}
+	public void setGetSingularActionsOp(Supplier<List<Consumer<T>>> getSingularActionsOp){
+		this.getSingularActionsOp=getSingularActionsOp;
+	}
+	public void setGetCollectiveActionsOp(Supplier<List<Consumer<List<T>>>> getCollectiveActionsOp){
+		this.getCollectiveActionsOp=getCollectiveActionsOp;
 	}
 
 	public ArrayList<T> getObjects(){
@@ -87,29 +108,36 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	public void removeObject(T object){
 		removeObjectOp.accept(object);
 	}
-	public void setElementSupplier(Supplier<ArrayList<T>> supplier){
+	public ItemList<T> setElementSupplier(Supplier<ArrayList<T>> supplier){
 		setElementSupplierOp.accept(supplier);
+		return this;
 	}
 	public boolean getAllowCreation(){
 		return getAllowCreationOp.getAsBoolean();
 	}
-	public void setAllowCreation(boolean allow){
+	public ItemList<T> setAllowCreation(boolean allow){
 		setAllowCreationOp.accept(allow);
+		return this;
 	}
-	public void addCollectiveAction(Consumer<List<T>> action){
+	public ItemList<T> addCollectiveAction(Consumer<List<T>> action){
 		addCollectiveActionOp.accept(action);
+		return this;
 	}
-	public void addSingularAction(Consumer<T> action){
+	public ItemList<T> addSingularAction(Consumer<T> action){
 		addSingularActionOp.accept(action);
+		return this;
 	}
-	public void setSlicer(Function<T,String> slicer){
+	public ItemList<T> setSlicer(Function<T,String> slicer){
 		setSlicerOp.accept(slicer);
+		return this;
 	}
-	public void setSorter(Board.Sorter<T> sorter){
+	public ItemList<T> setSorter(Board.Sorter<T> sorter){
 		setSorterOp.accept(sorter);
+		return this;
 	}
-	public void setFilter(Board.Filter<T> filter){
+	public ItemList<T> setFilter(Board.Filter<T> filter){
 		setFilterOp.accept(filter);
+		return this;
 	}
 	public void renderSorter(SwingConfiguratorRenderingContext ctx){
 		renderSorterOp.accept(ctx);
@@ -119,5 +147,28 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	}
 	public String getFeatureName(){
 		return name;
+	}
+	public Class<T> getType(){
+		return type;
+	}
+	public List<Consumer<T>> getSingularActions(){
+		return getSingularActionsOp.get();
+	}
+	public List<Consumer<List<T>>> getCollectiveActions(){
+		return getCollectiveActionsOp.get();
+	}
+
+	public static <T extends Serializable> Feature<ItemList<T>> registerList(String name,Class<T> clazz){
+		ItemList<T> list=new ItemList<>(name,clazz);
+		Feature<ItemList<T>> feature=new Feature<>(list);
+		registeredLists.put(name,feature);
+		return feature;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T extends Serializable> ItemList<T> getList(String name){
+		Feature<?> feature=registeredLists.get(name);
+		if(feature==null){ throw new IllegalArgumentException("ItemList with name '"+name+"' not found. Make sure to register it first."); }
+		return (ItemList<T>)feature.getContract();
 	}
 }

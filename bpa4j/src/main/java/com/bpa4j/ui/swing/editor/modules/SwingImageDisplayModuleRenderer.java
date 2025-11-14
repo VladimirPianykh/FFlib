@@ -9,12 +9,9 @@ import java.awt.MediaTracker;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.io.IOException;
-
 import javax.swing.ImageIcon;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.Root;
 import com.bpa4j.editor.ModularEditorRenderer.ModulesRenderingContext;
@@ -26,7 +23,6 @@ import com.bpa4j.ui.swing.util.HButton;
 public class SwingImageDisplayModuleRenderer implements ModuleRenderer<ImageDisplayModule>{
     public void createTab(Editable editable,boolean isNew,Runnable deleter,ImageDisplayModule module,ModulesRenderingContext context){
         SwingModuleRenderingContext ctx=(SwingModuleRenderingContext)context;
-        JDialog editor=ctx.getEditorDialog();
         JPanel tab=new JPanel(null);
         tab.setBackground(Color.DARK_GRAY);
         tab.setSize(Root.SCREEN_SIZE);

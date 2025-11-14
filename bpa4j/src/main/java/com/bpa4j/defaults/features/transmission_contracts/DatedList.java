@@ -1,15 +1,25 @@
 package com.bpa4j.defaults.features.transmission_contracts;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import com.bpa4j.Dater;
 import com.bpa4j.core.Editable;
+import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class DatedList<T extends Editable> implements FeatureTransmissionContract{
+	private static final Map<String,Feature<?>> registeredDatedLists;
+	static{
+		HashMap<String,Feature<?>>reg=new HashMap<>();
+		ProgramStarter.getStorageManager().getStorage().putGlobal("BL:DatedList",reg);
+		registeredDatedLists=reg;
+	}
+	
 	public Supplier<Set<T>> getObjectsOp;
 	public Supplier<HashMap<T,Dater<T>>> getObjectsWithDatersOp;
 	public Supplier<T> createObjectOp;
@@ -55,8 +65,9 @@ public class DatedList<T extends Editable> implements FeatureTransmissionContrac
 	public T createObject(){
 		return createObjectOp.get();
 	}
-	public void setDateProvider(Supplier<Dater<T>> provider){
+	public DatedList<T> setDateProvider(Supplier<Dater<T>> provider){
 		setDateProviderOp.accept(provider);
+		return this;
 	}
 	public void removeObject(T object){
 		removeObjectOp.accept(object);
@@ -72,5 +83,21 @@ public class DatedList<T extends Editable> implements FeatureTransmissionContrac
 	}
 	public String getFeatureName(){
 		return name;
+	}
+	
+	public static <T extends Editable> Feature<DatedList<T>> registerList(String name, Class<T> clazz) {
+		DatedList<T> datedList = new DatedList<>(name);
+		Feature<DatedList<T>> feature = new Feature<>(datedList);
+		registeredDatedLists.put(name, feature);
+		return feature;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T extends Editable> DatedList<T> getList(String name) {
+		Feature<?> feature = registeredDatedLists.get(name);
+		if (feature == null) {
+			throw new IllegalArgumentException("DatedList with name '" + name + "' not found. Make sure to register it first.");
+		}
+		return (DatedList<T>) feature.getContract();
 	}
 }

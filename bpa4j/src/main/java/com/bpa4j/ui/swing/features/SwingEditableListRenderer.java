@@ -9,25 +9,23 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
+import java.util.function.Function;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
-import com.bpa4j.defaults.features.models.EditableListModel;
 import com.bpa4j.defaults.features.transmission_contracts.EditableList;
-import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.feature.FeatureRenderer;
+import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 
 public class SwingEditableListRenderer<T extends Editable> implements FeatureRenderer<EditableList<T>>{
 	private EditableList<T> contract;
-	private EditableListModel<T> model;
-	public SwingEditableListRenderer(EditableList<T> contract,EditableListModel<T> model){
+	public SwingEditableListRenderer(EditableList<T> contract){
 		this.contract=contract;
-		this.model=model;
 	}
 	public EditableList<T> getTransmissionContract(){
 		return contract;
@@ -62,7 +60,7 @@ public class SwingEditableListRenderer<T extends Editable> implements FeatureRen
 		JPanel panel=new JPanel(new GridLayout(Math.max(10,group.size()+1),1));
 		JScrollPane s=new JScrollPane(panel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		s.getVerticalScrollBar().setUnitIncrement(tab.getHeight()/50);
-		java.util.function.Function<T,JComponent> componentProvider=model.getComponentProvider();
+		Function<T,JComponent> componentProvider=getTransmissionContract().getComponentProvider();
 		if(componentProvider==null){
 			componentProvider=t->{
 				HButton b=new HButton(){
@@ -84,11 +82,11 @@ public class SwingEditableListRenderer<T extends Editable> implements FeatureRen
 				return b;
 			};
 		}
-		final java.util.function.Function<T,JComponent> finalProvider=componentProvider;
+		final Function<T,JComponent> finalProvider=componentProvider;
 		for(T t:group){
 			panel.add(finalProvider.apply(t));
 		}
-		if(model.getCanCreate()){
+		if(getTransmissionContract().getCanCreate()){
 			HButton add=new HButton(){
 				public void paint(Graphics g){
 					int c=50-scale*4;
