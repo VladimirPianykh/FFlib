@@ -308,7 +308,7 @@ public class GraphResource{
 		e.appendInstruction(new Instruction(iText,type),nn);
 		return Map.of("status","ok");
 	}
-
+	
 	@PUT
 	@Path("/navigator/entries/{text}/instructions/{index}")
 	public Map<String,Object>navigatorReplaceInstruction(@PathParam("text")String text,@PathParam("index")int index,Map<String,String>body){
@@ -321,7 +321,7 @@ public class GraphResource{
 		e.replaceInstruction(new Instruction(iText,type),index,nn);
 		return Map.of("status","ok");
 	}
-
+	
 	@DELETE
 	@Path("/navigator/entries/{text}/instructions/last")
 	public Map<String,Object>navigatorDeleteLastInstruction(@PathParam("text")String text){
@@ -332,7 +332,7 @@ public class GraphResource{
 		e.deleteLastInstruction(nn);
 		return Map.of("status","ok");
 	}
-
+	
 	@GET
 	@Path("/features")
 	public List<Map<String,Object>>features(@QueryParam("detailed") boolean detailed){
@@ -344,20 +344,19 @@ public class GraphResource{
 			return m;
 		}).toList();
 	}
-
-	// @POST
-	// @Path("/save-initial-state")
-	// public Map<String,Object>saveInitialState(){
-	// 	try{
-	// 		java.nio.file.Files.createDirectories(java.nio.file.Path.of(graph.projectFolder+"/resources/initial/"));
-	// 		java.nio.file.Files.copy(java.nio.file.Path.of(Root.folder+"Data.ser"+ProgramStarter.version),java.nio.file.Path.of(graph.projectFolder+"/resources/initial/Data.ser"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-	// 		java.nio.file.Files.copy(java.nio.file.Path.of(Root.folder+"Users.ser"+ProgramStarter.version),java.nio.file.Path.of(graph.projectFolder+"/resources/initial/Users.ser"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-	// 		return Map.of("status","ok");
-	// 	}catch(java.io.IOException ex){
-	// 		throw new IllegalStateException(ex);
-	// 	}
-	// }
-
+	/* @POST
+	@Path("/save-initial-state")
+	public Map<String,Object>saveInitialState(){
+		try{
+			java.nio.file.Files.createDirectories(java.nio.file.Path.of(graph.projectFolder+"/resources/initial/"));
+			java.nio.file.Files.copy(java.nio.file.Path.of(Root.folder+"Data.ser"+ProgramStarter.version),java.nio.file.Path.of(graph.projectFolder+"/resources/initial/Data.ser"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			java.nio.file.Files.copy(java.nio.file.Path.of(Root.folder+"Users.ser"+ProgramStarter.version),java.nio.file.Path.of(graph.projectFolder+"/resources/initial/Users.ser"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			return Map.of("status","ok");
+		}catch(java.io.IOException ex){
+			throw new IllegalStateException(ex);
+		}
+	} */
+	
 	@POST
 	@Path("/reload")
 	public Map<String,Object>reload(){
@@ -365,7 +364,7 @@ public class GraphResource{
 		graph.nodes=ng.nodes;
 		return Map.of("status","ok","counts",graph.nodes.stream().collect(Collectors.groupingBy(n->n.getClass().getSimpleName(),Collectors.counting())));
 	}
-
+	
 	@GET
 	@Path("/impl-features")
 	public List<Map<String,Object>>implFeatures(@QueryParam("detailed") boolean detailed){
@@ -378,7 +377,11 @@ public class GraphResource{
 		}).toList();
 	}
 
-	private static Map<String,Object>nodeSummary(ProjectNode n){
+	//Raw access
+	@GET
+	@Path("/raw/node/{node-index}")
+	public Map<String,Object>nodeSummary(@PathParam("node-index") int index){
+		ProjectNode n=graph.nodes.get(index);
 		Map<String,Object>m=new HashMap<>();
 		m.put("type",n.getClass().getSimpleName());
 		m.put("path",n.location==null?null:n.location.getPath());

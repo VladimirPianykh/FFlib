@@ -15,31 +15,30 @@ import com.bpa4j.feature.FeatureTransmissionContract;
 public class DatedList<T extends Editable> implements FeatureTransmissionContract{
 	private static final Map<String,Feature<?>> registeredDatedLists;
 	static{
-		HashMap<String,Feature<?>>reg=new HashMap<>();
+		HashMap<String,Feature<?>> reg=new HashMap<>();
 		ProgramStarter.getStorageManager().getStorage().putGlobal("BL:DatedList",reg);
 		registeredDatedLists=reg;
 	}
-	
+
 	public Supplier<Set<T>> getObjectsOp;
 	public Supplier<HashMap<T,Dater<T>>> getObjectsWithDatersOp;
-	public Supplier<T> createObjectOp;
 	public Consumer<T> removeObjectOp;
 	public BiConsumer<T,Dater<T>> putObjectOp;
 	public Consumer<Supplier<Dater<T>>> setDateProviderOp;
 	public Supplier<Supplier<Dater<T>>> getDateProviderOp;
 	public Runnable clearObjectsOp;
+
 	private String name;
-	public DatedList(String name){
+	private Class<T> type;
+	public DatedList(String name,Class<T> type){
 		this.name=name;
+		this.type=type;
 	}
 	public void setGetObjectsOp(Supplier<Set<T>> getObjectsOp){
 		this.getObjectsOp=getObjectsOp;
 	}
 	public void setGetObjectsWithDatersOp(Supplier<HashMap<T,Dater<T>>> getObjectsWithDatersOp){
 		this.getObjectsWithDatersOp=getObjectsWithDatersOp;
-	}
-	public void setCreateObjectOp(Supplier<T> createObjectOp){
-		this.createObjectOp=createObjectOp;
 	}
 	public void setSetDateProviderOp(Consumer<Supplier<Dater<T>>> setDateProviderOp){
 		this.setDateProviderOp=setDateProviderOp;
@@ -62,9 +61,6 @@ public class DatedList<T extends Editable> implements FeatureTransmissionContrac
 	public HashMap<T,Dater<T>> getObjectsWithDaters(){
 		return getObjectsWithDatersOp.get();
 	}
-	public T createObject(){
-		return createObjectOp.get();
-	}
 	public DatedList<T> setDateProvider(Supplier<Dater<T>> provider){
 		setDateProviderOp.accept(provider);
 		return this;
@@ -81,23 +77,25 @@ public class DatedList<T extends Editable> implements FeatureTransmissionContrac
 	public void clearObjects(){
 		clearObjectsOp.run();
 	}
+
 	public String getFeatureName(){
 		return name;
 	}
-	
-	public static <T extends Editable> Feature<DatedList<T>> registerList(String name, Class<T> clazz) {
-		DatedList<T> datedList = new DatedList<>(name);
-		Feature<DatedList<T>> feature = new Feature<>(datedList);
-		registeredDatedLists.put(name, feature);
+	public Class<T> getType(){
+		return type;
+	}
+
+	public static <T extends Editable> Feature<DatedList<T>> registerList(String name,Class<T> clazz){
+		DatedList<T> datedList=new DatedList<>(name,clazz);
+		Feature<DatedList<T>> feature=new Feature<>(datedList);
+		registeredDatedLists.put(name,feature);
 		return feature;
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public static <T extends Editable> DatedList<T> getList(String name) {
-		Feature<?> feature = registeredDatedLists.get(name);
-		if (feature == null) {
-			throw new IllegalArgumentException("DatedList with name '" + name + "' not found. Make sure to register it first.");
-		}
-		return (DatedList<T>) feature.getContract();
+	public static <T extends Editable> DatedList<T> getList(String name){
+		Feature<?> feature=registeredDatedLists.get(name);
+		if(feature==null){ throw new IllegalArgumentException("DatedList with name '"+name+"' not found. Make sure to register it first."); }
+		return (DatedList<T>)feature.getContract();
 	}
 }

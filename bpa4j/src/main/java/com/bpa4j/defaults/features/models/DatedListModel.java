@@ -24,6 +24,7 @@ public class DatedListModel<T extends Editable> implements FeatureModel<DatedLis
     public DatedList<T> getTransmissionContract(){
         return ftc;
     }
+    
     public Set<T> getObjects(){
         return objects.keySet();
     }

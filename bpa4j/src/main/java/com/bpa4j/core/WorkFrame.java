@@ -19,6 +19,9 @@ public class WorkFrame{
 		public void renderPreview(FeatureRenderingContext ctx){
 			feature.renderPreview(ctx);
 		}
+		public String toString(){
+			return feature.getName();
+		}
 	}
 	static{
 		User.ftrMap.put(DefaultRole.ADMIN,User.registeredFeatures.toArray(Feature[]::new));

@@ -35,15 +35,20 @@ import com.bpa4j.ui.swing.util.HButton;
 
 public class SwingBoardRenderer<T extends Serializable> implements FeatureRenderer<Board<T>>{
 	public static class SwingConfiguratorRenderingContext implements RenderingContext{
+		private Runnable saver;
     	private JPanel target;
-    	public SwingConfiguratorRenderingContext(JPanel target){
+    	public SwingConfiguratorRenderingContext(JPanel target,Runnable saver){
     		this.target=target;
+			this.saver=saver;
     	}
     	public JPanel getTarget(){
     		return target;
     	}
+		public Runnable getSaver(){
+			return saver;
+		}
     }
-    private Board<T> contract;
+	private Board<T> contract;
 	public SwingBoardRenderer(Board<T> contract){
 		this.contract=contract;
 	}
@@ -97,7 +102,7 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 		if(contract.getAllowCreation()||filterConfig!=null||sorterConfig!=null){
 			config=new JPanel(new AutoLayout());
 			config.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/9));
-			SwingConfiguratorRenderingContext ctx=new SwingConfiguratorRenderingContext(config);
+			SwingConfiguratorRenderingContext ctx=new SwingConfiguratorRenderingContext(config,()->fillTable(m,getTransmissionContract().getObjects()));
 			getTransmissionContract().renderSorter(ctx);
 			getTransmissionContract().renderFilter(ctx);
 			if(filterConfig!=null) config.add(filterConfig);
@@ -118,7 +123,7 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 						contract.addObject(o);
 						if(o instanceof Editable){
 							Editable editable=(Editable)o;
-							ProgramStarter.editor.constructEditor(editable,true,()->contract.removeObject(o),null);
+							ProgramStarter.editor.constructEditor(editable,true,()->contract.removeObject(o),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 						}
 						m.setRowCount(0);
 						fillTable(m,objects);

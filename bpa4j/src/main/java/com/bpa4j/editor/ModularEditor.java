@@ -29,7 +29,7 @@ public class ModularEditor implements IEditor{
 		ModularEditorRenderer r=(ModularEditorRenderer)getRenderer();
 		ModulesRenderingContext mctx=r.getModulesRenderingContext(ctx);
 		for(EditorModule m:modules){
-			m.<EditorModule>setRendererSource(e->r.getModuleRenderer(m));
+			m.setRendererSource(e->r.getModuleRenderer(e));
 			m.createTab(editable,isNew,deleter,mctx);
 		}
 		r.constructEditor(editable,isNew,deleter,this,ctx,mctx);

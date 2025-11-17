@@ -20,7 +20,7 @@ public class ExcludeModule implements EditorModule{
     public void createTab(Editable editable,boolean isNew,Runnable deleter,ModulesRenderingContext ctx){
         boolean flag=false;
         for(Class<? extends Editable> m:types)
-            if(m.isAssignableFrom(editable.getClass())) flag=true;
+            if(editable.getClass().isAssignableFrom(m)) flag=true;
         if(!flag)module.createTab(editable,isNew,deleter,ctx);
     }
 	public <M extends EditorModule> void setRendererSource(Function<M,? extends ModuleRenderer<M>> rendererSource){

@@ -23,14 +23,13 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
-import com.bpa4j.defaults.features.models.MappedListModel;
 import com.bpa4j.defaults.features.transmission_contracts.MappedList;
 import com.bpa4j.defaults.table.FieldCellRenderer;
 import com.bpa4j.defaults.table.FieldCellValue;
 import com.bpa4j.defaults.table.FormCellEditor;
 import com.bpa4j.editor.EditorEntry;
-import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.feature.FeatureRenderer;
+import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
@@ -38,15 +37,8 @@ import com.bpa4j.ui.swing.util.HButton;
 @SuppressWarnings({"unchecked","PMD.ReplaceVectorWithList"})
 public class SwingMappedListRenderer<T extends Editable,V extends Serializable> implements FeatureRenderer<MappedList<T,V>>{
 	private MappedList<T,V> contract;
-	private MappedListModel<T,V> model;
-	@SuppressWarnings("unused")
-	private Class<T> type;
-	private Class<V> vType;
-	public SwingMappedListRenderer(MappedList<T,V> contract,MappedListModel<T,V> model,Class<T> type,Class<V> vType){
+	public SwingMappedListRenderer(MappedList<T,V> contract){
 		this.contract=contract;
-		this.model=model;
-		this.type=type;
-		this.vType=vType;
 	}
 	public MappedList<T,V> getTransmissionContract(){
 		return contract;
@@ -87,7 +79,7 @@ public class SwingMappedListRenderer<T extends Editable,V extends Serializable> 
 		t.setRowHeight(tab.getHeight()/10);
 		Vector<String> v=new Vector<>();
 		v.add("Объекты");
-		for(Field f:vType.getFields())
+		for(Field f:getVType().getFields())
 			v.add(f.getAnnotation(EditorEntry.class).translation());
 		DefaultTableModel m=new DefaultTableModel(v,0);
 		t.setModel(m);
@@ -154,10 +146,10 @@ public class SwingMappedListRenderer<T extends Editable,V extends Serializable> 
 		};
 		add.addActionListener(e->{
 			T o=contract.createObject();
-			ProgramStarter.editor.constructEditor(o,true,null,null);
+			ProgramStarter.editor.constructEditor(o,true,null,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 			Vector<Object> l=new Vector<>();
 			l.add(o);
-			for(Field f:vType.getFields())
+			for(Field f:getVType().getFields())
 				l.add(new FieldCellValue(f,contract.getMapping(o)));
 			m.addRow(l);
 		});
@@ -167,11 +159,14 @@ public class SwingMappedListRenderer<T extends Editable,V extends Serializable> 
 		tab.add(s,BorderLayout.NORTH);
 		tab.revalidate();
 	}
+	private Class<V> getVType(){
+		return getTransmissionContract().getVType();
+	}
 	private void fillTable(DefaultTableModel m){
-		for(T t:model.getObjects().keySet()){
+		for(T t:getTransmissionContract().getObjects().keySet()){
 			Vector<Object> l=new Vector<>();
 			l.add(t);
-			for(Field f:vType.getFields())
+			for(Field f:getVType().getFields())
 				l.add(new FieldCellValue(f,contract.getMapping(t)));
 			m.addRow(l);
 		}

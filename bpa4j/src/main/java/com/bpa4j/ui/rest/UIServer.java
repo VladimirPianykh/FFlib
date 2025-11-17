@@ -1,44 +1,34 @@
-package com.bpa4j.util.codegen.server;
+package com.bpa4j.ui.rest;
 
 import java.net.URI;
-
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import com.bpa4j.ui.rest.abstractui.UIState;
+import com.bpa4j.util.codegen.server.GsonJsonProvider;
 
-import com.bpa4j.util.codegen.ProjectGraph;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-
-/**
- * Embedded REST server for {@link ProjectGraph} using Jersey/Grizzly.
- * Starts on the port provided to the constructor.
- * @author AI-generated
- */
-public class ProjectServer{
-	private final ProjectGraph graph;
+public class UIServer{
 	private final long port;
 	private HttpServer server;
-	public ProjectServer(ProjectGraph graph){
-		this(graph,5616);
+	private UIState state;
+	public UIServer(){
+		this(5617);
 	}
-	public ProjectServer(ProjectGraph graph,long port){
-		this.graph=graph;
+	public UIServer(long port){
 		this.port=port;
-		start();
 	}
-
 	public synchronized void start(){
 		if(server!=null)return;
 		ResourceConfig rc=new ResourceConfig()
 			.register(new AbstractBinder(){
 				protected void configure(){
-					bind(graph).to(ProjectGraph.class);
-					// bind()
-				} 
+					bind(state).to(UIState.class);
+				}
 			})
 			.register(GsonJsonProvider.class)
-			.packages("com.bpa4j.util.codegen.server");
+			.register(UIResource.class);
 		server=GrizzlyHttpServerFactory.createHttpServer(URI.create("http://0.0.0.0:"+port+"/"),rc);
 		Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
 	}

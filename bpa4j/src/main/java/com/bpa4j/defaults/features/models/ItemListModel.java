@@ -38,6 +38,7 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 		this.ftc=ftc;
 		ftc.setGetObjectsOp(this::getObjects);
 		ftc.setAddObjectOp(this::addObject);
+		ftc.setCreateObjectOp(this::createObject);
 		ftc.setRemoveObjectOp(this::removeObject);
 		ftc.setSetElementSupplierOp(this::setElementSupplier);
 		ftc.setGetAllowCreationOp(this::getAllowCreation);
@@ -45,10 +46,12 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 		ftc.setAddCollectiveActionOp(this::addCollectiveAction);
 		ftc.setAddSingularActionOp(this::addSingularAction);
 		ftc.setSetSlicerOp(this::setSlicer);
-		ftc.addSetSorterOp(this::setSorter);
-		ftc.addSetFilterOp(this::setFilter);
-		ftc.addRenderSorterOp(this::renderSorter);
-		ftc.addRenderFilterOp(this::renderFilter);
+		ftc.setSetSorterOp(this::setSorter);
+		ftc.setSetFilterOp(this::setFilter);
+		ftc.setRenderSorterOp(this::renderSorter);
+		ftc.setRenderFilterOp(this::renderFilter);
+		ftc.setGetSingularActionsOp(this::getSingularActions);
+		ftc.setGetCollectiveActionsOp(this::getCollectiveActions);
 	}
 	public ItemList<T> getTransmissionContract(){
 		return ftc;
@@ -63,6 +66,15 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 			o.removeIf(filter.negate());
 		}
 		return o;
+	}
+	public T createObject(){
+		try{
+			T t=getTransmissionContract().getType().getDeclaredConstructor().newInstance();
+			objects.add(t);
+			return t;
+		}catch(ReflectiveOperationException ex){
+			throw new IllegalStateException("Editables must have default constructor");
+		}
 	}
 	public void addObject(T object){
 		objects.add(object);

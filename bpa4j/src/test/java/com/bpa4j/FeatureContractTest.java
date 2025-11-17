@@ -1,6 +1,5 @@
 package com.bpa4j;
 
-import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,7 @@ import com.bpa4j.feature.Feature;
 public class FeatureContractTest{
 
     // Sample classes for testing
-    public static class TestEditable extends Editable implements Serializable{
+    public static class TestEditable extends Editable{
         private static final long serialVersionUID=1L;
         public String name;
         public int value;

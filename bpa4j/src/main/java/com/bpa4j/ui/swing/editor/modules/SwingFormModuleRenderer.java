@@ -66,7 +66,7 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 		JPanel tab=createTabPanel(editable,isNew,deleter,module,ctx);
 		ctx.getTabs().add(tab);
 	}
-	protected JPanel createTabPanel(Editable editable,boolean isNew,Runnable deleter,FormModule module,ModulesRenderingContext context){
+	protected static JPanel createTabPanel(Editable editable,boolean isNew,Runnable deleter,FormModule module,ModulesRenderingContext context){
 		SwingModuleRenderingContext ctx=(SwingModuleRenderingContext)context;
 		JDialog editor=ctx.getEditorDialog();
 		JPanel tab=new JPanel(null);

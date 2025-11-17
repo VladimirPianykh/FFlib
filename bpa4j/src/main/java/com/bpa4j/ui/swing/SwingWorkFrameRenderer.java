@@ -13,7 +13,6 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.LinearGradientPaint;
 import java.awt.MultipleGradientPaint.CycleMethod;
-import java.awt.RadialGradientPaint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -51,15 +50,10 @@ public class SwingWorkFrameRenderer extends JFrame implements WorkFrameRenderer{
 			g2.setPaint(new GradientPaint(0,0,new Color(13,16,31),h,h,new Color(11,18,31)));
 			feature.renderPreview(new SwingPreviewRenderingContext(image));
 			g2.dispose();
-			JPanel tab=new JPanel(null){
-				float[]fr={0,1};
-				Color[]c1={new Color(20,20,20),Color.BLACK};
-				public void paintComponent(Graphics g){
-					Graphics2D g2=(Graphics2D)g;
-					g2.setPaint(new RadialGradientPaint(0,0,getWidth(),fr,c1));
-					g2.fillRect(0,0,getWidth(),getHeight());
-				}
-			};
+			// JPanel tab=new JPanel(null){
+			// 	float[]fr={0,1};
+			// 	C
+			
 			// Font font=new Font(Font.DIALOG,Font.PLAIN,content.getHeight()/20);
 			addComponentListener(new ComponentListener(){
 				public void componentMoved(ComponentEvent e){}
@@ -73,10 +67,10 @@ public class SwingWorkFrameRenderer extends JFrame implements WorkFrameRenderer{
 			addActionListener(new ActionListener(){
 				public void actionPerformed(ActionEvent e){
 					content.removeAll();
-					tab.removeAll();
-					tab.setSize(content.getSize());
+					// tab.removeAll();
+					// tab.setSize(content.getSize());
 					wf.selectFeature(feature);
-					content.add(tab);
+					// content.add(tab);
 					content.revalidate();
 					content.repaint();
 				}
@@ -154,7 +148,7 @@ public class SwingWorkFrameRenderer extends JFrame implements WorkFrameRenderer{
 		add(exit);
 		if(User.ftrMap.get(wf.getUser().role)==null||User.ftrMap.get(wf.getUser().role).length==0){
 			new Message("Ошибка! Возможно, у вас есть устаревшее сохранение и его надо удалить (см. записку).",Color.RED);
-			System.exit(1);
+			throw new IllegalStateException("ftrMap does not has elements is null.");
 		}
 		for(FeatureEntry<?>f:wf.getFeatures()){
 			WorkTabButton t=new WorkTabButton(f,content,sidebar.getComponentCount(),wf);

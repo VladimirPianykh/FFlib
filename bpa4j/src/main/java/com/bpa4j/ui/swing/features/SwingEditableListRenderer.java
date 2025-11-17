@@ -100,7 +100,7 @@ public class SwingEditableListRenderer<T extends Editable> implements FeatureRen
 				try{
 					T t=group.type.getDeclaredConstructor().newInstance();
 					group.add(t);
-					ProgramStarter.editor.constructEditor(t,true,()->group.remove(t),null);
+					ProgramStarter.editor.constructEditor(t,true,()->group.remove(t),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 					if(group.contains(t)){
 						panel.add(finalProvider.apply(t),panel.getComponentCount()-1);
 						panel.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*panel.getComponentCount()/10));

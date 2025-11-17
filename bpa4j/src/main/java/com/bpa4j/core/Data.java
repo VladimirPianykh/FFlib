@@ -2,15 +2,25 @@ package com.bpa4j.core;
 
 import java.io.Serializable;
 import java.util.List;
-
+import com.bpa4j.core.User.Permission;
+import com.bpa4j.core.User.Role;
 import com.bpa4j.feature.Feature;
 
 public interface Data{
-    void register(User.Role...r);
+	void register(Role...r);
 	void register(Feature<?>...r);
-	void register(User.Permission...r);
+	void register(Permission...r);
 	void register(EditableGroup<?>...r);
-	void register(User.Role r,Feature<?>[]f,User.Permission[]p);
+	default void register(Role role,Feature<?>[] features,Permission[] permissions){
+		//Shiftmake?
+		User.ftrMap.put(role,features);
+		User.permissions.put(role,permissions);
+		if(role!=null){
+			register(role);
+			if(features!=null) register(features);
+			if(permissions!=null) register(permissions);
+		}
+	}
 
 	List<User.Role>getRegisteredRoles();
 	List<Feature<?>>getRegisteredFeatures();

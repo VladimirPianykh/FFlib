@@ -28,8 +28,8 @@ import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.defaults.features.transmission_contracts.DatedList;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
-import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.feature.FeatureRenderer;
+import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
@@ -91,14 +91,21 @@ public class SwingDatedListRenderer<T extends Editable> implements FeatureRender
 			}
 		};
 		add.addActionListener(e->{
-			T t=contract.createObject();
-			panel.add(createTableEntry(t,tab,font),panel.getComponentCount()-1);
-			ProgramStarter.editor.constructEditor(t,true,()->contract.removeObject(t),null);
-			panel.revalidate();
+			try{
+				T t=getType().getDeclaredConstructor().newInstance();
+				panel.add(createTableEntry(t,tab,font),panel.getComponentCount()-1);
+				ProgramStarter.editor.constructEditor(t,true,()->contract.removeObject(t),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
+				panel.revalidate();
+			}catch(ReflectiveOperationException ex){
+				throw new IllegalStateException(ex);
+			}
 		});
 		add.setFont(font);
 		panel.add(add);
 		tab.add(s);
+	}
+	private Class<T> getType(){
+		return getTransmissionContract().getType();
 	}
 	@SuppressWarnings("null")
 	private JComponent createTableEntry(T t,JPanel tab,Font font){
@@ -138,7 +145,7 @@ public class SwingDatedListRenderer<T extends Editable> implements FeatureRender
 			}
 		};
 		b.addActionListener(e->{
-			ProgramStarter.editor.constructEditor(t,false,()->contract.removeObject(t),null);
+			ProgramStarter.editor.constructEditor(t,false,()->contract.removeObject(t),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 			tab.revalidate();
 		});
 		b.setSize(tab.getWidth()/3,tab.getHeight()/10);

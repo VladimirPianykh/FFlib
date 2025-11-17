@@ -86,7 +86,7 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 		if(contract.getAllowCreation()||filterConfig!=null||sorterConfig!=null||!getSingularActions().isEmpty()||!getCollectiveActions().isEmpty()){
 			config=new JPanel(new AutoLayout());
 			config.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/9));
-			SwingConfiguratorRenderingContext ctx=new SwingConfiguratorRenderingContext(config);
+			SwingConfiguratorRenderingContext ctx=new SwingConfiguratorRenderingContext(config,()->fillTable(m,getTransmissionContract().getObjects()));
 			getTransmissionContract().renderSorter(ctx);
 			getTransmissionContract().renderFilter(ctx);
 			if(filterConfig!=null) config.add(filterConfig);
@@ -109,10 +109,12 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 			if(contract.getAllowCreation()){
 				HButton create=new HButton(){
 					public void paint(Graphics g){
-						g.setColor(Color.DARK_GRAY);
+						int c=50-scale*4;
+						if(getModel().isPressed()) c-=25;
+						g.setColor(new Color(c,c,c));
 						g.fillRect(0,0,getWidth(),getHeight());
 						FontMetrics fm=g.getFontMetrics();
-						g.setColor(Color.WHITE);
+						g.setColor(Color.BLACK);
 						g.drawString("Добавить",(getWidth()-fm.stringWidth("Добавить"))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
 					}
 				};
@@ -122,7 +124,7 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 						contract.addObject(o);
 						if(o instanceof Editable){
 							Editable editable=(Editable)o;
-							ProgramStarter.editor.constructEditor(editable,true,()->contract.removeObject(o),null);
+							ProgramStarter.editor.constructEditor(editable,true,()->contract.removeObject(o),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 						}
 						m.clear();
 						fillTable(m,objects);

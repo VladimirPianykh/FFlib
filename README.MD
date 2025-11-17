@@ -85,3 +85,6 @@ Base path: `/graph`
 
 - Maintenance
   - POST `/graph/save-initial-state` → copy runtime `Data.ser`/`Users.ser` into project `resources/initial`
+
+- Raw access
+  - GET `/graph/raw/node/{node-index}` → `{type,path}`

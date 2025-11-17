@@ -9,6 +9,7 @@ import com.bpa4j.editor.ModularEditorRenderer.ModulesRenderingContext;
  */
 public class StageApprovalModule extends FormModule{
 	public void createTab(Editable editable,boolean isNew,Runnable deleter,ModulesRenderingContext ctx){
+		if(!(editable instanceof Processable))throw new IllegalArgumentException("StageApprovalModule is only for Processables.");
 		super.createTab(editable,isNew,deleter,ctx);
 	}
 }

@@ -36,13 +36,15 @@ public class SwingModularEditorRenderer implements ModularEditorRenderer{
 			return dialog;
 		}
 	}
-	
 	public HashMap<Class<? extends EditorModule>,Supplier<? extends ModuleRenderer<?>>>moduleRenderers=new HashMap<>();
 	public Supplier<? extends ModuleRenderer<?>>defaultModuleRenderer=()->null;
-
+	public SwingModularEditorRenderer(){
+		loadDefaultRenderers();
+	}
 	public ModulesRenderingContext getModulesRenderingContext(FeatureRenderingContext context){
 		SwingFeatureRenderingContext ctx=(SwingFeatureRenderingContext)context;
-		JDialog d=new JDialog(ctx.getWindow(),ModalityType.DOCUMENT_MODAL);
+		JDialog d=new JDialog(ctx.getWindow(),ModalityType.APPLICATION_MODAL);
+		d.setSize(Root.SCREEN_SIZE);
 		return new SwingModuleRenderingContext(d);
 	}
 	public void constructEditor(Editable editable,boolean isNew,Runnable deleter,ModularEditor editor,FeatureRenderingContext context,ModulesRenderingContext moduleContext){
@@ -110,6 +112,7 @@ public class SwingModularEditorRenderer implements ModularEditorRenderer{
 	public <M extends EditorModule> ModuleRenderer<M> getModuleRenderer(M m){
 		Supplier<? extends ModuleRenderer<?>> renderer=moduleRenderers.get(m.getClass());
 		if(renderer==null) renderer=defaultModuleRenderer;
+		if(renderer==null) throw new IllegalArgumentException("No renderer for "+m+".");
 		return (ModuleRenderer<M>)renderer.get();
 	}
 	public <M extends EditorModule> void putModuleRenderer(Class<M> e,Supplier<ModuleRenderer<M>>renderer){
@@ -117,5 +120,19 @@ public class SwingModularEditorRenderer implements ModularEditorRenderer{
 	}
 	public void setDefaultModuleRenderer(Supplier<? extends ModuleRenderer<?>>renderer){
 		defaultModuleRenderer=renderer;
+	}
+	private void loadDefaultRenderers(){
+		putModuleRenderer(com.bpa4j.editor.modules.CustomerModule.class,()->new com.bpa4j.ui.swing.editor.modules.SwingCustomerModuleRenderer());
+		// putModuleRenderer(com.bpa4j.editor.modules.ExcludeModule.class,null);
+		putModuleRenderer(com.bpa4j.editor.modules.FormModule.class,()->new com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer());
+		putModuleRenderer(com.bpa4j.editor.modules.ImageDisplayModule.class,()->new com.bpa4j.ui.swing.editor.modules.SwingImageDisplayModuleRenderer());
+		putModuleRenderer(com.bpa4j.editor.modules.LimitToModule.class,null);
+		putModuleRenderer(com.bpa4j.editor.modules.LogWatchModule.class,()->new com.bpa4j.ui.swing.editor.modules.SwingLogWatchModuleRenderer());
+		// putModuleRenderer(com.bpa4j.editor.modules.MapModule.class,null);
+		// putModuleRenderer(com.bpa4j.editor.modules.NewLimiterModule.class,null);
+		putModuleRenderer(com.bpa4j.editor.modules.StageApprovalModule.class,()->new com.bpa4j.ui.swing.editor.modules.SwingStageApprovalModuleRenderer());
+		putModuleRenderer(com.bpa4j.editor.modules.StageMapModule.class,()->new com.bpa4j.ui.swing.editor.modules.SwingStageMapModuleRenderer());
+		putModuleRenderer(com.bpa4j.editor.modules.TableModule.class,()->new com.bpa4j.ui.swing.editor.modules.SwingTableModuleRenderer());
+
 	}
 }

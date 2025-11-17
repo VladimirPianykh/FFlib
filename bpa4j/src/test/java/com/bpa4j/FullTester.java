@@ -14,6 +14,7 @@ import javax.swing.SwingUtilities;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.EditableGroup;
 import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.core.RenderingContext;
 import com.bpa4j.core.Root;
 import com.bpa4j.core.User;
 import com.bpa4j.core.User.Permission;
@@ -48,6 +49,8 @@ import com.bpa4j.editor.modules.StageApprovalModule;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.navigation.Navigator;
+import com.bpa4j.ui.swing.features.SwingBoardRenderer;
+import com.bpa4j.ui.swing.features.SwingBoardRenderer.SwingConfiguratorRenderingContext;
 import com.bpa4j.ui.swing.util.PathIcon;
 import com.bpa4j.util.testgen.TestGen;
 
@@ -248,12 +251,13 @@ public final class FullTester{
 		GroupElementSupplier<MyProcessable>groupES=new GroupElementSupplier<>(MyProcessable.class);
 		Board.<MyProcessable>getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){
 			private final JComboBox<Boolean>c=new JComboBox<>();
-			public JComponent getConfigurator(Runnable saver,ArrayList<MyProcessable>objects){
+			public void renderConfigurator(RenderingContext context){
+				SwingBoardRenderer.SwingConfiguratorRenderingContext ctx=(SwingConfiguratorRenderingContext)context;
 				c.removeAllItems();
 				c.addItem(true);
 				c.addItem(false);
-				c.addItemListener(e->saver.run());
-				return c;
+				c.addItemListener(e->ctx.getSaver().run());
+				ctx.getTarget().add(c);
 			}
 			public int compare(MyProcessable o1,MyProcessable o2){
 				try{

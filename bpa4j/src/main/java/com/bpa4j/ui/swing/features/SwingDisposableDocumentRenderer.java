@@ -68,7 +68,7 @@ public class SwingDisposableDocumentRenderer<T extends Editable> implements Feat
 		b.addActionListener(e->{
 			if(doc.var==null) try{
 				doc.var=contract.getType().getDeclaredConstructor().newInstance();
-				ProgramStarter.editor.constructEditor(doc.var,true,()->doc.var=null,null);
+				ProgramStarter.editor.constructEditor(doc.var,true,()->doc.var=null,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 			}catch(ReflectiveOperationException ex){
 				throw new RuntimeException(ex);
 			}

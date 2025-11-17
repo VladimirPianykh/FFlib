@@ -77,16 +77,16 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	public void setAddSingularActionOp(Consumer<Consumer<T>> addSingularActionOp){
 		this.addSingularActionOp=addSingularActionOp;
 	}
-	public void addSetSorterOp(Consumer<Board.Sorter<T>> setSorterOp){
+	public void setSetSorterOp(Consumer<Board.Sorter<T>> setSorterOp){
 		this.setSorterOp=setSorterOp;
 	}
-	public void addSetFilterOp(Consumer<Board.Filter<T>> setFilterOp){
+	public void setSetFilterOp(Consumer<Board.Filter<T>> setFilterOp){
 		this.setFilterOp=setFilterOp;
 	}
-	public void addRenderSorterOp(Consumer<RenderingContext> renderSorterOp){
+	public void setRenderSorterOp(Consumer<RenderingContext> renderSorterOp){
 		this.renderSorterOp=renderSorterOp;
 	}
-	public void addRenderFilterOp(Consumer<RenderingContext> renderFilterOp){
+	public void setRenderFilterOp(Consumer<RenderingContext> renderFilterOp){
 		this.renderFilterOp=renderFilterOp;
 	}
 	public void setGetSingularActionsOp(Supplier<List<Consumer<T>>> getSingularActionsOp){
@@ -98,9 +98,6 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 
 	public ArrayList<T> getObjects(){
 		return getObjectsOp.get();
-	}
-	public T createObject(){
-		return createObjectOp.get();
 	}
 	public void addObject(T object){
 		addObjectOp.accept(object);
@@ -164,7 +161,6 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 		registeredLists.put(name,feature);
 		return feature;
 	}
-
 	@SuppressWarnings("unchecked")
 	public static <T extends Serializable> ItemList<T> getList(String name){
 		Feature<?> feature=registeredLists.get(name);
