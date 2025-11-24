@@ -88,3 +88,103 @@ Base path: `/graph`
 
 - Raw access
   - GET `/graph/raw/node/{node-index}` → `{type,path}`
+
+## AbstractUI REST API (AI-generated docs)
+
+Base URL: `http://localhost:{port}` (port is passed to `UIServer`)
+
+Base path: `/ui`
+
+- UI structure
+  - GET `/ui/structure`
+    - `{ "validity": true|false, "structure": WindowJson }`
+  - POST `/ui/call/{function-id}`
+    - Returns HTTP 200 without body, calls the function by it's ID.
+  - PUT `/ui/modify/{component-id}`
+    - body:
+      - `{`
+      - `  "data": [ { propertyName: string } ]` // propertyName is some field name from the original structure json acquired via GET `/ui/structure`.
+      - `}`
+    - Returns HTTP 200 without body, modifies the component by it's ID.
+
+### JSON contract
+
+- WindowJson
+  - `{"content": PanelJson}`
+
+- PanelJson
+  - `{`
+  - `  "type": "panel",`
+  - `  "x": number,` // panel X coordinate
+  - `  "y": number,` // panel Y coordinate
+  - `  "width": number,` // panel width
+  - `  "height": number,` // panel height
+  - `  "children": [ ComponentJson ... ]` // JSON of all child components in layout order
+  - `}`
+
+`ComponentJson` is one of the following, depending on `type`:
+
+- Label
+  - `{`
+  - `  "type": "label",`
+  - `  "x": number, "y": number, "width": number, "height": number,`
+  - `  "text": string`
+  - `}`
+
+- Button
+  - `{`
+  - `  "type": "button",`
+  - `  "x": number, "y": number, "width": number, "height": number,`
+  - `  "text": string,`
+  - `  "enabled": boolean`
+  - `  "onClick": string` // function ID
+  - `}`
+
+- CheckBox
+  - `{`
+  - `  "type": "checkbox",`
+  - `  "x": number, "y": number, "width": number, "height": number,`
+  - `  "text": string,`
+  - `  "selected": boolean,`
+  - `  "enabled": boolean`
+  - `}`
+
+- ComboBox
+  - `{`
+  - `  "type": "combobox",`
+  - `  "x": number, "y": number, "width": number, "height": number,`
+  - `  "items": [string...],`
+  - `  "selectedIndex": number,` // -1 if nothing selected
+  - `  "selectedItem": string|null,`
+  - `  "enabled": boolean`
+  - `}`
+
+- TextField
+  - `{`
+  - `  "type": "textfield",`
+  - `  "x": number, "y": number, "width": number, "height": number,`
+  - `  "text": string,`
+  - `  "editable": boolean,`
+  - `  "maxLength": number`
+  - `  "onAction": string` // function ID
+  - `  "onTextChanged": string` // function ID
+  - `}`
+
+- TextArea
+  - `{`
+  - `  "type": "textarea",`
+  - `  "x": number, "y": number, "width": number, "height": number,`
+  - `  "text": string,`
+  - `  "editable": boolean,`
+  - `  "maxLength": number`
+  - `}`
+
+- ProgressBar
+  - `{`
+  - `  "type": "progressbar",`
+  - `  "x": number, "y": number, "width": number, "height": number,`
+  - `  "min": number,`
+  - `  "max": number,`
+  - `  "value": number,`
+  - `  "indeterminate": boolean`
+  - `}`

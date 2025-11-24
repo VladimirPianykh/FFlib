@@ -12,6 +12,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.LinearGradientPaint;
+import java.awt.RenderingHints;
 import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -78,6 +79,7 @@ public class SwingWorkFrameRenderer extends JFrame implements WorkFrameRenderer{
 		}
 		public void paintComponent(Graphics g){
 			Graphics2D g2=(Graphics2D)g;
+			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 			g2.setPaint(new LinearGradientPaint(0,0,getWidth()/2,getHeight()/2,new float[]{0,1},new Color[]{new Color(50-scale*2,50-scale,50-scale*2),Color.GRAY},CycleMethod.REFLECT));
 			g2.fillRect(0,0,getWidth(),getHeight());
 			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,0.45f));

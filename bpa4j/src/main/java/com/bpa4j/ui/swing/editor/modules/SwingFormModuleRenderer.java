@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
@@ -75,11 +76,15 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 			public void paint(Graphics g){
 				g.setColor(getModel().isPressed()?Color.DARK_GRAY:getBackground());
 				g.fillRect(0,0,getWidth(),getHeight());
+				g.setColor(getForeground());
+				FontMetrics fm=g.getFontMetrics();
+				g.drawString(getText(),(getWidth()-fm.stringWidth(getText()))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
 			}
 		};
 		ok.setBounds(editor.getWidth()*2/5,editor.getHeight()*9/10,editor.getWidth()/5,editor.getHeight()/20);
 		ok.setOpaque(false);
 		ok.setFont(new Font(Font.DIALOG,Font.PLAIN,ok.getHeight()));
+		ok.setForeground(Color.BLACK);
 		JTextField nameField=new JTextField(editable.name);
 		nameField.setBounds(editor.getWidth()/5,editor.getHeight()/100,editor.getWidth()*3/5,editor.getHeight()/10);
 		nameField.setFont(new Font(Font.DIALOG,Font.PLAIN,nameField.getHeight()*2/3));
@@ -216,6 +221,8 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 					g.setColor(new Color(71+scale*5,16+scale*2,1+scale));
 					g.fillRect(0,0,getWidth(),getHeight());
 					g.setColor(Color.WHITE);
+					FontMetrics fm=g.getFontMetrics();
+					g.drawString(getText(),(getWidth()-fm.stringWidth(getText()))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
 				}
 			};
 			c.addActionListener(e->{

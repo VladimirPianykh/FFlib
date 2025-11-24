@@ -31,7 +31,7 @@ public class SwingCustomerModuleRenderer implements ModuleRenderer<CustomerModul
     public void createTab(Editable editable,boolean isNew,Runnable deleter,CustomerModule module,ModulesRenderingContext context){
         SwingModuleRenderingContext ctx=(SwingModuleRenderingContext)context;
         JDialog editor=ctx.getEditorDialog();
-        JPanel tab=new JPanel();
+        JPanel tab=new JPanel(null);
         tab.setBackground(Color.BLACK);
         JButton ok=new JButton(){
             public void paint(Graphics g){

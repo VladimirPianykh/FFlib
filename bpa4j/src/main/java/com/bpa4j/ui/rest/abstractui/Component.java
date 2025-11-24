@@ -4,30 +4,24 @@ import java.util.Map;
 
 public abstract class Component{
 	private Component parent;
-	private Rect bounds;
-
+	private Rect bounds=new Rect(0,0,0,0);
 	protected Component(){}
-
 	/**
 	 * @return The parent component of this component, or null if it has no parent
 	 */
 	public Component getParent(){
 		return parent;
 	}
-
 	/**
 	 * Sets the parent component. This is called by container components
 	 * like Panel when this component is added to them.
-	 * 
-	 * @param parent The parent component to set
 	 */
 	protected void setParent(Component parent){
 		this.parent=parent;
 	}
-
 	/**
-	 * Marks this component as needing to be laid out. If this component
-	 * is inside a container, the container will be invalidated.
+	 * Marks this component as needing to be laid out.
+	 * If this component is inside a container, the container will be invalidated.
 	 */
 	public void invalidate(){
 		if(parent!=null){
@@ -89,4 +83,16 @@ public abstract class Component{
 	}
 	public void update(){}
 	public abstract Map<String,Object> getJson();
+	/**
+	 * Calls component's function with the given id, if there is such function.
+	 * Any function ID has form id {@code button.hashCode()+"/"+eventID}.
+	 * Does nothing by default.
+	 */
+    public void callFunction(String id){}
+	/**
+	 * Modifies component with the given id, if there is such component.
+	 * @param id - component id
+	 * @param update - mapping of structure keys to new values
+	 */
+    public void modifyComponent(String id,Map<String,Object>update){}
 }

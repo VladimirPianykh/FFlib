@@ -13,11 +13,12 @@ public class UIServer{
 	private final long port;
 	private HttpServer server;
 	private UIState state;
-	public UIServer(){
-		this(5617);
+	public UIServer(UIState state){
+		this(state,5617);
 	}
-	public UIServer(long port){
+	public UIServer(UIState state,long port){
 		this.port=port;
+		this.state=state;
 	}
 	public synchronized void start(){
 		if(server!=null)return;
