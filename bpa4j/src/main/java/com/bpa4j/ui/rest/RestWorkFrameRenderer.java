@@ -30,7 +30,14 @@ public class RestWorkFrameRenderer implements WorkFrameRenderer{
 	}
 	public void showWorkFrame(){
 		if(window!=null)return;
-		window=new Window();
+		// Validate that features are registered for user's role
+		com.bpa4j.feature.Feature<?>[] features=com.bpa4j.core.User.ftrMap.get(workFrame.getUser().role);
+		if(features==null||features.length==0){
+			String errorMsg="ERROR: No features registered for role: "+workFrame.getUser().role+
+				". This may indicate an outdated save file that needs to be deleted.";
+			System.err.println(errorMsg);
+			throw new IllegalStateException("ftrMap does not have elements for role "+workFrame.getUser().role);
+		}
 		root=new Panel(new BorderLayout());
 		root.setSize(1000,800);
 		featureBar=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,5,5));
@@ -53,7 +60,7 @@ public class RestWorkFrameRenderer implements WorkFrameRenderer{
 		}
 		Label placeholder=new Label("Select a feature");
 		content.add(placeholder);
-		window.setContent(root);
+		window=new Window(root);
 		state.showWindow(window);
 	}
 	public RestFeatureRenderingContext getContext(WorkFrame.FeatureEntry<?>f){

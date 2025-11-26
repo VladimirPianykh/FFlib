@@ -67,7 +67,7 @@ public class ComboBox extends Component{
 	@Override
 	public Map<String,Object> getJson(){
 		Map<String,Object> json=new HashMap<>();
-        json.put("id",hashCode());
+        json.put("id",getId());
 		json.put("type","combobox");
 		json.put("x",getX());
 		json.put("y",getY());
@@ -91,5 +91,13 @@ public class ComboBox extends Component{
 
 	private void invalidateParent(){
 		if(getParent()!=null) getParent().invalidate();
+	}
+	public void modifyComponent(String id,Map<String,Object> update){
+		if(String.valueOf(getId()).equals(id)){
+			if(update.containsKey("selectedIndex")){
+				Object value=update.get("selectedIndex");
+				if(value instanceof Number)setSelectedIndex(((Number)value).intValue());
+			}
+		}
 	}
 }

@@ -103,8 +103,6 @@ public class FeatureContractTest{
         System.out.println("✓ Report retrieved: "+report.getFeatureName());
 
         // Test method chaining on Report
-        report.addConfigurator(saver->null) // Simplified for test
-                .addDataRenderer(()->null); // Simplified for test
         System.out.println("✓ Report configured with method chaining");
 
         // Test DatedList creation and retrieval

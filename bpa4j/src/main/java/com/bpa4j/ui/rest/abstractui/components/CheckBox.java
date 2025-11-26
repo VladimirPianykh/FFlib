@@ -70,7 +70,7 @@ public class CheckBox extends Component{
 	@Override
 	public Map<String,Object> getJson(){
 		Map<String,Object> json=new HashMap<>();
-        json.put("id",hashCode());
+        json.put("id",getId());
 		json.put("type","checkbox");
 		json.put("x",getX());
 		json.put("y",getY());
@@ -93,5 +93,10 @@ public class CheckBox extends Component{
 
 	private void invalidateParent(){
 		if(getParent()!=null) getParent().invalidate();
+	}
+	public void modifyComponent(String id,Map<String,Object> update){
+		if(String.valueOf(getId()).equals(id)){
+			if(update.containsKey("selected"))setSelected((Boolean)update.get("selected"));
+		}
 	}
 }

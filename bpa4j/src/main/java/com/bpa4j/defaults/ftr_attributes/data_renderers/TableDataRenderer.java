@@ -4,6 +4,7 @@ import java.awt.*;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.swing.BorderFactory;
@@ -14,6 +15,8 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 
+import com.bpa4j.defaults.features.transmission_contracts.Report;
+import com.bpa4j.feature.DataRendererRenderer;
 import com.bpa4j.defaults.table.EmptyCellEditor;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.ui.swing.util.HButton;
@@ -23,34 +26,56 @@ import com.bpa4j.util.excel.ExcelUtils;
 /**
  * <p>Returns a table, rendering all editable fields of the component given.</p>
  * <p>You can create a separate info class or use an existing editable to fill the table.</p>
+ * @author AI-generated
  */
-public class TableDataRenderer<T>implements Supplier<JComponent>{
-	private Supplier<ArrayList<T>>elementSupplier;
+public final class TableDataRenderer<T> implements Report.DataRenderer{
+	private Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>> rendererSource;
+	private Supplier<ArrayList<T>> elementSupplier;
 	private String title;
 	private boolean allowExport;
-	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier){this.elementSupplier=elementSupplier;}
-	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier,String title){this(elementSupplier);this.title=title;}
-	public TableDataRenderer(Supplier<ArrayList<T>>elementSupplier,String title,boolean allowExport){this(elementSupplier,title);this.allowExport=allowExport;}
+
+	public TableDataRenderer(Supplier<ArrayList<T>> elementSupplier){
+		this.elementSupplier=elementSupplier;
+	}
+	public TableDataRenderer(Supplier<ArrayList<T>> elementSupplier,String title){
+		this(elementSupplier);
+		this.title=title;
+	}
+	public TableDataRenderer(Supplier<ArrayList<T>> elementSupplier,String title,boolean allowExport){
+		this(elementSupplier,title);
+		this.allowExport=allowExport;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <D extends Report.DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource){
+		this.rendererSource=(Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>>)(Object)rendererSource;
+	}
+
 	@SuppressWarnings("PMD.UseArraysAsList")
-	public JComponent get(){
-		ArrayList<T>a=elementSupplier.get();
-		if(a.isEmpty())return new JTable();
-		Field[]allFields=a.get(0).getClass().getFields();
-		ArrayList<Field>fields=new ArrayList<>();
-		for(Field f:allFields)if(f.isAnnotationPresent(EditorEntry.class))fields.add(f);
+	public JComponent getComponent(){
+		ArrayList<T> a=elementSupplier.get();
+		if(a.isEmpty()) return new JTable();
+		Field[] allFields=a.get(0).getClass().getFields();
+		ArrayList<Field> fields=new ArrayList<>();
+		for(Field f:allFields)
+			if(f.isAnnotationPresent(EditorEntry.class)) fields.add(f);
 		DefaultTableModel m=new DefaultTableModel(fields.stream().map(f->f.getAnnotation(EditorEntry.class).translation()).toArray(),0);
 		JTable table=new JTable(m);
 		table.setDefaultEditor(Object.class,new EmptyCellEditor());
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		for(T t:a){
-			Object[]o=new Object[fields.size()];
-			for(int i=0;i<o.length;++i)try{
-				o[i]=fields.get(i).get(t);
-			}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
+			Object[] o=new Object[fields.size()];
+			for(int i=0;i<o.length;++i)
+				try{
+					o[i]=fields.get(i).get(t);
+				}catch(IllegalAccessException ex){
+					throw new IllegalStateException(ex);
+				}
 			m.addRow(o);
 		}
 		JScrollPane s=new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		if(title!=null)s.setBorder(BorderFactory.createTitledBorder(title));
+		if(title!=null) s.setBorder(BorderFactory.createTitledBorder(title));
 		if(allowExport){
 			GridBagLayout l=new GridBagLayout();
 			l.rowWeights=l.columnWeights=new double[]{0.2,0.2,0.2,0.2,0.2};
@@ -93,5 +118,21 @@ public class TableDataRenderer<T>implements Supplier<JComponent>{
 			p.add(s,c2);
 			return p;
 		}else return s;
+	}
+
+	public Supplier<ArrayList<T>> getElementSupplier(){
+		return elementSupplier;
+	}
+
+	public String getTitle(){
+		return title;
+	}
+
+	public boolean getAllowExport(){
+		return allowExport;
+	}
+
+	public Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>> getRendererSource(){
+		return rendererSource;
 	}
 }

@@ -74,4 +74,7 @@ public class Panel extends Component{
 	public void callFunction(String id){
 		for(Component c:getComponents())c.callFunction(id);
 	}
+	public void modifyComponent(String id,Map<String,Object>update){
+		for(Component c:getComponents())c.modifyComponent(id,update);
+	}
 }

@@ -67,7 +67,7 @@ public class ProgressBar extends Component{
 	@Override
 	public Map<String,Object> getJson(){
 		Map<String,Object> json=new HashMap<>();
-        json.put("id",hashCode());
+        json.put("id",getId());
 		json.put("type","progressbar");
 		json.put("x",getX());
 		json.put("y",getY());

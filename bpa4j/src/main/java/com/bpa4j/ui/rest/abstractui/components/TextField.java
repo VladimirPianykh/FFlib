@@ -79,7 +79,7 @@ public class TextField extends Component{
 	}
 	public Map<String,Object> getJson(){
 		Map<String,Object> json=new HashMap<>();
-        json.put("id",hashCode());
+        json.put("id",getId());
 		json.put("type","textfield");
 		json.put("x",getX());
 		json.put("y",getY());
@@ -98,9 +98,14 @@ public class TextField extends Component{
 		setSize(size);
 	}
 	public void callFunction(String id){
-		String thisTextId=hashCode()+"/onTextChanged";
+		String thisTextId=getId()+"/onTextChanged";
 		if(thisTextId.equals(id)&&onTextChanged!=null)onTextChanged.accept(text);
-		String thisActionId=hashCode()+"/onAction";
+		String thisActionId=getId()+"/onAction";
 		if(thisActionId.equals(id)&&onAction!=null)onAction.accept(this);
+	}
+	public void modifyComponent(String id,Map<String,Object> update){
+		if(String.valueOf(getId()).equals(id)){
+			if(update.containsKey("text"))text=(String)update.get("text");
+		}
 	}
 }

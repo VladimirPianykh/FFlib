@@ -54,7 +54,7 @@ public class Button extends Component{
     }
     public Map<String,Object> getJson(){
         Map<String,Object> json=new HashMap<>();
-        json.put("id",hashCode());
+        json.put("id",getId());
         json.put("type","button");
         json.put("x",getX());
         json.put("y",getY());
@@ -62,7 +62,7 @@ public class Button extends Component{
         json.put("height",getHeight());
         json.put("text",text);
         json.put("enabled",enabled);
-        json.put("onClick",onClick==null?null:hashCode()+"/onClick");
+        json.put("onClick",onClick==null?null:getId()+"/onClick");
         return json;
     }
     public Size getPreferredSize(){
@@ -78,7 +78,7 @@ public class Button extends Component{
         }
     }
     public void callFunction(String id){
-        String thisId=hashCode()+"/onClick";
+        String thisId=getId()+"/onClick";
         if(thisId.equals(id))doClick();
     }
 }

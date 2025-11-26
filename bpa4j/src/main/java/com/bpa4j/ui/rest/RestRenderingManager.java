@@ -62,7 +62,7 @@ public class RestRenderingManager implements RenderingManager{
 		workFrameRenderer=new RestWorkFrameRenderer(wf,state);
 		return workFrameRenderer;
 	}
-	public NavigatorRenderer getNaviatorRenderer(){
+	public NavigatorRenderer getNavigatorRenderer(){
 		return new NoOpNavigatorRenderer();
 	}
 	public RegScreen getRegistrationScreen(){
@@ -70,10 +70,9 @@ public class RestRenderingManager implements RenderingManager{
 	}
 	public void close(){}
 	public FeatureRenderingContext getDetachedFeatureRenderingContext(){
-		Window w=new Window();
 		Panel p=new Panel(new GridLayout(1,1,5,5));
 		p.setSize(1000,800);
-		w.setContent(p);
+		Window w=new Window(p);
 		return new RestFeatureRenderingContext(state,w,p);
 	}
 	@SuppressWarnings({"unchecked"})

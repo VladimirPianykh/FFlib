@@ -17,7 +17,6 @@ public class AbstractUIDemoServerMain{
 	public static void main(String[]args) throws Exception{
 		UIState state=new UIState();
 
-		Window window=new Window();
 		Panel root=new Panel(new FlowLayout());
 		root.setSize(1000,1000);
 
@@ -38,7 +37,7 @@ public class AbstractUIDemoServerMain{
 		root.add(comboBox);
 		root.add(progressBar);
 
-		window.setContent(root);
+		Window window=new Window(root);
 
 		state.invokeAndWait(()->{
 			state.showWindow(window);

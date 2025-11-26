@@ -23,6 +23,9 @@ public class Window extends Panel{
 	}
 	public void callFunction(String id){
 		content.callFunction(id);
+	}	
+	public void modifyComponent(String id,Map<String,Object>update){
+		content.modifyComponent(id,update);
 	}
 	public void update(){
 		content.update();

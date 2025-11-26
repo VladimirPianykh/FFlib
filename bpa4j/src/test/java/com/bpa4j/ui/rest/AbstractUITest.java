@@ -28,7 +28,7 @@ public class AbstractUITest{
 	public void testServer()throws Exception{
 		UIState state=new UIState();
 		UIServer server=new UIServer(state);
-		Window window=new Window();
+		// Window window=new Window(root);
 		Thread.sleep(100);
 		HttpClient c=HttpClient.newHttpClient();
 		HttpRequest req=HttpRequest.newBuilder(URI.create("https://localhost:5617/ui/structure")).GET().build();

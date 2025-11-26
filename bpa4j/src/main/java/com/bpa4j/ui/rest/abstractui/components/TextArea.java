@@ -60,7 +60,7 @@ public class TextArea extends Component{
 	@Override
 	public Map<String,Object> getJson(){
 		Map<String,Object> json=new HashMap<>();
-        json.put("id",hashCode());
+        json.put("id",getId());
 		json.put("type","textarea");
 		json.put("x",getX());
 		json.put("y",getY());
@@ -79,5 +79,10 @@ public class TextArea extends Component{
 	public void setPreferredSize(Size size){
 		this.preferredSize=size;
 		setSize(size);
+	}
+	public void modifyComponent(String id,Map<String,Object> update){
+		if(String.valueOf(getId()).equals(id)){
+			if(update.containsKey("text"))text=(String)update.get("text");
+		}
 	}
 }

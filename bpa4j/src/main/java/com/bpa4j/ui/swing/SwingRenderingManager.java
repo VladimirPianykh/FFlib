@@ -55,7 +55,7 @@ public class SwingRenderingManager implements RenderingManager{
 	public WorkFrameRenderer getWorkFrameRenderer(WorkFrame wf){
 		return wfr=new SwingWorkFrameRenderer(wf);
 	}
-	public NavigatorRenderer getNaviatorRenderer(){
+	public NavigatorRenderer getNavigatorRenderer(){
 		return new SwingNavigatorRenderer();
 	}
 	public RegScreen getRegistrationScreen(){

@@ -15,7 +15,7 @@ public class Navigator{
 		renderer.render(this);
 	}
 	public static void init(){
-		renderer=ProgramStarter.getRenderingManager().getNaviatorRenderer();
+		renderer=ProgramStarter.getRenderingManager().getNavigatorRenderer();
 		renderer.init();
 	}
 }

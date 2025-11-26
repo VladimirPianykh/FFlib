@@ -1,5 +1,6 @@
 package com.bpa4j.ui.rest;
 
+import java.util.Map;
 import com.bpa4j.ui.rest.abstractui.UIState;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -25,7 +26,6 @@ public class UIResource{
 		// if(state.isValid()) return Response.noContent().build();
 		// else{
 		var json=state.getJsonWithValidity();
-		// System.err.println(json);
 		System.err.println("Sent structure with validity "+json.get("valid"));
 		if(!(boolean)json.get("valid"))System.err.println(json.get("structure"));
 		Response r=Response.ok(json).build();
@@ -48,6 +48,7 @@ public class UIResource{
 	@PUT
 	@Path("/modify/{component-id}")
 	public Response modify(@PathParam("component-id") String componentID,Map<String,Object>update){
-		state.modify(componentID,update);
+		state.modifyComponent(componentID,update);
+		return Response.ok().build();
 	}
 }

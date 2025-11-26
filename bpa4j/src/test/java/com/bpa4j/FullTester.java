@@ -55,6 +55,15 @@ import com.bpa4j.ui.swing.util.PathIcon;
 import com.bpa4j.util.testgen.TestGen;
 
 public final class FullTester{
+	public static class SpinnerConfigurator implements Report.Configurator{
+		public final JSpinner spinner;
+		public SpinnerConfigurator(JSpinner spinner,java.util.function.Consumer<Runnable> saverConsumer){
+			this.spinner=spinner;
+		}
+		@Override
+		public <C extends Report.Configurator> void setRendererSource(java.util.function.Function<C,? extends com.bpa4j.feature.ConfiguratorRenderer<C>> rendererSource){}
+	}
+
 	public static class MyEditable5 extends Editable{
 		public MyEditable5(){
 			super("Новый объект");
@@ -276,10 +285,9 @@ public final class FullTester{
 			.setDater(new EventDater<>(EventDater::listProperties));
 		JSpinner s=new JSpinner(new SpinnerNumberModel(50,10,100,1));
 		Report.getReport("report")
-			.addConfigurator(saver->{
-				s.addChangeListener(e->saver.run());
-				return s;
-			}).addDataRenderer(new ChartDataRenderer(
+				.addConfigurator(new SpinnerConfigurator(s,saver->{
+					s.addChangeListener(e->saver.run());
+				})).addDataRenderer(new ChartDataRenderer(
 				ChartMode.LINEAR_COMPARE,
 				new ChartDataConverter<>(()->new ArrayList<>(new GroupElementSupplier<>(MyEditable3.class).get().stream().filter(e->e.value1<(int)s.getValue()).toList())),
 				"Координаты смертей после резов",

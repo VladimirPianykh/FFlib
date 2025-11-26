@@ -10,8 +10,19 @@ import javax.swing.JComponent;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
+import com.bpa4j.feature.DataRendererRenderer;
+import com.bpa4j.feature.ConfiguratorRenderer;
 
+/**
+ * Transmission contract for Report feature.
+ */
 public class Report implements FeatureTransmissionContract{
+	public static interface DataRenderer{
+		<D extends DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource);
+	}
+	public static interface Configurator{
+		<C extends Configurator> void setRendererSource(Function<C,? extends ConfiguratorRenderer<C>> rendererSource);
+	}
 	private static final Map<String,Feature<?>> registeredReports;
 	static{
 		HashMap<String,Feature<?>>reg=new HashMap<>();
@@ -19,37 +30,37 @@ public class Report implements FeatureTransmissionContract{
 		registeredReports=reg;
 	}
 	
-	public Supplier<ArrayList<Supplier<JComponent>>> getDataRenderersOp;
-	public Supplier<ArrayList<Function<Runnable,JComponent>>> getConfiguratorsOp;
-	public Consumer<Supplier<JComponent>> addDataRendererOp;
-	public Consumer<Function<Runnable,JComponent>> addConfiguratorOp;
+	private Supplier<ArrayList<DataRenderer>> getDataRenderersOp;
+	private Supplier<ArrayList<Configurator>> getConfiguratorsOp;
+	private Consumer<DataRenderer> addDataRendererOp;
+	private Consumer<Configurator> addConfiguratorOp;
 	private String name;
 	public Report(String name){
 		this.name=name;
 	}
-	public void setGetDataRenderersOp(Supplier<ArrayList<Supplier<JComponent>>> getDataRenderersOp){
+	public void setGetDataRenderersOp(Supplier<ArrayList<DataRenderer>> getDataRenderersOp){
 		this.getDataRenderersOp=getDataRenderersOp;
 	}
-	public void setGetConfiguratorsOp(Supplier<ArrayList<Function<Runnable,JComponent>>> getConfiguratorsOp){
+	public void setGetConfiguratorsOp(Supplier<ArrayList<Configurator>> getConfiguratorsOp){
 		this.getConfiguratorsOp=getConfiguratorsOp;
 	}
-	public void setAddDataRendererOp(Consumer<Supplier<JComponent>> addDataRendererOp){
+	public void setAddDataRendererOp(Consumer<DataRenderer> addDataRendererOp){
 		this.addDataRendererOp=addDataRendererOp;
 	}
-	public void setAddConfiguratorOp(Consumer<Function<Runnable,JComponent>> addConfiguratorOp){
+	public void setAddConfiguratorOp(Consumer<Configurator> addConfiguratorOp){
 		this.addConfiguratorOp=addConfiguratorOp;
 	}
-	public ArrayList<Supplier<JComponent>> getDataRenderers(){
+	public ArrayList<DataRenderer> getDataRenderers(){
 		return getDataRenderersOp.get();
 	}
-	public ArrayList<Function<Runnable,JComponent>> getConfigurators(){
+	public ArrayList<Configurator> getConfigurators(){
 		return getConfiguratorsOp.get();
 	}
-	public Report addDataRenderer(Supplier<JComponent> dataRenderer){
+	public Report addDataRenderer(DataRenderer dataRenderer){
 		addDataRendererOp.accept(dataRenderer);
 		return this;
 	}
-	public Report addConfigurator(Function<Runnable,JComponent> configurator){
+	public Report addConfigurator(Configurator configurator){
 		addConfiguratorOp.accept(configurator);
 		return this;
 	}

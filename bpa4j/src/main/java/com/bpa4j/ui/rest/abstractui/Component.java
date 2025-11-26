@@ -1,11 +1,22 @@
 package com.bpa4j.ui.rest.abstractui;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class Component{
+	private static final AtomicLong ID_GENERATOR=new AtomicLong(0);
+	private final long id;
 	private Component parent;
 	private Rect bounds=new Rect(0,0,0,0);
-	protected Component(){}
+	protected Component(){
+		this.id=ID_GENERATOR.incrementAndGet();
+	}
+	/**
+	 * @return Unique identifier for this component
+	 */
+	public long getId(){
+		return id;
+	}
 	/**
 	 * @return The parent component of this component, or null if it has no parent
 	 */
@@ -85,7 +96,7 @@ public abstract class Component{
 	public abstract Map<String,Object> getJson();
 	/**
 	 * Calls component's function with the given id, if there is such function.
-	 * Any function ID has form id {@code button.hashCode()+"/"+eventID}.
+	 * Any function ID has form {@code component.getId()+"/"+eventID}.
 	 * Does nothing by default.
 	 */
     public void callFunction(String id){}

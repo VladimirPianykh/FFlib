@@ -6,6 +6,7 @@ import com.bpa4j.editor.ModularEditor;
 import com.bpa4j.editor.ModularEditorRenderer;
 import com.bpa4j.editor.ModuleRenderer;
 import com.bpa4j.editor.modules.FormModule;
+import com.bpa4j.editor.modules.StageMapModule;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Label;
@@ -43,6 +44,11 @@ public class RestModularEditorRenderer implements ModularEditorRenderer{
 		if(m instanceof FormModule){
 			@SuppressWarnings("unchecked")
 			ModuleRenderer<M> r=(ModuleRenderer<M>)new com.bpa4j.ui.rest.editor.modules.RestFormModuleRenderer();
+			return r;
+		}
+		if(m instanceof StageMapModule){
+			@SuppressWarnings("unchecked")
+			ModuleRenderer<M> r=(ModuleRenderer<M>)new com.bpa4j.ui.rest.editor.modules.RestStageMapModuleRenderer();
 			return r;
 		}
 		return new RestDummyModuleRenderer<>();

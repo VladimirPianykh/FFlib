@@ -26,7 +26,6 @@ public class UIState{
 		}
 	}
 	private List<Window> windows=new ArrayList<>();
-	// private Map<String,Component>functions;
 	private Window activeWindow;
 	private boolean valid=true;
 	public void callFunction(String id){
