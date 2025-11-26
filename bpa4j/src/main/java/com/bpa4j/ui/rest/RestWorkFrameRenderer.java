@@ -39,7 +39,7 @@ public class RestWorkFrameRenderer implements WorkFrameRenderer{
 			throw new IllegalStateException("ftrMap does not have elements for role "+workFrame.getUser().role);
 		}
 		root=new Panel(new BorderLayout());
-		root.setSize(1000,800);
+		root.setSize(RestRenderingManager.DEFAULT_SIZE);
 		featureBar=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,5,5));
 		featureBar.setSize(root.getWidth(),80);
 		content=new Panel(new GridLayout(1,1,5,5));

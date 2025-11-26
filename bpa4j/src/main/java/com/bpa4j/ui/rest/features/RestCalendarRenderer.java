@@ -2,7 +2,6 @@ package com.bpa4j.ui.rest.features;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.HashMap;
 import java.util.List;
 import com.bpa4j.defaults.features.transmission_contracts.Calendar;
 import com.bpa4j.feature.FeatureRenderer;

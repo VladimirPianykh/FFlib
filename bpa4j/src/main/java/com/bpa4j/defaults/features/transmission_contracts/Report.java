@@ -4,24 +4,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.swing.JComponent;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
-import com.bpa4j.feature.DataRendererRenderer;
-import com.bpa4j.feature.ConfiguratorRenderer;
 
 /**
  * Transmission contract for Report feature.
  */
 public class Report implements FeatureTransmissionContract{
 	public static interface DataRenderer{
-		<D extends DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource);
+		// <D extends DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource);
 	}
 	public static interface Configurator{
-		<C extends Configurator> void setRendererSource(Function<C,? extends ConfiguratorRenderer<C>> rendererSource);
+		// <C extends Configurator> void setRendererSource(Function<C,? extends ConfiguratorRenderer<C>> rendererSource);
 	}
 	private static final Map<String,Feature<?>> registeredReports;
 	static{

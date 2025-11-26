@@ -3,10 +3,8 @@ package com.bpa4j.ui.rest.editor.modules;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.bpa4j.core.Editable;
 import com.bpa4j.editor.EditorEntry;
-import com.bpa4j.editor.EditorModule;
 import com.bpa4j.editor.ModularEditorRenderer.ModulesRenderingContext;
 import com.bpa4j.editor.ModuleRenderer;
 import com.bpa4j.editor.modules.FormModule;

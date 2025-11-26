@@ -17,11 +17,20 @@ import com.bpa4j.feature.FeatureTransmissionContract;
 import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.navigation.Navigator;
 import com.bpa4j.ui.rest.abstractui.Panel;
+import com.bpa4j.ui.rest.abstractui.Size;
 import com.bpa4j.ui.rest.abstractui.UIState;
 import com.bpa4j.ui.rest.abstractui.Window;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 import com.bpa4j.ui.rest.features.RestBoardRenderer;
+import com.bpa4j.ui.rest.features.RestCalendarRenderer;
+import com.bpa4j.ui.rest.features.RestDisposableDocumentRenderer;
+import com.bpa4j.ui.rest.features.RestEditableListRenderer;
+import com.bpa4j.ui.rest.features.RestHistoryRenderer;
 import com.bpa4j.ui.rest.features.RestItemListRenderer;
+import com.bpa4j.ui.rest.features.RestMappedListRenderer;
+import com.bpa4j.ui.rest.features.RestModelEditingRenderer;
+import com.bpa4j.ui.rest.features.RestDatedListRenderer;
+import com.bpa4j.ui.rest.features.RestReportRenderer;
 
 /**
  * @author AI-generated
@@ -32,13 +41,17 @@ public class RestRenderingManager implements RenderingManager{
 		public void renderInfo(ImplementedInfo info){}
 		public void init(){}
 	}
+	public static final Size DEFAULT_SIZE=new Size(1000,800);
 	private final UIState state;
+	private final UIServer server;
 	private final Map<Class<?>,Function<? extends FeatureTransmissionContract,? extends FeatureRenderer<?>>>featureRenderers=new HashMap<>();
 	private final Map<Class<?>,Function<? extends IEditor,? extends EditorRenderer<?>>>editorRenderers=new HashMap<>();
 	private RestWorkFrameRenderer workFrameRenderer;
 	public RestRenderingManager(UIState state){
 		this.state=state;
 		loadDefaults();
+		server=new UIServer(state);
+		server.start();
 	}
 	@SuppressWarnings("unchecked")
 	public <F extends FeatureTransmissionContract>FeatureRenderer<F>getFeatureRenderer(F feature){
@@ -59,19 +72,21 @@ public class RestRenderingManager implements RenderingManager{
 		editorRenderers.put(e,renderer);
 	}
 	public WorkFrameRenderer getWorkFrameRenderer(WorkFrame wf){
-		workFrameRenderer=new RestWorkFrameRenderer(wf,state);
+		if(workFrameRenderer==null) workFrameRenderer=new RestWorkFrameRenderer(wf,state);
 		return workFrameRenderer;
 	}
 	public NavigatorRenderer getNavigatorRenderer(){
 		return new NoOpNavigatorRenderer();
 	}
 	public RegScreen getRegistrationScreen(){
-		throw new UnsupportedOperationException("REST registration screen is not implemented.");
+		return new RestRegScreen(state);
 	}
-	public void close(){}
+	public void close(){
+		server.stop();
+	}
 	public FeatureRenderingContext getDetachedFeatureRenderingContext(){
 		Panel p=new Panel(new GridLayout(1,1,5,5));
-		p.setSize(1000,800);
+		p.setSize(RestRenderingManager.DEFAULT_SIZE);
 		Window w=new Window(p);
 		return new RestFeatureRenderingContext(state,w,p);
 	}
@@ -79,6 +94,14 @@ public class RestRenderingManager implements RenderingManager{
 	private void loadDefaults(){
 		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.Board.class,f->new RestBoardRenderer<>(f));
 		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.ItemList.class,f->new RestItemListRenderer<>(f));
+		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.Calendar.class,f->new RestCalendarRenderer<>(f));
+		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.History.class,f->new RestHistoryRenderer(f));
+		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.Report.class,f->new RestReportRenderer(f));
+		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.DisposableDocument.class,f->new RestDisposableDocumentRenderer<>(f));
+		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.EditableList.class,f->new RestEditableListRenderer<>(f));
+		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.MappedList.class,f->new RestMappedListRenderer<>(f));
+		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.ModelEditing.class,f->new RestModelEditingRenderer(f));
+		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.DatedList.class,f->new RestDatedListRenderer<>(f));
 		putEditorRenderer(com.bpa4j.editor.ModularEditor.class,e->new RestModularEditorRenderer());
 	}
 }

@@ -2,11 +2,8 @@ package com.bpa4j.defaults.ftr_attributes.data_renderers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.function.Function;
 import java.util.function.Supplier;
-
 import javax.swing.JComponent;
-
 import org.knowm.xchart.CategoryChart;
 import org.knowm.xchart.CategoryChartBuilder;
 import org.knowm.xchart.PieChart;
@@ -16,16 +13,14 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.internal.chartpart.Chart;
 import org.knowm.xchart.style.Styler.ChartTheme;
-
 import com.bpa4j.defaults.features.transmission_contracts.Report;
-import com.bpa4j.feature.DataRendererRenderer;
 
 /**
  * Data renderer for displaying various types of charts.
  * @author AI-generated
  */
 public final class ChartDataRenderer implements Report.DataRenderer{
-	private Function<ChartDataRenderer,DataRendererRenderer<ChartDataRenderer>> rendererSource;
+	// private Function<ChartDataRenderer,DataRendererRenderer<ChartDataRenderer>> rendererSource;
 
 	public static enum ChartMode{
 		LINEAR_EACH,
@@ -59,11 +54,11 @@ public final class ChartDataRenderer implements Report.DataRenderer{
 		this.title=title;
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public <D extends Report.DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource){
-		this.rendererSource=(Function<ChartDataRenderer,DataRendererRenderer<ChartDataRenderer>>)(Object)rendererSource;
-	}
+	// @Override
+	// @SuppressWarnings("unchecked")
+	// public <D extends Report.DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource){
+	// 	this.rendererSource=(Function<ChartDataRenderer,DataRendererRenderer<ChartDataRenderer>>)(Object)rendererSource;
+	// }
 
 	public JComponent getComponent(){
 		if(mode==null) throw new NullPointerException("Mode cannot be null.");
@@ -153,7 +148,7 @@ public final class ChartDataRenderer implements Report.DataRenderer{
 		return args;
 	}
 
-	public Function<ChartDataRenderer,DataRendererRenderer<ChartDataRenderer>> getRendererSource(){
-		return rendererSource;
-	}
+	// public Function<ChartDataRenderer,DataRendererRenderer<ChartDataRenderer>> getRendererSource(){
+	// 	return rendererSource;
+	// }
 }

@@ -1,12 +1,16 @@
 package com.bpa4j.defaults.ftr_attributes.data_renderers;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.function.Function;
 import java.util.function.Supplier;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -14,9 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
-
 import com.bpa4j.defaults.features.transmission_contracts.Report;
-import com.bpa4j.feature.DataRendererRenderer;
 import com.bpa4j.defaults.table.EmptyCellEditor;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.ui.swing.util.HButton;
@@ -29,7 +31,7 @@ import com.bpa4j.util.excel.ExcelUtils;
  * @author AI-generated
  */
 public final class TableDataRenderer<T> implements Report.DataRenderer{
-	private Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>> rendererSource;
+	// private Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>> rendererSource;
 	private Supplier<ArrayList<T>> elementSupplier;
 	private String title;
 	private boolean allowExport;
@@ -46,11 +48,11 @@ public final class TableDataRenderer<T> implements Report.DataRenderer{
 		this.allowExport=allowExport;
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public <D extends Report.DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource){
-		this.rendererSource=(Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>>)(Object)rendererSource;
-	}
+	// @Override
+	// @SuppressWarnings("unchecked")
+	// public <D extends Report.DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource){
+	// 	this.rendererSource=(Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>>)(Object)rendererSource;
+	// }
 
 	@SuppressWarnings("PMD.UseArraysAsList")
 	public JComponent getComponent(){
@@ -132,7 +134,7 @@ public final class TableDataRenderer<T> implements Report.DataRenderer{
 		return allowExport;
 	}
 
-	public Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>> getRendererSource(){
-		return rendererSource;
-	}
+	// public Function<TableDataRenderer<T>,DataRendererRenderer<TableDataRenderer<T>>> getRendererSource(){
+	// 	return rendererSource;
+	// }
 }

@@ -49,6 +49,8 @@ import com.bpa4j.editor.modules.StageApprovalModule;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.navigation.Navigator;
+import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.abstractui.UIState;
 import com.bpa4j.ui.swing.features.SwingBoardRenderer;
 import com.bpa4j.ui.swing.features.SwingBoardRenderer.SwingConfiguratorRenderingContext;
 import com.bpa4j.ui.swing.util.PathIcon;
@@ -60,8 +62,6 @@ public final class FullTester{
 		public SpinnerConfigurator(JSpinner spinner,java.util.function.Consumer<Runnable> saverConsumer){
 			this.spinner=spinner;
 		}
-		@Override
-		public <C extends Report.Configurator> void setRendererSource(java.util.function.Function<C,? extends com.bpa4j.feature.ConfiguratorRenderer<C>> rendererSource){}
 	}
 
 	public static class MyEditable5 extends Editable{
@@ -216,6 +216,8 @@ public final class FullTester{
 		// g.runServer();
 		// if(true)return;
 
+		UIState state=new UIState();
+		ProgramStarter.setRenderingManager(new RestRenderingManager(state));
 		Navigator.init();
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;

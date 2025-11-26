@@ -22,7 +22,6 @@ public class SwingRenderingManager implements RenderingManager{
 	private static class DetachedCtx extends SwingFeatureRenderingContext{
 		public DetachedCtx(){
 			super(null,null);
-			//TODO Auto-generated constructor stub
 		}
 		public Window getWindow(){
 			Window[] w=Window.getWindows();
@@ -65,7 +64,7 @@ public class SwingRenderingManager implements RenderingManager{
 		if(wfr!=null) wfr.dispose();
 	}
 	public FeatureRenderingContext getDetachedFeatureRenderingContext(){
-		return new SwingFeatureRenderingContext(null,new JPanel());
+		return new DetachedCtx();
 	}
 
 	public <F extends FeatureTransmissionContract> void putFeatureRenderer(Class<F> e,Function<F,? extends FeatureRenderer<F>> renderer){

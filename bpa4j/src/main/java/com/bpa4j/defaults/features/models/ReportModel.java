@@ -1,7 +1,6 @@
 package com.bpa4j.defaults.features.models;
 
 import java.util.ArrayList;
-import java.util.function.Function;
 import com.bpa4j.defaults.features.transmission_contracts.Report;
 import com.bpa4j.feature.FeatureModel;
 

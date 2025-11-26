@@ -67,7 +67,7 @@ public class FlowLayout implements LayoutManager{
         int y=(direction==BTT)?height:0;
 
         int rowSize=0; // Width for horizontal flows, height for vertical flows
-        int lineSize=0; // Height for horizontal flows, width for vertical flows
+        // int lineSize=0; // Height for horizontal flows, width for vertical flows, unused by AI author
 
         for(Component comp:target.getComponents()){
             Size prefSize=comp.getSize();
