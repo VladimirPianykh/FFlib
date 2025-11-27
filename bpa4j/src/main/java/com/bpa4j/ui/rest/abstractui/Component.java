@@ -2,6 +2,7 @@ package com.bpa4j.ui.rest.abstractui;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
 
 public abstract class Component{
 	private static final AtomicLong ID_GENERATOR=new AtomicLong(0);
@@ -93,7 +94,7 @@ public abstract class Component{
 		setLocation(new Point(x,y));
 	}
 	public void update(){}
-	public abstract Map<String,Object> getJson();
+	public abstract Map<String,Object> getJson(JsonVisualContext ctx);
 	/**
 	 * Calls component's function with the given id, if there is such function.
 	 * Any function ID has form {@code component.getId()+"/"+eventID}.

@@ -16,6 +16,19 @@ import java.util.concurrent.Executors;
  * Operations with components are allowed to be performed in <i>other</i> single thread <b>as long as they are not plugged</b> in this {@code UIState}.
  */
 public class UIState{
+	public static class JsonVisualContext{
+		private int dx,dy;
+		public JsonVisualContext(int dx,int dy){
+			this.dx=dx;
+			this.dy=dy;
+		}
+		public int getXDisplacement(){
+			return dx;
+		}
+		public int getYDisplacement(){
+			return dy;
+		}
+	}
 	private ExecutorService edt=Executors.newSingleThreadExecutor();
 	private Thread edtThread;
 	{
@@ -36,6 +49,10 @@ public class UIState{
 	public void modifyComponent(String id,Map<String,Object>update){
 		invokeAndWait(()->activeWindow.modifyComponent(id,update));
 	}
+	/**
+	 * Like {@link #getJsonAndMarkValid()}, but also wraps the result in an additional map with a "valid" field.
+	 * @return
+	 */
 	public Map<String,Object>getJsonWithValidity(){
 		return invokeAndWait(()->{
 			boolean validNow=isValid();
@@ -53,7 +70,8 @@ public class UIState{
 			valid=true;
 			//Window absence can be handled in a different way.
 			if(activeWindow==null)throw new IllegalStateException("No window shown.");
-			return activeWindow.getJson();
+			JsonVisualContext ctx=new JsonVisualContext(0,0);
+			return activeWindow.getJson(ctx);
 		});
 	}
 	public void invalidate(){

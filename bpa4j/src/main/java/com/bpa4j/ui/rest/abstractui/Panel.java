@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
 public class Panel extends Component{
@@ -62,13 +63,9 @@ public class Panel extends Component{
 		layoutManager.layout(this);
 		valid=true;
 	}
-	public Map<String,Object> getJson(){
-		List<TreeMap<String,Object>> ch=components.stream().map(c->c.getJson()).map(c->{
-			TreeMap<String,Object>copy=new TreeMap<>(c);
-			copy.computeIfPresent("x",(s,x)->((int)x)+getX());
-			copy.computeIfPresent("y",(s,y)->((int)y)+getY());
-			return copy;
-		}).toList();
+	public Map<String,Object> getJson(JsonVisualContext ctx){
+		JsonVisualContext subCtx=new JsonVisualContext(ctx.getXDisplacement()+getX(),ctx.getYDisplacement()+getY());
+		List<Map<String,Object>> ch=components.stream().map(c->c.getJson(subCtx)).toList();
 		return Map.of("type","panel","x",getX(),"y",getY(),"width",getWidth(),"height",getHeight(),"children",ch);
 	}
 	public void callFunction(String id){

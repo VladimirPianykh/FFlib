@@ -34,10 +34,11 @@ public class UIResource{
 	}
 
 	@POST
-	@Path("/call/{function-id}")
-	public Response callFunction(@PathParam("function-id") String functionID){
+	@Path("/call/{component-id}/{function-name}")
+	public Response callFunction(@PathParam("component-id") String componentID,@PathParam("function-name") String functionName){
+		System.err.println("Call function "+componentID+"/"+functionName);
 		try{
-			state.callFunction(functionID);
+			state.callFunction(componentID+"/"+functionName);
 			return Response.ok().build();
 		}catch(Exception ex){
 			ex.printStackTrace();
@@ -48,6 +49,7 @@ public class UIResource{
 	@PUT
 	@Path("/modify/{component-id}")
 	public Response modify(@PathParam("component-id") String componentID,Map<String,Object>update){
+		System.err.println("Modify component "+componentID);
 		state.modifyComponent(componentID,update);
 		return Response.ok().build();
 	}

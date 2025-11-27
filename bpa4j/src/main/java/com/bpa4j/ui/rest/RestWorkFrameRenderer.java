@@ -52,7 +52,6 @@ public class RestWorkFrameRenderer implements WorkFrameRenderer{
 		for(WorkFrame.FeatureEntry<?>entry:workFrame.getFeatures()){
 			Button b=new Button(entry.toString());
 			b.setOnClick(btn->{
-				System.err.println("accepted!!!");
 				workFrame.selectFeature(entry);
 				state.invalidate();
 			});

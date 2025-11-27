@@ -2,6 +2,7 @@ package com.bpa4j.ui.rest.abstractui.components;
 
 import com.bpa4j.ui.rest.abstractui.Component;
 import com.bpa4j.ui.rest.abstractui.Size;
+import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -65,12 +66,12 @@ public class ProgressBar extends Component{
 	}
 
 	@Override
-	public Map<String,Object> getJson(){
+	public Map<String,Object> getJson(JsonVisualContext ctx){
 		Map<String,Object> json=new HashMap<>();
         json.put("id",getId());
 		json.put("type","progressbar");
-		json.put("x",getX());
-		json.put("y",getY());
+		json.put("x",getX()+ctx.getXDisplacement());
+        json.put("y",getY()+ctx.getYDisplacement());
 		json.put("width",getWidth());
 		json.put("height",getHeight());
 		json.put("min",min);

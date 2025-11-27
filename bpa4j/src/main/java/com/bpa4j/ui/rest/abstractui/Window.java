@@ -2,6 +2,7 @@ package com.bpa4j.ui.rest.abstractui;
 
 import java.util.List;
 import java.util.Map;
+import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
 
 public class Window extends Panel{
 	private Panel content;
@@ -17,9 +18,9 @@ public class Window extends Panel{
 	public List<? extends Component> getComponents(){
 		return List.of(content);
 	}
-	public Map<String,Object>getJson(){
+	public Map<String,Object>getJson(JsonVisualContext ctx){
 		if(!content.isValid())content.update();
-		return Map.of("content",content.getJson());
+		return Map.of("content",content.getJson(ctx));
 	}
 	public void callFunction(String id){
 		content.callFunction(id);

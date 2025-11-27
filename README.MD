@@ -126,6 +126,7 @@ Base path: `/ui`
 
 - Label
   - `{`
+  - `  "id": number,`
   - `  "type": "label",`
   - `  "x": number, "y": number, "width": number, "height": number,`
   - `  "text": string`
@@ -133,6 +134,7 @@ Base path: `/ui`
 
 - Button
   - `{`
+  - `  "id": number,`
   - `  "type": "button",`
   - `  "x": number, "y": number, "width": number, "height": number,`
   - `  "text": string,`
@@ -142,6 +144,7 @@ Base path: `/ui`
 
 - CheckBox
   - `{`
+  - `  "id": number,`
   - `  "type": "checkbox",`
   - `  "x": number, "y": number, "width": number, "height": number,`
   - `  "text": string,`
@@ -151,6 +154,7 @@ Base path: `/ui`
 
 - ComboBox
   - `{`
+  - `  "id": number,`
   - `  "type": "combobox",`
   - `  "x": number, "y": number, "width": number, "height": number,`
   - `  "items": [string...],`
@@ -161,6 +165,7 @@ Base path: `/ui`
 
 - TextField
   - `{`
+  - `  "id": number,`
   - `  "type": "textfield",`
   - `  "x": number, "y": number, "width": number, "height": number,`
   - `  "text": string,`
@@ -172,6 +177,7 @@ Base path: `/ui`
 
 - TextArea
   - `{`
+  - `  "id": number,`
   - `  "type": "textarea",`
   - `  "x": number, "y": number, "width": number, "height": number,`
   - `  "text": string,`
@@ -181,6 +187,7 @@ Base path: `/ui`
 
 - ProgressBar
   - `{`
+  - `  "id": number,`
   - `  "type": "progressbar",`
   - `  "x": number, "y": number, "width": number, "height": number,`
   - `  "min": number,`
