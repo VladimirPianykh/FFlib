@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import com.bpa4j.core.RenderingContext;
 import com.bpa4j.defaults.features.transmission_contracts.Board;
+import com.bpa4j.defaults.features.transmission_contracts.Board.TableCustomizationRenderingContext;
 import com.bpa4j.feature.FeatureModel;
 
 public class BoardModel<T extends Serializable> implements FeatureModel<Board<T>>{
@@ -22,6 +24,7 @@ public class BoardModel<T extends Serializable> implements FeatureModel<Board<T>
     private transient Board.Sorter<T> sorter;
     private transient Board.Filter<T> filter;
     private transient boolean allowCreation;
+    private transient Consumer<Board.TableCustomizationRenderingContext> tableCustomizer;
     @SuppressWarnings("null")
     public BoardModel(Board<T> ftc){
         this.ftc=ftc;
@@ -36,6 +39,8 @@ public class BoardModel<T extends Serializable> implements FeatureModel<Board<T>
         ftc.setSetFilterOp(this::setFilter);
         ftc.setRenderSorterOp(this::renderSorter);
         ftc.setRenderFilterOp(this::renderFilter);
+        ftc.setSetTableCustomizerOp(this::setTableCustomizer);
+        ftc.setCustomizeTableOp(this::customizeTable);
     }
     public Board<T> getTransmissionContract(){
         return ftc;
@@ -80,5 +85,11 @@ public class BoardModel<T extends Serializable> implements FeatureModel<Board<T>
     }
     public void setAllowCreation(boolean allow){
         this.allowCreation=allow;
+    }
+    public void setTableCustomizer(Consumer<TableCustomizationRenderingContext> tableCustomizer){
+        this.tableCustomizer=tableCustomizer;
+    }
+    public void customizeTable(TableCustomizationRenderingContext ctx){
+        if(tableCustomizer!=null) tableCustomizer.accept(ctx);
     }
 }

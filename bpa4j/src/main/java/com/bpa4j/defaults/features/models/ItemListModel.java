@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import com.bpa4j.core.RenderingContext;
 import com.bpa4j.defaults.features.transmission_contracts.Board;
 import com.bpa4j.defaults.features.transmission_contracts.ItemList;
+import com.bpa4j.defaults.features.transmission_contracts.ItemList.ListCustomizationRenderingContext;
 import com.bpa4j.feature.FeatureModel;
 
 public class ItemListModel<T extends Serializable> implements FeatureModel<ItemList<T>>{
@@ -28,6 +29,7 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 	private transient boolean allowCreation;
 	private transient Board.Sorter<T> sorter;
 	private transient Board.Filter<T> filter;
+	private transient Consumer<ListCustomizationRenderingContext>listCustomizer;
 	private void readObject(ObjectInputStream is) throws IOException,ClassNotFoundException{
 		is.defaultReadObject();
 		collectiveActions=new ArrayList<>();
@@ -52,6 +54,8 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 		ftc.setRenderFilterOp(this::renderFilter);
 		ftc.setGetSingularActionsOp(this::getSingularActions);
 		ftc.setGetCollectiveActionsOp(this::getCollectiveActions);
+		ftc.setSetListCustomizerOp(this::setListCustomizer);
+		ftc.setCustomizeListOp(this::customizeList);
 	}
 	public ItemList<T> getTransmissionContract(){
 		return ftc;
@@ -123,5 +127,11 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 	}
 	public Board.Filter<T> getFilter(){
 		return filter;
+	}
+	public void setListCustomizer(Consumer<ListCustomizationRenderingContext> listCustomizer){
+		this.listCustomizer=listCustomizer;
+	}
+	public void customizeList(ListCustomizationRenderingContext ctx){
+		if(listCustomizer!=null)listCustomizer.accept(ctx);
 	}
 }

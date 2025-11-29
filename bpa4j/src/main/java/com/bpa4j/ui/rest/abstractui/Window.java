@@ -18,6 +18,15 @@ public class Window extends Panel{
 	public List<? extends Component> getComponents(){
 		return List.of(content);
 	}
+	public void add(Component c){
+		throw new UnsupportedOperationException("Window cannot contain components.");
+	}
+	public void remove(Component c){
+		throw new UnsupportedOperationException("Window cannot contain components.");
+	}
+	public void removeAll(){
+		throw new UnsupportedOperationException("Window cannot contain components.");
+	}
 	public Map<String,Object>getJson(JsonVisualContext ctx){
 		if(!content.isValid())content.update();
 		return Map.of("content",content.getJson(ctx));

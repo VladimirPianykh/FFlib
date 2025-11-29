@@ -83,6 +83,7 @@ public final class ProgramStarter{
 	}
 	public static void exit(){
 		getRenderingManager().close();
+		getStorageManager().close();
 		System.exit(0);
 	}
 	public static boolean isFirstLaunch(){

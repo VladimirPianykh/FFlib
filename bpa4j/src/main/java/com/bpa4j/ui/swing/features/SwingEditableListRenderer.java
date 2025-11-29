@@ -2,20 +2,24 @@ package com.bpa4j.ui.swing.features;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.util.function.Function;
+import java.util.function.BiConsumer;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.defaults.features.transmission_contracts.EditableList;
+import com.bpa4j.defaults.features.transmission_contracts.EditableList.ItemRenderingContext;
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
@@ -23,6 +27,23 @@ import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 
 public class SwingEditableListRenderer<T extends Editable> implements FeatureRenderer<EditableList<T>>{
+	/**
+	 * Context source passes {@code target} and {@code listener},
+	 * context user calls {@link #setButton(JButton)}
+	 * and this context does the necessary things with them.
+	 */
+	public static class SwingItemRenderingContext implements ItemRenderingContext{
+		private JPanel target;
+		private ActionListener l;
+		public SwingItemRenderingContext(JPanel target,ActionListener listener){
+			this.target=target;
+			this.l=listener;
+		}
+		public void setButton(JButton b){
+			b.addActionListener(l);
+			target.add(b);
+		}
+	}
 	private EditableList<T> contract;
 	public SwingEditableListRenderer(EditableList<T> contract){
 		this.contract=contract;
@@ -60,9 +81,10 @@ public class SwingEditableListRenderer<T extends Editable> implements FeatureRen
 		JPanel panel=new JPanel(new GridLayout(Math.max(10,group.size()+1),1));
 		JScrollPane s=new JScrollPane(panel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		s.getVerticalScrollBar().setUnitIncrement(tab.getHeight()/50);
-		Function<T,JComponent> componentProvider=getTransmissionContract().getComponentProvider();
+		BiConsumer<T,ItemRenderingContext> componentProvider=getTransmissionContract().getComponentProvider();
 		if(componentProvider==null){
-			componentProvider=t->{
+			componentProvider=(t,ctx)->{
+				SwingItemRenderingContext sctx=(SwingItemRenderingContext)ctx;
 				HButton b=new HButton(){
 					public void paint(Graphics g){
 						int c=50-scale*4;
@@ -75,16 +97,16 @@ public class SwingEditableListRenderer<T extends Editable> implements FeatureRen
 						if(group.elementIcon!=null) group.elementIcon.paintIcon(this,g,getWidth()*9/10-group.elementIcon.getIconWidth(),(getHeight()-group.elementIcon.getIconHeight())/2);
 					}
 				};
-				b.addActionListener(e->ProgramStarter.editor.constructEditor(t,false,()->{
-					group.remove(t);
-					b.getParent().remove(b);
-				},null));
-				return b;
+				sctx.setButton(b);
 			};
 		}
-		final Function<T,JComponent> finalProvider=componentProvider;
+		final BiConsumer<T,ItemRenderingContext> finalProvider=componentProvider;
 		for(T t:group){
-			panel.add(finalProvider.apply(t));
+			finalProvider.accept(t,new SwingItemRenderingContext(panel,e->ProgramStarter.editor.constructEditor(t,false,()->{
+				group.remove(t);
+				JComponent b=((JComponent)e.getSource());
+				b.getParent().remove(b);
+			},null)));
 		}
 		if(getTransmissionContract().getCanCreate()){
 			HButton add=new HButton(){
@@ -102,7 +124,14 @@ public class SwingEditableListRenderer<T extends Editable> implements FeatureRen
 					group.add(t);
 					ProgramStarter.editor.constructEditor(t,true,()->group.remove(t),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 					if(group.contains(t)){
-						panel.add(finalProvider.apply(t),panel.getComponentCount()-1);
+						Component last=panel.getComponent(panel.getComponentCount()-1); //Create button
+						panel.remove(last);
+						finalProvider.accept(t,new SwingItemRenderingContext(panel,e2->ProgramStarter.editor.constructEditor(t,false,()->{
+							group.remove(t);
+							JComponent b=((JComponent)e2.getSource());
+							b.getParent().remove(b);
+						},null)));
+						panel.add(last);
 						panel.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*panel.getComponentCount()/10));
 						panel.setLayout(new GridLayout(Math.max(10,group.size()+1),1));
 						panel.revalidate();

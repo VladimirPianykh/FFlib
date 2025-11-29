@@ -10,6 +10,10 @@ import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
+/**
+ * Standard model editing tab with all registered editable groups.
+ * Unlike other operations, {@link #getRenderingContextOp} is provided by the renderer.
+ */
 public class ModelEditing implements FeatureTransmissionContract{
 	public Supplier<FeatureRenderingContext>getRenderingContextOp;
 	public BiConsumer<Integer,Editable>createOp;

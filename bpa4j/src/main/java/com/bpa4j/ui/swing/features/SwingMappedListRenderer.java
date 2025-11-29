@@ -15,6 +15,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.EventObject;
 import java.util.Vector;
+import java.util.function.BiConsumer;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -23,6 +24,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.defaults.features.transmission_contracts.EditableList.ItemRenderingContext;
 import com.bpa4j.defaults.features.transmission_contracts.MappedList;
 import com.bpa4j.defaults.table.FieldCellRenderer;
 import com.bpa4j.defaults.table.FieldCellValue;
@@ -32,6 +34,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
+import com.bpa4j.ui.swing.features.SwingEditableListRenderer.SwingItemRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 
 @SuppressWarnings({"unchecked","PMD.ReplaceVectorWithList"})
@@ -73,37 +76,20 @@ public class SwingMappedListRenderer<T extends Editable,V extends Serializable> 
 	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
 		tab.setLayout(new BorderLayout());
-		JTable t=new JTable();
-		t.setDefaultEditor(Object.class,new FormCellEditor());
-		t.setDefaultRenderer(Object.class,new FieldCellRenderer());
-		t.setRowHeight(tab.getHeight()/10);
+		JTable table=new JTable();
+		contract.customizeTable(new SwingBoardRenderer.SwingTableCustomizationRenderingContext(table));
+		table.setDefaultEditor(Object.class,new FormCellEditor());
+		table.setDefaultRenderer(Object.class,new FieldCellRenderer());
+		table.setRowHeight(tab.getHeight()/10);
 		Vector<String> v=new Vector<>();
 		v.add("Объекты");
 		for(Field f:getVType().getFields())
 			v.add(f.getAnnotation(EditorEntry.class).translation());
 		DefaultTableModel m=new DefaultTableModel(v,0);
-		t.setModel(m);
-		t.getColumnModel().getColumn(0).setCellRenderer((table,value,isSelected,hasFocus,row,column)->{
-			HButton b=new HButton(){
-				public void paint(Graphics g){
-					int c=50-scale;
-					if(getModel().isPressed()) c-=25;
-					g.setColor(new Color(c,c,c));
-					g.fillRect(0,0,getWidth(),getHeight());
-					FontMetrics fm=g.getFontMetrics();
-					g.setColor(Color.WHITE);
-					g.drawString(((T)value).name,(getWidth()-fm.stringWidth(((T)value).name))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
-				}
-			};
-			b.addActionListener(e->ProgramStarter.editor.constructEditor((T)value,false,null,null));
-			return b;
-		});
-		t.getColumnModel().getColumn(0).setCellEditor(new TableCellEditor(){
-			public Object getCellEditorValue(){
-				return null;
-			}
-			public Component getTableCellEditorComponent(JTable table,Object value,boolean isSelected,int row,int column){
-				HButton b=new HButton(){
+		BiConsumer<T,ItemRenderingContext>componentProvider=getTransmissionContract().getComponentProvider();
+		if(componentProvider==null){
+			componentProvider=(t,ctx)->{
+				HButton bb=new HButton(){
 					public void paint(Graphics g){
 						int c=50-scale;
 						if(getModel().isPressed()) c-=25;
@@ -111,10 +97,28 @@ public class SwingMappedListRenderer<T extends Editable,V extends Serializable> 
 						g.fillRect(0,0,getWidth(),getHeight());
 						FontMetrics fm=g.getFontMetrics();
 						g.setColor(Color.WHITE);
-						g.drawString(((T)value).name,(getWidth()-fm.stringWidth(((T)value).name))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
+						g.drawString(t.name,(getWidth()-fm.stringWidth(t.name))/2,(getHeight()+fm.getAscent()+fm.getLeading()-fm.getDescent())/2);
 					}
 				};
-				b.addActionListener(e->ProgramStarter.editor.constructEditor((T)value,false,null,null));
+				((SwingItemRenderingContext)ctx).setButton(bb);
+			};
+		}
+		final BiConsumer<T,ItemRenderingContext>fComponentProvider=componentProvider;
+		table.setModel(m);
+		table.getColumnModel().getColumn(0).setCellRenderer((table2,value,isSelected,hasFocus,row,column)->{
+			JPanel b=new JPanel();
+			SwingItemRenderingContext itemContext=new SwingItemRenderingContext(b,e->ProgramStarter.editor.constructEditor((T)value,false,null,null));
+			fComponentProvider.accept((T)value,itemContext);
+			return b;
+		});
+		table.getColumnModel().getColumn(0).setCellEditor(new TableCellEditor(){
+			public Object getCellEditorValue(){
+				return null;
+			}
+			public Component getTableCellEditorComponent(JTable table,Object value,boolean isSelected,int row,int column){
+				JPanel b=new JPanel();
+				SwingItemRenderingContext itemContext=new SwingItemRenderingContext(b,e->ProgramStarter.editor.constructEditor((T)value,false,null,null));
+				fComponentProvider.accept((T)value,itemContext);
 				return b;
 			}
 			public boolean isCellEditable(EventObject anEvent){
@@ -130,7 +134,7 @@ public class SwingMappedListRenderer<T extends Editable,V extends Serializable> 
 			public void addCellEditorListener(CellEditorListener l){}
 			public void removeCellEditorListener(CellEditorListener l){}
 		});
-		JScrollPane s=new JScrollPane(t,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		JScrollPane s=new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		s.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*9/10));
 		fillTable(m);
 		HButton add=new HButton(){
@@ -155,7 +159,7 @@ public class SwingMappedListRenderer<T extends Editable,V extends Serializable> 
 		});
 		add.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/10));
 		add.setFont(font);
-		tab.add(add,BorderLayout.SOUTH);
+		if(getTransmissionContract().getAllowCreation()) tab.add(add,BorderLayout.SOUTH);
 		tab.add(s,BorderLayout.NORTH);
 		tab.revalidate();
 	}

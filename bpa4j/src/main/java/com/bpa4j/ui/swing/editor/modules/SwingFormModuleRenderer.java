@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.function.Supplier;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -44,9 +45,16 @@ import com.bpa4j.core.Editable;
 import com.bpa4j.core.EditableDemo;
 import com.bpa4j.core.EditableGroup;
 import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.defaults.input.ConditionalWEditor;
 import com.bpa4j.defaults.input.EmptySaver;
+import com.bpa4j.defaults.input.FlagWEditor;
+import com.bpa4j.defaults.input.FunctionEditor;
+import com.bpa4j.defaults.input.SelectFromEditor;
+import com.bpa4j.defaults.input.SelectionListEditor;
 import com.bpa4j.editor.Completer;
 import com.bpa4j.editor.EditorEntry;
+import com.bpa4j.editor.EditorEntryBase;
+import com.bpa4j.editor.EditorEntryBaseRenderer;
 import com.bpa4j.editor.InfoProvider;
 import com.bpa4j.editor.ModularEditorRenderer.ModulesRenderingContext;
 import com.bpa4j.editor.ModuleRenderer;
@@ -55,13 +63,39 @@ import com.bpa4j.editor.Verifier;
 import com.bpa4j.editor.modules.FormModule;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingModularEditorRenderer.SwingModuleRenderingContext;
+import com.bpa4j.ui.swing.editor.SwingConditionalWEditorRenderer;
+import com.bpa4j.ui.swing.editor.SwingFlagWEditorRenderer;
+import com.bpa4j.ui.swing.editor.SwingFunctionEditorRenderer;
+import com.bpa4j.ui.swing.editor.SwingSelectFromEditorRenderer;
+import com.bpa4j.ui.swing.editor.SwingSelectionListEditorRenderer;
 import com.bpa4j.ui.swing.util.HButton;
 import com.bpa4j.ui.swing.util.Message;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.components.TimePicker;
 
+/**
+ * @author AI-generated
+ */
 public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
+	// Renderer registry for EditorEntryBase implementations
+	private static final HashMap<Class<? extends EditorEntryBase>,EditorEntryBaseRenderer> editorRenderers=new HashMap<>();
+	static{
+		editorRenderers.put(FlagWEditor.class,new SwingFlagWEditorRenderer());
+		editorRenderers.put(ConditionalWEditor.class,new SwingConditionalWEditorRenderer());
+		editorRenderers.put(FunctionEditor.class,new SwingFunctionEditorRenderer());
+		editorRenderers.put(SelectFromEditor.class,new SwingSelectFromEditorRenderer());
+		editorRenderers.put(SelectionListEditor.class,new SwingSelectionListEditorRenderer());
+	}
+
+	// EditorEntryRenderingContext implementation
+	private static class SwingEditorEntryRenderingContext implements EditorEntryBase.EditorEntryRenderingContext{
+		public EditorEntryBaseRenderer getRenderer(EditorEntryBase base){
+			EditorEntryBaseRenderer renderer=editorRenderers.get(base.getClass());
+			if(renderer==null) throw new IllegalStateException("No renderer registered for "+base.getClass());
+			return renderer;
+		}
+	}
 	public void createTab(Editable editable,boolean isNew,Runnable deleter,FormModule module,ModulesRenderingContext context){
 		SwingModuleRenderingContext ctx=(SwingModuleRenderingContext)context;
 		JPanel tab=createTabPanel(editable,isNew,deleter,module,ctx);
@@ -135,8 +169,16 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 			name.setBorder(javax.swing.BorderFactory.createTitledBorder(null,"Параметр",0,0,font.deriveFont(font.getSize2D()/2),Color.LIGHT_GRAY));
 			entry.add(name);
 			javax.swing.JComponent c;
-			if(a.editorBaseSource()==com.bpa4j.editor.EditorEntryBase.class) c=com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.wrapEditorComponent(com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.createEditorBase(editable,f,currentSaver),font);
-			else c=a.editorBaseSource().getDeclaredConstructor().newInstance().createEditorBase(editable,f,currentSaver,demo);
+			if(a.editorBaseSource()==com.bpa4j.editor.EditorEntryBase.class){
+				c=com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.wrapEditorComponent(com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.createEditorBase(editable,f,currentSaver),font);
+			}else{
+				EditorEntryBase editorBase=a.editorBaseSource().getDeclaredConstructor().newInstance();
+				EditorEntryBase.EditorEntryRenderingContext renderingContext=new SwingEditorEntryRenderingContext();
+				EditorEntryBaseRenderer renderer=renderingContext.getRenderer(editorBase);
+				Object component=renderer.createEditorComponent(editable,f,currentSaver,demo,editorBase,renderingContext);
+				c=(JComponent)component;
+				if(c!=null) c=wrapEditorComponent(c,font);
+			}
 			if(currentSaver.var==null) throw new IllegalStateException("Saver for "+f.getName()+" is null.");
 			savers.add(currentSaver.var);
 			if(c!=null){

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import com.bpa4j.core.ProgramStarter;
+
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
@@ -19,13 +19,8 @@ public class Report implements FeatureTransmissionContract{
 	public static interface Configurator{
 		// <C extends Configurator> void setRendererSource(Function<C,? extends ConfiguratorRenderer<C>> rendererSource);
 	}
-	private static final Map<String,Feature<?>> registeredReports;
-	static{
-		HashMap<String,Feature<?>>reg=new HashMap<>();
-		ProgramStarter.getStorageManager().getStorage().putGlobal("BL:Report",reg);
-		registeredReports=reg;
-	}
-	
+	private static final Map<String,Feature<Report>> registeredReports=new HashMap<>();
+
 	private Supplier<ArrayList<DataRenderer>> getDataRenderersOp;
 	private Supplier<ArrayList<Configurator>> getConfiguratorsOp;
 	private Consumer<DataRenderer> addDataRendererOp;
@@ -63,19 +58,25 @@ public class Report implements FeatureTransmissionContract{
 	public String getFeatureName(){
 		return name;
 	}
-	
-	public static Feature<Report> registerReport(String name) {
-		Report report = new Report(name);
-		Feature<Report> feature = new Feature<>(report);
-		registeredReports.put(name, feature);
+
+	/**
+	 * Registers a report, if it is not registered yet.
+	 * @return the feature, registered or already present
+	 */
+	public static Feature<Report> registerReport(String name){
+		Report report=new Report(name);
+		Feature<Report> feature=new Feature<>(report);
+		feature.load();
+		return registerReport(name,feature);
+	}
+	public static Feature<Report> registerReport(String name,Feature<Report> feature){
+		registeredReports.put(name,feature);
 		return feature;
 	}
-	
-	public static Report getReport(String name) {
-		Feature<?> feature = registeredReports.get(name);
-		if (feature == null) {
-			throw new IllegalArgumentException("Report with name '" + name + "' not found. Make sure to register it first.");
-		}
-		return (Report) feature.getContract();
+
+	public static Report getReport(String name){
+		Feature<?> feature=registeredReports.get(name);
+		if(feature==null){ throw new IllegalArgumentException("Report with name '"+name+"' not found. Make sure to register it first."); }
+		return (Report)feature.getContract();
 	}
 }

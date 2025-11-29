@@ -23,6 +23,7 @@ import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.RenderingContext;
 import com.bpa4j.defaults.features.transmission_contracts.Board;
+import com.bpa4j.defaults.features.transmission_contracts.Board.TableCustomizationRenderingContext;
 import com.bpa4j.defaults.table.FieldCellValue;
 import com.bpa4j.defaults.table.FormCellEditor;
 import com.bpa4j.editor.EditorEntry;
@@ -48,6 +49,15 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 			return saver;
 		}
     }
+	public static class SwingTableCustomizationRenderingContext implements TableCustomizationRenderingContext{
+		private JTable table;
+		public SwingTableCustomizationRenderingContext(JTable table){
+			this.table=table;
+		}
+		public JTable getTable(){
+			return table;
+		}
+	}
 	private Board<T> contract;
 	public SwingBoardRenderer(Board<T> contract){
 		this.contract=contract;
@@ -87,6 +97,7 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 		JPanel config=null;
 		JComponent filterConfig=null,sorterConfig=null;
 		JTable t=new JTable();
+		contract.customizeTable(new SwingTableCustomizationRenderingContext(t));
 		t.setBackground(Color.DARK_GRAY);
 		t.setForeground(Color.WHITE);
 		t.setRowHeight(tab.getHeight()/10);

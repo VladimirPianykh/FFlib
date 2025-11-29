@@ -6,6 +6,10 @@ import com.bpa4j.core.User.Permission;
 import com.bpa4j.core.User.Role;
 import com.bpa4j.feature.Feature;
 
+/**
+ * Persistent storage for editable groups and globals and
+ * non-persistent storage for roles, features and permission.
+ */
 public interface Data{
 	void register(Role...r);
 	void register(Feature<?>...r);

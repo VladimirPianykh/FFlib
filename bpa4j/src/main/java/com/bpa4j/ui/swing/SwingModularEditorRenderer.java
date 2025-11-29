@@ -29,6 +29,9 @@ public class SwingModularEditorRenderer implements ModularEditorRenderer{
 		public SwingModuleRenderingContext(JDialog dialog){
 			this.dialog=dialog;
 		}
+		/**
+		 * Modules' tabs should be added directly to this list.
+		 */
 		public ArrayList<JPanel> getTabs(){
 			return tabs;
 		}

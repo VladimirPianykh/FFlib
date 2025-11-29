@@ -23,6 +23,7 @@ public class RestModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 		return contract;
 	}
 	public void render(FeatureRenderingContext ctx){
+		contract.setGetRenderingContextOp(()->ctx);
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)ctx;
 		Panel target=rctx.getTarget();
 		target.removeAll();

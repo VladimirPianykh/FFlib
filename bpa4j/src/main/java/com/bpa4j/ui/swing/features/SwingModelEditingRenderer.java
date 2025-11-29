@@ -34,6 +34,7 @@ public class SwingModelEditingRenderer implements FeatureRenderer<ModelEditing>{
         for(int x=0;x<h;x++)for(int y=0;y<h-x;y++)image.setRGB(x,y,image.getRGB(h-y-1,h-x-1));
     }
     public void fillTab(JPanel content,JPanel tab,Font font,FeatureRenderingContext context){
+		contract.setGetRenderingContextOp(()->context);
         SwingFeatureRenderingContext ctx=(SwingFeatureRenderingContext)context;
         List<EditableGroup<?>>groupList=getTransmissionContract().getGroups();
         int columns=0;

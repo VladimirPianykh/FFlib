@@ -14,6 +14,10 @@ public class SwingFeatureRenderingContext implements FeatureRenderingContext{
     public Window getWindow(){
         return window;
     }
+    /**
+     * Returns the target where the feature should be rendered.
+     * The feature can do anything with it: change layout, and as many components as needed, etc.
+     */
     public JPanel getTarget(){
         return target;
     }

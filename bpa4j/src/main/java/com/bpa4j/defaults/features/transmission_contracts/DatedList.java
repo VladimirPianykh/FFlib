@@ -8,17 +8,13 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import com.bpa4j.Dater;
 import com.bpa4j.core.Editable;
-import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.core.RenderingContext;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class DatedList<T extends Editable> implements FeatureTransmissionContract{
-	private static final Map<String,Feature<?>> registeredDatedLists;
-	static{
-		HashMap<String,Feature<?>> reg=new HashMap<>();
-		ProgramStarter.getStorageManager().getStorage().putGlobal("BL:DatedList",reg);
-		registeredDatedLists=reg;
-	}
+	public static interface DateRenderingContext extends RenderingContext{}
+	private static final Map<String,Feature<? extends DatedList<?>>> registeredDatedLists=new HashMap<>();
 
 	public Supplier<Set<T>> getObjectsOp;
 	public Supplier<HashMap<T,Dater<T>>> getObjectsWithDatersOp;
@@ -85,9 +81,17 @@ public class DatedList<T extends Editable> implements FeatureTransmissionContrac
 		return type;
 	}
 
+	/**
+	 * Registers a dated list, if it is not registered yet.
+	 * @return the feature, registered or already present
+	 */
 	public static <T extends Editable> Feature<DatedList<T>> registerList(String name,Class<T> clazz){
 		DatedList<T> datedList=new DatedList<>(name,clazz);
 		Feature<DatedList<T>> feature=new Feature<>(datedList);
+		feature.load();
+		return registerList(name,feature);
+	}
+	public static <T extends Editable> Feature<DatedList<T>> registerList(String name,Feature<DatedList<T>> feature){
 		registeredDatedLists.put(name,feature);
 		return feature;
 	}

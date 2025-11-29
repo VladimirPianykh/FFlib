@@ -26,6 +26,7 @@ import com.bpa4j.Wrapper;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.defaults.features.transmission_contracts.DatedList;
+import com.bpa4j.defaults.features.transmission_contracts.DatedList.DateRenderingContext;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.feature.FeatureRenderer;
@@ -36,6 +37,15 @@ import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
 import com.bpa4j.ui.swing.util.HButton;
 
 public class SwingDatedListRenderer<T extends Editable> implements FeatureRenderer<DatedList<T>>{
+	public static class SwingDatedListRenderingContext implements DateRenderingContext{
+		private JPanel target;
+		public SwingDatedListRenderingContext(JPanel target){
+			this.target=target;
+		}
+		public JPanel getTarget(){
+			return target;
+		}
+	}
 	private DatedList<T> contract;
 	public SwingDatedListRenderer(DatedList<T> contract){
 		this.contract=contract;
@@ -152,15 +162,16 @@ public class SwingDatedListRenderer<T extends Editable> implements FeatureRender
 		b.setFont(new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/20));
 		p.add(b);
 		if(finalDater!=null){
+			SwingDatedListRenderingContext dContext=new SwingDatedListRenderingContext(tab);
 			JPanel dates=new JPanel(new GridLayout(1,7));
 			dates.setBounds(tab.getWidth()/3,0,flag?tab.getWidth()/2:tab.getWidth()*2/3,tab.getHeight()/10);
 			for(int i=0;i<7;++i)
-				dates.add(finalDater.apply(t,date.var.plusDays(i)));
+				finalDater.render(t,date.var.plusDays(i),dContext);
 			b.addMouseWheelListener(e->{
 				date.var=date.var.plusDays(e.getWheelRotation());
 				dates.removeAll();
 				for(int i=0;i<7;++i)
-					dates.add(finalDater.apply(t,date.var.plusDays(i)));
+					finalDater.render(t,date.var.plusDays(i),dContext);
 			});
 			p.add(dates);
 		}

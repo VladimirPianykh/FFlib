@@ -2,8 +2,10 @@ package com.bpa4j.ui.rest.features;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.util.function.BiConsumer;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
+import com.bpa4j.defaults.features.transmission_contracts.EditableList.ItemRenderingContext;
 import com.bpa4j.defaults.features.transmission_contracts.MappedList;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.feature.FeatureRenderer;
@@ -12,8 +14,17 @@ import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
+import com.bpa4j.ui.rest.abstractui.components.TextField;
+import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
+import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
+/**
+ * REST renderer for MappedList feature with editable fields.
+ * Displays objects with their mapped values in a table format.
+ * Field values are editable via TextFields.
+ * @author AI-generated
+ */
 public class RestMappedListRenderer<T extends Editable,V extends Serializable> implements FeatureRenderer<MappedList<T,V>>{
 	private final MappedList<T,V> contract;
 	public RestMappedListRenderer(MappedList<T,V> contract){
@@ -26,53 +37,100 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)ctx;
 		Panel target=rctx.getTarget();
 		target.removeAll();
+		Panel root=new Panel(new BorderLayout());
+		root.setSize(target.getWidth(),target.getHeight());
 		
 		Field[] fields=contract.getVType().getFields();
 		int columns=fields.length+1; // +1 for the object name
 		
-		// Use a grid layout for the table
-		// We'll just add rows sequentially. GridLayout(0, columns) means any number of rows.
-		target.setLayout(new GridLayout(0,columns,5,5));
+		// Create table panel
+		Panel tablePanel=new Panel(new GridLayout(0,columns,5,5));
+		tablePanel.setSize(root.getWidth(),root.getHeight()-40);
 		
 		// Header
-		target.add(new Label("Objects"));
+		tablePanel.add(new Label("Objects"));
 		for(Field f:fields){
 			EditorEntry entry=f.getAnnotation(EditorEntry.class);
-			target.add(new Label(entry!=null?entry.translation():f.getName()));
+			tablePanel.add(new Label(entry!=null?entry.translation():f.getName()));
 		}
 		
+		// Get componentProvider or use default
+		BiConsumer<T,ItemRenderingContext> componentProvider=contract.getComponentProvider();
+		if(componentProvider==null){
+			componentProvider=(t,itemCtx)->{
+				RestItemRenderingContext restCtx=(RestItemRenderingContext)itemCtx;
+				Button itemBtn=new Button(t.name);
+				itemBtn.setOnClick(b->{
+					ProgramStarter.editor.constructEditor(t,false,null,null);
+				});
+				restCtx.getTarget().add(itemBtn);
+			};
+		}
+		final BiConsumer<T,ItemRenderingContext> finalProvider=componentProvider;
+
 		// Rows
 		for(T t:contract.getObjects().keySet()){
-			Button itemBtn=new Button(t.name);
-			itemBtn.setOnClick(b->{
-				ProgramStarter.editor.constructEditor(t,false,null,null);
-			});
-			target.add(itemBtn);
+			Panel itemPanel=new Panel(new FlowLayout());
+			finalProvider.accept(t,new RestItemRenderingContext(itemPanel));
+			tablePanel.add(itemPanel);
 			
 			V value=contract.getMapping(t);
 			for(Field f:fields){
 				try{
 					Object val=f.get(value);
-					target.add(new Label(String.valueOf(val)));
+					TextField textField=new TextField(val!=null?String.valueOf(val):"");
+					textField.setOnTextChanged(newText->{
+						try{
+							// Try to convert and set the value
+							Object convertedValue=convertValue(newText,f.getType());
+							f.set(value,convertedValue);
+						}catch(Exception e){
+							// Conversion failed, ignore or log
+						}
+					});
+					tablePanel.add(textField);
 				}catch(IllegalAccessException e){
-					target.add(new Label("Error"));
+					tablePanel.add(new Label("Error"));
 				}
 			}
 		}
 		
-		// Add button row
+		// Add button panel
+		Panel addPanel=new Panel(new BorderLayout());
+		addPanel.setSize(root.getWidth(),40);
 		Button addBtn=new Button("Add");
 		addBtn.setOnClick(b->{
 			T o=contract.createObject();
 			ProgramStarter.editor.constructEditor(o,true,null,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 			rctx.rebuild();
 		});
-		target.add(addBtn);
+		addPanel.add(addBtn);
 		
-		// Fill the rest of the last row with empty labels if needed
-		for(int i=0;i<fields.length;i++){
-			target.add(new Label(""));
-		}
+		// Layout
+		BorderLayout layout=(BorderLayout)root.getLayout();
+		layout.addLayoutComponent(tablePanel,BorderLayout.CENTER);
+		layout.addLayoutComponent(addPanel,BorderLayout.SOUTH);
+		root.add(tablePanel);
+		root.add(addPanel);
+		target.add(root);
 	}
+
+	/**
+	 * Convert string value to the target type.
+	 * Supports primitive types and their wrappers, plus String.
+	 */
+	private Object convertValue(String text,Class<?> targetType){
+		if(targetType==String.class) return text;
+		if(targetType==int.class||targetType==Integer.class) return Integer.parseInt(text);
+		if(targetType==long.class||targetType==Long.class) return Long.parseLong(text);
+		if(targetType==double.class||targetType==Double.class) return Double.parseDouble(text);
+		if(targetType==float.class||targetType==Float.class) return Float.parseFloat(text);
+		if(targetType==boolean.class||targetType==Boolean.class) return Boolean.parseBoolean(text);
+		if(targetType==byte.class||targetType==Byte.class) return Byte.parseByte(text);
+		if(targetType==short.class||targetType==Short.class) return Short.parseShort(text);
+		if(targetType==char.class||targetType==Character.class) return text.isEmpty()?'\0':text.charAt(0);
+		return text; // Fallback to string
+	}
+
 	public void renderPreview(FeatureRenderingContext ctx){}
 }

@@ -6,5 +6,9 @@ package com.bpa4j.feature;
  */
 public interface FeatureSaver<F extends FeatureTransmissionContract>{
     void save(F f);
+    /**
+     * Loads the feature's state.
+     * If no state was ever saved, does nothing.
+     */
     void load(F f);
 }

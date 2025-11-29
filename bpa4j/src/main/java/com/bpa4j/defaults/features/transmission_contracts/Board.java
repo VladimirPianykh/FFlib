@@ -10,18 +10,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import com.bpa4j.core.ProgramStarter;
+
 import com.bpa4j.core.RenderingContext;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class Board<T extends Serializable> implements FeatureTransmissionContract{
-	private static final Map<String,Feature<?>> registeredBoards;
-	static{
-		HashMap<String,Feature<?>>reg=new HashMap<>();
-		ProgramStarter.getStorageManager().getStorage().putGlobal("BL:Board",reg);
-		registeredBoards=reg;
-	}
+	public static interface TableCustomizationRenderingContext extends RenderingContext{}
+	private static final Map<String,Feature<? extends Board<?>>> registeredBoards=new HashMap<>();
 	public static interface Sorter<T> extends Comparator<T>{
 		default void renderConfigurator(RenderingContext ctx){}
 	}
@@ -29,7 +25,7 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 		default void renderConfigurator(RenderingContext ctx){}
 	}
 	public Supplier<ArrayList<T>> getObjectsOp;
-	public Supplier<T> createObjectOp;
+	// public Supplier<T> createObjectOp;
 	public Consumer<T> addObjectOp;
 	public Consumer<T> removeObjectOp;
 	public Consumer<Function<T,String>> setSlicerOp;
@@ -40,6 +36,8 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	public Consumer<Board.Filter<T>> setFilterOp;
 	private Consumer<RenderingContext> renderSorterOp;
 	private Consumer<RenderingContext> renderFilterOp;
+	private Consumer<Consumer<TableCustomizationRenderingContext>> setTableCustomizerOp;
+	private Consumer<TableCustomizationRenderingContext> customizeTableOp;
 
 	private String name;
 	private Class<T> type;
@@ -51,9 +49,9 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	public void setGetObjectsOp(Supplier<ArrayList<T>> getObjectsOp){
 		this.getObjectsOp=getObjectsOp;
 	}
-	public void setCreateObjectOp(Supplier<T> createObjectOp){
-		this.createObjectOp=createObjectOp;
-	}
+	// public void setCreateObjectOp(Supplier<T> createObjectOp){
+	// 	this.createObjectOp=createObjectOp;
+	// }
 	public void setAddObjectOp(Consumer<T> addObjectOp){
 		this.addObjectOp=addObjectOp;
 	}
@@ -84,13 +82,19 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	public void setRenderFilterOp(Consumer<RenderingContext> renderFilterOp){
 		this.renderFilterOp=renderFilterOp;
 	}
+	public void setSetTableCustomizerOp(Consumer<Consumer<TableCustomizationRenderingContext>> setTableCustomizerOp){
+		this.setTableCustomizerOp=setTableCustomizerOp;
+	}
+	public void setCustomizeTableOp(Consumer<TableCustomizationRenderingContext> customizeTableOp){
+		this.customizeTableOp=customizeTableOp;
+	}
 
 	public ArrayList<T> getObjects(){
 		return getObjectsOp.get();
 	}
-	public T createObject(){
-		return createObjectOp.get();
-	}
+	// public T createObject(){
+	// 	return createObjectOp.get();
+	// }
 	public void addObject(T object){
 		addObjectOp.accept(object);
 	}
@@ -120,6 +124,10 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 		setSlicerOp.accept(slicer);
 		return this;
 	}
+	public Board<T> setTableCustomizer(Consumer<TableCustomizationRenderingContext> customizer){
+		setTableCustomizerOp.accept(customizer);
+		return this;
+	}
 	public void renderSorter(RenderingContext ctx){
 		renderSorterOp.accept(ctx);
 	}
@@ -132,10 +140,20 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	public Class<T> getType(){
 		return type;
 	}
-
+	public void customizeTable(TableCustomizationRenderingContext ctx){
+		customizeTableOp.accept(ctx);
+	}
+	/**
+	 * Registers a board, if it is not registered yet.
+	 * @return the feature, registered or already present
+	 */
 	public static <T extends Serializable> Feature<Board<T>> registerBoard(String name,Class<T> clazz){
 		Board<T> board=new Board<>(name,clazz);
 		Feature<Board<T>> feature=new Feature<>(board);
+		feature.load();
+		return registerBoard(name,feature);
+	}
+	public static <T extends Serializable> Feature<Board<T>> registerBoard(String name,Feature<Board<T>>feature){
 		registeredBoards.put(name,feature);
 		return feature;
 	}

@@ -74,6 +74,8 @@ public class FileStorageManager implements StorageManager{
 		}
 		firstLaunch=(!new File(folder+"Data.ser"+version).exists()&&url==null);
 		loadDefaults();
+		// Load persisted data
+		data.load(new File(folder,"data.bin"));
 	}
 	public File getFolder(){
 		return folder;

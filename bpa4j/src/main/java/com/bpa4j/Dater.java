@@ -2,13 +2,8 @@ package com.bpa4j;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.function.BiFunction;
+import com.bpa4j.defaults.features.transmission_contracts.DatedList.DateRenderingContext;
 
-import javax.swing.JComponent;
-
-/**
- * Just a {@link Serializable} {@link BiFunction}, taking {@link LocalDate} (as a second argument) and returning {@link JComponent}.
- */
-public interface Dater<T>extends BiFunction<T,LocalDate,JComponent>,Serializable{
-    
+public interface Dater<T>extends Serializable{
+    public void render(T t,LocalDate date,DateRenderingContext ctx);
 }

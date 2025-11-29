@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
@@ -24,6 +23,7 @@ import com.bpa4j.defaults.editables.Processable;
 import com.bpa4j.defaults.features.transmission_contracts.Board;
 import com.bpa4j.defaults.features.transmission_contracts.Calendar;
 import com.bpa4j.defaults.features.transmission_contracts.DatedList;
+import com.bpa4j.defaults.features.transmission_contracts.DatedList.DateRenderingContext;
 import com.bpa4j.defaults.features.transmission_contracts.ItemList;
 import com.bpa4j.defaults.features.transmission_contracts.ModelEditing;
 import com.bpa4j.defaults.features.transmission_contracts.Report;
@@ -53,6 +53,7 @@ import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.UIState;
 import com.bpa4j.ui.swing.features.SwingBoardRenderer;
 import com.bpa4j.ui.swing.features.SwingBoardRenderer.SwingConfiguratorRenderingContext;
+import com.bpa4j.ui.swing.features.SwingDatedListRenderer.SwingDatedListRenderingContext;
 import com.bpa4j.ui.swing.util.PathIcon;
 import com.bpa4j.util.testgen.TestGen;
 
@@ -176,8 +177,8 @@ public final class FullTester{
 		public String toString(){return "Олимпиада";}
 	}
 	public static class MyDater implements Dater<MyProcessable>{
-		public JComponent apply(MyProcessable t,LocalDate u){
-			return new JSpinner();
+		public void render(MyProcessable t,LocalDate date,DateRenderingContext context){
+			if(context instanceof SwingDatedListRenderingContext ctx)ctx.getTarget().add(new JSpinner());
 		}
 	}
 	public enum AppRole implements Role{

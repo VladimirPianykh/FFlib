@@ -17,6 +17,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import com.bpa4j.core.Editable;
+import com.bpa4j.defaults.features.transmission_contracts.Board.TableCustomizationRenderingContext;
 import com.bpa4j.defaults.table.FieldCellValue;
 import com.bpa4j.defaults.table.FormCellEditor;
 import com.bpa4j.editor.EditorEntry;
@@ -48,7 +49,7 @@ public class SwingTableModuleRenderer implements ModuleRenderer<TableModule>{
                 m.addRow(v);
             }
             t.setModel(m);
-            for(Consumer<JTable>c:module.getTableDecorators())c.accept(t);
+            for(Consumer<TableCustomizationRenderingContext> c:module.getTableDecorators())c.accept(new SwingBoardRenderer.SwingTableCustomizationRenderingContext(t));
             JScrollPane s=new JScrollPane(t,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
             tab.add(s,BorderLayout.CENTER);
             HButton b=new HButton(){

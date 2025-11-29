@@ -37,13 +37,16 @@ public class Feature<F extends FeatureTransmissionContract>{
     public void save(){
         saver.save(contract);
     }
-    FeatureModel<F>getModel(){
+    public void load(){
+        saver.load(contract);
+    }
+    protected FeatureModel<F>getModel(){
         return model;
     }
-    FeatureRenderer<F>getRenderer(){
+    protected FeatureRenderer<F>getRenderer(){
         return renderer;
     }
-    FeatureSaver<F>getSaver(){
+    protected FeatureSaver<F>getSaver(){
         return saver;
     }
 	public Iterable<ImplementedInfo>getImplementedInfo(){

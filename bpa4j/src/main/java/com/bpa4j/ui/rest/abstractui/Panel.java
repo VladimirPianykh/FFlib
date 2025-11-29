@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
@@ -58,7 +57,7 @@ public class Panel extends Component{
 	}
 	public void update(){
 		super.update();
-		for(Component c:getComponents())
+		for(Component c:components)
 			c.update();
 		layoutManager.layout(this);
 		valid=true;
@@ -69,9 +68,9 @@ public class Panel extends Component{
 		return Map.of("type","panel","x",getX(),"y",getY(),"width",getWidth(),"height",getHeight(),"children",ch);
 	}
 	public void callFunction(String id){
-		for(Component c:getComponents())c.callFunction(id);
+		for(Component c:components)c.callFunction(id);
 	}
 	public void modifyComponent(String id,Map<String,Object>update){
-		for(Component c:getComponents())c.modifyComponent(id,update);
+		for(Component c:components)c.modifyComponent(id,update);
 	}
 }

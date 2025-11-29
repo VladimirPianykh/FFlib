@@ -141,7 +141,7 @@ public class SwingReportRenderer implements ReportRenderer{
 		g2.dispose();
 	}
 	public void paint(Graphics2D g2,BufferedImage image,int h){
-		// TODO: paint report icon
+		
 	}
 	public void fillTab(JPanel content,JPanel tab,Font font){
 		tab.setLayout(new BorderLayout());
@@ -170,7 +170,7 @@ public class SwingReportRenderer implements ReportRenderer{
 		saver.run();
 		tab.add(panel,BorderLayout.SOUTH);
 	}
-
+	
 	/**
 	 * DataRendererRenderer implementation for TableDataRenderer.
 	 * Renders table components into the Swing panel by accessing the data renderer's properties.
@@ -266,7 +266,6 @@ public class SwingReportRenderer implements ReportRenderer{
 			}
 		}
 	}
-
 	/**
 	 * DataRendererRenderer implementation for AnswerDataRenderer.
 	 * Renders answer list components into the Swing panel by accessing the data renderer's properties.
@@ -292,7 +291,6 @@ public class SwingReportRenderer implements ReportRenderer{
 			swingCtx.getPanel().add(wrapper);
 		}
 	}
-
 	/**
 	 * DataRendererRenderer implementation for ChartDataRenderer.
 	 * Renders chart components into the Swing panel by accessing the data renderer's properties.
