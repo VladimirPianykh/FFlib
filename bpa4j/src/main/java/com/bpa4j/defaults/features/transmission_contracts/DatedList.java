@@ -8,12 +8,10 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import com.bpa4j.Dater;
 import com.bpa4j.core.Editable;
-import com.bpa4j.core.RenderingContext;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class DatedList<T extends Editable> implements FeatureTransmissionContract{
-	public static interface DateRenderingContext extends RenderingContext{}
 	private static final Map<String,Feature<? extends DatedList<?>>> registeredDatedLists=new HashMap<>();
 
 	public Supplier<Set<T>> getObjectsOp;

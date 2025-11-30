@@ -22,67 +22,68 @@ import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.WorkTabButton;
+import com.bpa4j.ui.swing.features.SwingEditableListRenderer.SwingItemRenderingContext;
 
 public class SwingModelEditingRenderer implements FeatureRenderer<ModelEditing>{
-    private ModelEditing contract;
-    public SwingModelEditingRenderer(ModelEditing contract){
-        this.contract=contract;
-    }
-    public void paint(Graphics2D g2,BufferedImage image,int h){
-        g2.setStroke(new BasicStroke(h/40));
-        g2.drawPolyline(new int[]{h/4,h/4+h/20,h*3/4+h/20,h*3/4+h/20+h/10,h*3/4+h/5,h*3/4+h/5,h*3/4+h/5-h/40,h*3/4+h/5-h/40,h*3/4+h/20+h/10,h*3/4+h/40},new int[]{h*3/4,h*3/4,h/4,h/4,h/4-h/20,h/4-h/20-h/10,h/4-h/20-h/10,h/4-h/10,h/4-h/20,h/4-h/20},10);
-        for(int x=0;x<h;x++)for(int y=0;y<h-x;y++)image.setRGB(x,y,image.getRGB(h-y-1,h-x-1));
-    }
-    public void fillTab(JPanel content,JPanel tab,Font font,FeatureRenderingContext context){
+	private ModelEditing contract;
+	public SwingModelEditingRenderer(ModelEditing contract){
+		this.contract=contract;
+	}
+	public void paint(Graphics2D g2,BufferedImage image,int h){
+		g2.setStroke(new BasicStroke(h/40));
+		g2.drawPolyline(new int[]{h/4,h/4+h/20,h*3/4+h/20,h*3/4+h/20+h/10,h*3/4+h/5,h*3/4+h/5,h*3/4+h/5-h/40,h*3/4+h/5-h/40,h*3/4+h/20+h/10,h*3/4+h/40},new int[]{h*3/4,h*3/4,h/4,h/4,h/4-h/20,h/4-h/20-h/10,h/4-h/20-h/10,h/4-h/10,h/4-h/20,h/4-h/20},10);
+		for(int x=0;x<h;x++)for(int y=0;y<h-x;y++)image.setRGB(x,y,image.getRGB(h-y-1,h-x-1));
+	}
+	public void fillTab(JPanel content,JPanel tab,Font font,FeatureRenderingContext context){
 		contract.setGetRenderingContextOp(()->context);
-        SwingFeatureRenderingContext ctx=(SwingFeatureRenderingContext)context;
-        List<EditableGroup<?>>groupList=getTransmissionContract().getGroups();
-        int columns=0;
-        for(EditableGroup<?>group:groupList)try{
-            if(group.invisible)continue;
-            boolean canSee=User.getActiveUser().hasPermission(DefaultPermission.READ)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
-            canCreate=User.getActiveUser().hasPermission(DefaultPermission.CREATE)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
-            if(canSee||canCreate)++columns;
-        }catch(NoSuchElementException ex){throw new NoSuchElementException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.",ex);}
-        for(EditableGroup<?>group:groupList)try{
-            if(group.invisible)continue;
-            boolean canSee=User.getActiveUser().hasPermission(DefaultPermission.READ)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
-            canCreate=User.getActiveUser().hasPermission(DefaultPermission.CREATE)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
-            if(!canSee&&!canCreate)continue;
-            int n=(canSee?group.size():0)+(canCreate?1:0);
-            JPanel subTab=new JPanel(null);
-            subTab.setOpaque(false);
-            subTab.setSize(tab.getWidth()/columns,tab.getHeight());
-            JPanel p=WorkTabButton.createTable(n,1,subTab,true);
-            if(canSee)for(Editable r:group){
-                JButton b=group.createElementButton(r,font);
-                b.addActionListener(new ActionListener(){
-                    public void actionPerformed(ActionEvent e){
-                        ProgramStarter.editor.constructEditor(r,false,()->{group.remove(r);p.remove(b);p.revalidate();},ctx);
-                    }
-                });
-                p.add(b);
-            }
-            if(canCreate){
-                JButton add=group.createAddButton(font);
-                add.addActionListener(new ActionListener(){
-                    public void actionPerformed(ActionEvent e){
-                        try{
-                            if(ProgramStarter.editor==null)throw new NullPointerException("Editor cannot be null.");
-                            Editable nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
-                            group.add(nEditable);
-                            ProgramStarter.editor.constructEditor(nEditable,true,()->{group.remove(nEditable);p.revalidate();},ctx);
-                        }catch(ReflectiveOperationException ex){throw new IllegalStateException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}
-                    }
-                });
-                p.add(add);
-            }
-            tab.add(subTab);
-        }catch(NoSuchElementException ex){throw new NoSuchElementException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.",ex);}
-        tab.setLayout(new GridLayout(1,0));
-        tab.revalidate();
-        tab.repaint(); 
-    }
+		SwingFeatureRenderingContext ctx=(SwingFeatureRenderingContext)context;
+		List<EditableGroup<?>>groupList=getTransmissionContract().getGroups();
+		int columns=0;
+		for(EditableGroup<?>group:groupList)try{
+			if(group.invisible)continue;
+			boolean canSee=User.getActiveUser().hasPermission(DefaultPermission.READ)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
+			canCreate=User.getActiveUser().hasPermission(DefaultPermission.CREATE)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
+			if(canSee||canCreate)++columns;
+		}catch(NoSuchElementException ex){throw new NoSuchElementException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.",ex);}
+		for(EditableGroup<?>group:groupList)try{
+			if(group.invisible)continue;
+			boolean canSee=User.getActiveUser().hasPermission(DefaultPermission.READ)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())).findAny().get()),
+			canCreate=User.getActiveUser().hasPermission(DefaultPermission.CREATE)||User.getActiveUser().hasPermission(User.registeredPermissions.stream().filter(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())).findAny().get());
+			if(!canSee&&!canCreate)continue;
+			int n=(canSee?group.size():0)+(canCreate?1:0);
+			JPanel subTab=new JPanel(null);
+			subTab.setOpaque(false);
+			subTab.setSize(tab.getWidth()/columns,tab.getHeight());
+			JPanel p=WorkTabButton.createTable(n,1,subTab,true);
+			if(canSee)for(Editable r:group){
+				ActionListener action=new ActionListener(){
+					public void actionPerformed(ActionEvent e){
+						ProgramStarter.editor.constructEditor(r,false,()->{group.remove(r);p.remove((JButton)e.getSource());p.revalidate();},ctx);
+					}
+				};
+				SwingItemRenderingContext itemCtx=new SwingItemRenderingContext(p,action);
+				group.renderElementButton(r,itemCtx);
+			}
+			if(canCreate){
+				ActionListener action=new ActionListener(){
+					public void actionPerformed(ActionEvent e){
+						try{
+							if(ProgramStarter.editor==null)throw new NullPointerException("Editor cannot be null.");
+							Editable nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
+							group.add(nEditable);
+							ProgramStarter.editor.constructEditor(nEditable,true,()->{group.remove(nEditable);p.revalidate();},ctx);
+						}catch(ReflectiveOperationException ex){throw new IllegalStateException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}
+					}
+				};
+				SwingItemRenderingContext itemCtx=new SwingItemRenderingContext(p,action);
+				group.renderAddButton(itemCtx);
+			}
+			tab.add(subTab);
+		}catch(NoSuchElementException ex){throw new NoSuchElementException("Permission for "+group.type+" not found. You must define READ_"+group.type.getSimpleName().toUpperCase()+" and CREATE_"+group.type.getSimpleName().toUpperCase()+" permissions.",ex);}
+		tab.setLayout(new GridLayout(1,0));
+		tab.revalidate();
+		tab.repaint(); 
+	}
 	public ModelEditing getTransmissionContract(){
 		return contract;
 	}
@@ -98,8 +99,8 @@ public class SwingModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 	}
 	public void renderPreview(FeatureRenderingContext context){
 		SwingPreviewRenderingContext ctx=(SwingPreviewRenderingContext)context;
-        Graphics2D g2=ctx.getPreviewTarget().createGraphics();
+		Graphics2D g2=ctx.getPreviewTarget().createGraphics();
 		paint(g2,ctx.getPreviewTarget(),ctx.getPreviewTarget().getHeight());
-        g2.dispose();
+		g2.dispose();
 	}
 }

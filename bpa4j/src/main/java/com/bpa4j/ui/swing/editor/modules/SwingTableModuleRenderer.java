@@ -25,6 +25,7 @@ import com.bpa4j.editor.ModularEditorRenderer.ModulesRenderingContext;
 import com.bpa4j.editor.ModuleRenderer;
 import com.bpa4j.editor.modules.TableModule;
 import com.bpa4j.ui.swing.SwingModularEditorRenderer.SwingModuleRenderingContext;
+import com.bpa4j.ui.swing.features.SwingBoardRenderer;
 import com.bpa4j.ui.swing.util.HButton;
 
 import java.awt.Graphics;

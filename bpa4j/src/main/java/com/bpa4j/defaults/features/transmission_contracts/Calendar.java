@@ -8,12 +8,24 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import com.bpa4j.Dater;
-
+import com.bpa4j.feature.DaterRenderer;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class Calendar<T extends Calendar.Event> implements FeatureTransmissionContract{
+	public static interface DateRenderingContext{
+		<E> DaterRenderer<E> getRenderer(Dater<E> dater);
+	}
 	private static final Map<String,Feature<? extends Calendar<?>>> registeredCalendars=new HashMap<>();
+	private static final Map<Class<? extends Dater<?>>,DaterRenderer<?>> daterRenderers=new HashMap<>();
+
+	public static void registerDaterRenderer(Class<? extends Dater<?>> daterClass,DaterRenderer<?> renderer){
+		daterRenderers.put(daterClass,renderer);
+	}
+	@SuppressWarnings("unchecked")
+	public static <E> DaterRenderer<E> getDaterRenderer(Class<? extends Dater<E>> daterClass){
+		return (DaterRenderer<E>)daterRenderers.get(daterClass);
+	}
 
 	public static interface Event{}
 	public Supplier<HashMap<LocalDate,List<T>>> getEventsOp;

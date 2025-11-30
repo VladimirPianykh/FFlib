@@ -12,6 +12,7 @@ import com.bpa4j.core.EditableDemo;
 import com.bpa4j.defaults.input.SelectFromEditor;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.EditorEntryBaseRenderer;
+import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.SwingEditorEntryRenderingContext;
 import com.bpa4j.ui.swing.util.LazyPanel;
 import com.bpa4j.util.SprintUI;
 
@@ -20,13 +21,9 @@ import com.bpa4j.util.SprintUI;
  * @author AI-generated
  */
 public class SwingSelectFromEditorRenderer implements EditorEntryBaseRenderer{
-	public void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
-		// Not used for Swing, see createEditorComponent
-	}
-	
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object createEditorComponent(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
+	public void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>> saver,Wrapper<EditableDemo> demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
 		Wrapper<Supplier<?>>w=new Wrapper<Supplier<?>>(()->{
 			try{
 				return f.get(o);
@@ -35,7 +32,7 @@ public class SwingSelectFromEditorRenderer implements EditorEntryBaseRenderer{
 			}
 		});
 		saver.var=()->w.var.get();
-		return new LazyPanel(panel->{
+		LazyPanel panel=new LazyPanel(p->{
 			try{
 				ArrayList<?>elements=SelectFromEditor.getElementSuppliers().get(f).apply(demo.var.get());
 				if(Collection.class.isAssignableFrom(f.getType())){
@@ -60,7 +57,7 @@ public class SwingSelectFromEditorRenderer implements EditorEntryBaseRenderer{
 							throw new IllegalStateException(ex);
 						}
 					};
-					panel.add(SprintUI.wrap(m));
+					p.add(SprintUI.wrap(m));
 				}else{
 					JComboBox<Object>c=new JComboBox<>();
 					for(Object item:elements.toArray())
@@ -73,11 +70,12 @@ public class SwingSelectFromEditorRenderer implements EditorEntryBaseRenderer{
 							throw new IllegalStateException(ex);
 						}
 					};
-					panel.add(c);
+					p.add(c);
 				}
 			}catch(IllegalAccessException ex){
 				throw new IllegalStateException(ex);
 			}
 		});
+		((SwingEditorEntryRenderingContext)context).addComponent(panel);
 	}
 }

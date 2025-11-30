@@ -23,7 +23,6 @@ import com.bpa4j.defaults.editables.Processable;
 import com.bpa4j.defaults.features.transmission_contracts.Board;
 import com.bpa4j.defaults.features.transmission_contracts.Calendar;
 import com.bpa4j.defaults.features.transmission_contracts.DatedList;
-import com.bpa4j.defaults.features.transmission_contracts.DatedList.DateRenderingContext;
 import com.bpa4j.defaults.features.transmission_contracts.ItemList;
 import com.bpa4j.defaults.features.transmission_contracts.ModelEditing;
 import com.bpa4j.defaults.features.transmission_contracts.Report;
@@ -177,8 +176,8 @@ public final class FullTester{
 		public String toString(){return "Олимпиада";}
 	}
 	public static class MyDater implements Dater<MyProcessable>{
-		public void render(MyProcessable t,LocalDate date,DateRenderingContext context){
-			if(context instanceof SwingDatedListRenderingContext ctx)ctx.getTarget().add(new JSpinner());
+		public void render(MyProcessable t,LocalDate date,com.bpa4j.defaults.features.transmission_contracts.Calendar.DateRenderingContext context){
+			if(context instanceof SwingDatedListRenderingContext ctx)ctx.addComponent(new JSpinner());
 		}
 	}
 	public enum AppRole implements Role{

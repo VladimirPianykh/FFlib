@@ -8,6 +8,8 @@ import com.bpa4j.defaults.input.ConditionalWEditor;
 import com.bpa4j.defaults.input.EmptySaver;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.EditorEntryBaseRenderer;
+import com.bpa4j.ui.rest.abstractui.Component;
+import com.bpa4j.ui.rest.editor.modules.RestFormModuleRenderer;
 
 /**
  * REST renderer for ConditionalWEditor.
@@ -20,8 +22,10 @@ public class RestConditionalWEditorRenderer implements EditorEntryBaseRenderer{
 			if(ConditionalWEditor.getConditions().get(f).test(o)){
 				if(editor==null){
 					// Use default REST rendering
-					// This would need access to RestFormModuleRenderer.createEditorComponent
-					saver.var=()->null; // Placeholder
+					Component c=RestFormModuleRenderer.createEditorComponent(o,f,saver);
+					if(context instanceof RestFormModuleRenderer.RestEditorEntryRenderingContext){
+						((RestFormModuleRenderer.RestEditorEntryRenderingContext)context).addComponent(c);
+					}
 				}else{
 					editor.renderEditorBase(o,f,saver,demo,context);
 				}

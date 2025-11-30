@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Editable;
@@ -47,11 +48,18 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		editorRenderers.put(SelectionListEditor.class,new RestSelectionListEditorRenderer());
 	}
 	// EditorEntryRenderingContext implementation
-	private static class RestEditorEntryRenderingContext implements EditorEntryBase.EditorEntryRenderingContext{
+	public static class RestEditorEntryRenderingContext implements EditorEntryBase.EditorEntryRenderingContext{
+		private Panel target;
+		public RestEditorEntryRenderingContext(Panel target){
+			this.target=target;
+		}
 		public EditorEntryBaseRenderer getRenderer(EditorEntryBase base){
 			EditorEntryBaseRenderer renderer=editorRenderers.get(base.getClass());
 			if(renderer==null) throw new IllegalStateException("No renderer registered for "+base.getClass());
 			return renderer;
+		}
+		public void addComponent(Component c){
+			target.add(c);
 		}
 	}
 	public void createTab(Editable editable,boolean isNew,Runnable deleter,FormModule module,ModulesRenderingContext ctx){
@@ -59,17 +67,19 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		Panel container=rctx.getTarget();
 		container.removeAll();
 		container.setLayout(new GridLayout(0,2,5,5));
-		List<Runnable> savers=new ArrayList<>();
+		List<Supplier<?>> savers=new ArrayList<>();
 		Label nameLabel=new Label("Name");
 		TextField nameField=new TextField(editable.name);
 		savers.add(()->editable.name=nameField.getText());
 		container.add(nameLabel);
 		container.add(nameField);
+		ArrayList<Field> editableFields=new ArrayList<>();
 		for(Field f:editable.getClass().getFields())try{
 			EditorEntry a=f.getAnnotation(EditorEntry.class);
 			if(a==null)continue;
+			editableFields.add(f);
 			boolean hide=false,readonly=false;
-			for(String p:a.properties()){
+			for(String p:a.properties()){ //Handling entry flags
 				if("hide".equals(p))hide=true;
 				if("readonly".equals(p)||(!isNew&&"initonly".equals(p)))readonly=true;
 			}
@@ -84,25 +94,21 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			}
 			Component editorComponent;
 			if(a.editorBaseSource()==EditorEntryBase.class){
-				editorComponent=createEditorComponent(editable,f,savers);
+				Wrapper<Supplier<?>> nextSaver=new Wrapper<>(null);
+				editorComponent=createEditorComponent(editable,f,nextSaver);
+				savers.add(nextSaver.var);
 			}else{
 				try{
 					EditorEntryBase editorBase=a.editorBaseSource().getDeclaredConstructor().newInstance();
-					EditorEntryBase.EditorEntryRenderingContext renderingContext=new RestEditorEntryRenderingContext();
-					EditorEntryBaseRenderer renderer=renderingContext.getRenderer(editorBase);
+					Panel target=new Panel();
+					EditorEntryBase.EditorEntryRenderingContext renderingContext=new RestEditorEntryRenderingContext(target);
 					Wrapper<Supplier<?>> saver=new Wrapper<>(null);
 					Wrapper<EditableDemo> demo=new Wrapper<>(null);
-					Object component=renderer.createEditorComponent(editable,f,saver,demo,editorBase,renderingContext);
-					editorComponent=(Component)component;
-					if(saver.var!=null){
-						savers.add(()->{
-							try{
-								f.set(editable,saver.var.get());
-							}catch(IllegalAccessException e){
-								throw new IllegalStateException(e);
-							}
-						});
-					}
+					editorBase.renderEditorBase(editable,f,saver,demo,renderingContext);
+					// Extract the component from the target panel
+					editorComponent=target.getComponents().isEmpty()?null:target.getComponents().get(0);
+					Objects.requireNonNull(saver.var,"All entry editors must set a saver.");
+					savers.add(saver.var);
 				}catch(ReflectiveOperationException e){
 					throw new IllegalStateException(e);
 				}
@@ -113,63 +119,49 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		}
 		Button ok=new Button("OK");
 		ok.setOnClick(b->{
-			for(Runnable s:savers)s.run();
+			for(int i=0;i<editableFields.size();++i)try{
+				editableFields.get(i).set(editable,savers.get(i).get());
+			}catch(ReflectiveOperationException ex){
+				throw new IllegalStateException(ex);
+			}
 			rctx.getBase().rebuild();
 		});
 		container.add(new Label(""));
 		container.add(ok);
 	}
-	private Component createEditorComponent(Editable editable,Field f,List<Runnable>savers) throws IllegalAccessException{
+	public static Component createEditorComponent(Object o,Field f,Wrapper<Supplier<?>> saver) throws IllegalAccessException{
 		Class<?>type=f.getType();
 		if(type==String.class){
-			String value=(String)f.get(editable);
+			String value=(String)f.get(o);
 			TextField tf=new TextField(value);
-			savers.add(()->{
-				try{
-					f.set(editable,tf.getText());
-				}catch(IllegalAccessException e){
-					throw new IllegalStateException(e);
-				}
-			});
+			saver.var=()->tf.getText();
 			return tf;
 		}else if(type==boolean.class||type==Boolean.class){
-			boolean value=type==boolean.class?f.getBoolean(editable):(Boolean)f.get(editable);
+			boolean value=type==boolean.class?f.getBoolean(o):(Boolean)f.get(o);
 			CheckBox cb=new CheckBox();
 			cb.setSelected(value);
-			savers.add(()->{
-				try{
-					if(type==boolean.class)f.setBoolean(editable,cb.isSelected());
-					else f.set(editable,Boolean.valueOf(cb.isSelected()));
-				}catch(IllegalAccessException e){
-					throw new IllegalStateException(e);
-				}
-			});
+			saver.var=()->cb.isSelected();
 			return cb;
 		}else{
-			Object value=f.get(editable);
+			Object value=f.get(o);
 			TextField tf=new TextField(value==null?"":String.valueOf(value));
-			savers.add(()->{
+			saver.var=()->{
 				try{
 					String txt=tf.getText();
 					if(type==int.class||type==Integer.class){
 						Integer v=txt.isBlank()?null:Integer.parseInt(txt);
-						if(type==int.class)f.setInt(editable,v==null?0:v);
-						else f.set(editable,v);
+						return type==int.class?(v==null?Integer.valueOf(0):v):v;
 					}else if(type==double.class||type==Double.class){
 						Double v=txt.isBlank()?null:Double.parseDouble(txt);
-						if(type==double.class)f.setDouble(editable,v==null?0d:v);
-						else f.set(editable,v);
+						return type==double.class?(v==null?Double.valueOf(0d):v):v;
 					}else if(type==float.class||type==Float.class){
 						Float v=txt.isBlank()?null:Float.parseFloat(txt);
-						if(type==float.class)f.setFloat(editable,v==null?0f:v);
-						else f.set(editable,v);
-					}else{
-						f.set(editable,txt);
-					}
-				}catch(ReflectiveOperationException|NumberFormatException e){
+						return type==float.class?(v==null?Float.valueOf(0f):v):v;
+					}else return txt;
+				}catch(NumberFormatException e){
 					throw new IllegalStateException(e);
 				}
-			});
+			};
 			return tf;
 		}
 	}

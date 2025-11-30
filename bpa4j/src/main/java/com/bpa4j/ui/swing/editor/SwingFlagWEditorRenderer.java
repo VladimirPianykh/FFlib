@@ -13,18 +13,15 @@ import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.EditorEntryBaseRenderer;
 import com.bpa4j.defaults.input.FlagWEditor;
 import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
+import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.SwingEditorEntryRenderingContext;
 
 /**
  * Swing renderer for FlagWEditor.
  * @author AI-generated
  */
 public class SwingFlagWEditorRenderer implements EditorEntryBaseRenderer{
-	public void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
-		// Not used for Swing, see createEditorComponent
-	}
-	
 	@Override
-	public Object createEditorComponent(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
+	public void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>> saver,Wrapper<EditableDemo> demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
 		try{
 			EditorEntryBase editor=FlagWEditor.getTypes().get(f)==null?null:FlagWEditor.getTypes().get(f).getDeclaredConstructor().newInstance();
 			Object d=FlagWEditor.getDefaults().get(f),init=FlagWEditor.getInitials().get(f).get();
@@ -37,8 +34,9 @@ public class SwingFlagWEditorRenderer implements EditorEntryBaseRenderer{
 			if(editor==null){
 				c=SwingFormModuleRenderer.wrapEditorComponent(SwingFormModuleRenderer.createEditorBase(o,f,subSaver),null);
 			}else{
-				Object editorComponent=context.getRenderer(editor).createEditorComponent(o,f,subSaver,demo,editor,context);
-				c=(JComponent)editorComponent;
+				JPanel target=new JPanel();
+				context.getRenderer(editor).renderEditorBase(o,f,subSaver,demo,editor,context);
+				c=(JComponent)target.getComponent(0);
 			}
 			if(disabled)f.set(o,d);
 			b.addActionListener(e->{
@@ -52,7 +50,7 @@ public class SwingFlagWEditorRenderer implements EditorEntryBaseRenderer{
 				p.add(c);
 			}
 			saver.var=()->b.isSelected()?subSaver.var.get():d;
-			return p;
+			((SwingEditorEntryRenderingContext)context).addComponent(p);
 		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 	}
 }
