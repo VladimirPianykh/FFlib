@@ -183,8 +183,12 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 				JPanel target=new JPanel();
 				EditorEntryBase.EditorEntryRenderingContext renderingContext=new SwingEditorEntryRenderingContext(target);
 				editorBase.renderEditorBase(editable,f,currentSaver,demo,renderingContext);
+<<<<<<< HEAD
 				if(target.getComponentCount()>0) c=(JComponent)target.getComponent(0);
 				else c=null;
+=======
+				c=(JComponent)target.getComponent(0);
+>>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 				if(c!=null) c=wrapEditorComponent(c,font);
 			}
 			if(currentSaver.var==null) throw new IllegalStateException("Saver for "+f.getName()+" is null.");

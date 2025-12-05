@@ -7,7 +7,11 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+<<<<<<< HEAD
 import java.util.concurrent.atomic.AtomicInteger;
+=======
+import java.util.Objects;
+>>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 import java.util.function.Supplier;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Editable;
@@ -92,6 +96,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		}
 
 		container.removeAll();
+<<<<<<< HEAD
 		container.setLayout(new com.bpa4j.ui.rest.abstractui.layout.BorderLayout(10,10));
 
 		// Name Panel (North)
@@ -120,8 +125,22 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			EditorEntry a=f.getAnnotation(EditorEntry.class);
 			if(a==null)continue;
 
+=======
+		container.setLayout(new GridLayout(0,2,5,5));
+		List<Supplier<?>> savers=new ArrayList<>();
+		Label nameLabel=new Label("Name");
+		TextField nameField=new TextField(editable.name);
+		savers.add(()->editable.name=nameField.getText());
+		container.add(nameLabel);
+		container.add(nameField);
+		ArrayList<Field> editableFields=new ArrayList<>();
+		for(Field f:editable.getClass().getFields())try{
+			EditorEntry a=f.getAnnotation(EditorEntry.class);
+			if(a==null)continue;
+			editableFields.add(f);
+>>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 			boolean hide=false,readonly=false;
-			for(String p:a.properties()){
+			for(String p:a.properties()){ //Handling entry flags
 				if("hide".equals(p))hide=true;
 				if("readonly".equals(p)||(!isNew&&"initonly".equals(p)))readonly=true;
 			}
@@ -141,6 +160,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			if(a.editorBaseSource()==EditorEntryBase.class){
 				Wrapper<Supplier<?>> nextSaver=new Wrapper<>(null);
 				editorComponent=createEditorComponent(editable,f,nextSaver);
+<<<<<<< HEAD
 				if(nextSaver.var==null){
 					if(THROW_ON_NULL_SAVER) throw new IllegalStateException("Saver not set for field: "+f.getName());
 					nextSaver.var=new EmptySaver(); // Fallback
@@ -217,6 +237,23 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 						Object savedValue=saver.get();
 						fields.get(idx).set(editable,savedValue);
 					}
+=======
+				savers.add(nextSaver.var);
+			}else{
+				try{
+					EditorEntryBase editorBase=a.editorBaseSource().getDeclaredConstructor().newInstance();
+					Panel target=new Panel();
+					EditorEntryBase.EditorEntryRenderingContext renderingContext=new RestEditorEntryRenderingContext(target);
+					Wrapper<Supplier<?>> saver=new Wrapper<>(null);
+					Wrapper<EditableDemo> demo=new Wrapper<>(null);
+					editorBase.renderEditorBase(editable,f,saver,demo,renderingContext);
+					// Extract the component from the target panel
+					editorComponent=target.getComponents().isEmpty()?null:target.getComponents().get(0);
+					Objects.requireNonNull(saver.var,"All entry editors must set a saver.");
+					savers.add(saver.var);
+				}catch(ReflectiveOperationException e){
+					throw new IllegalStateException(e);
+>>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 				}
 			}
 
@@ -232,6 +269,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			if(THROW_ON_FIELD_ACCESS_ERROR) throw new IllegalStateException("Error saving field value",ex);
 			// Fallback: continue anyway
 		}
+<<<<<<< HEAD
 	});
 
 	// Add buttons in vertical order: back above OK
@@ -240,9 +278,20 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		cancel.setOnClick(b->{
 			if(deleter!=null) deleter.run();
 			rctx.close();
+=======
+		Button ok=new Button("OK");
+		ok.setOnClick(b->{
+			for(int i=0;i<editableFields.size();++i)try{
+				editableFields.get(i).set(editable,savers.get(i).get());
+			}catch(ReflectiveOperationException ex){
+				throw new IllegalStateException(ex);
+			}
+			rctx.getBase().rebuild();
+>>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 		});
 		buttonPanel.add(cancel);
 	}
+<<<<<<< HEAD
 	buttonPanel.add(back);
 	buttonPanel.add(ok);
 
@@ -259,6 +308,8 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 	}
 
 	@SuppressWarnings("unchecked")
+=======
+>>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 	public static Component createEditorComponent(Object o,Field f,Wrapper<Supplier<?>> saver) throws IllegalAccessException{
 		Class<?>type=f.getType();
 
@@ -268,15 +319,20 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			TextField tf=new TextField(value);
 			saver.var=()->tf.getText();
 			return tf;
+<<<<<<< HEAD
 		}
 
 		// boolean/Boolean
 		else if(type==boolean.class||type==Boolean.class){
+=======
+		}else if(type==boolean.class||type==Boolean.class){
+>>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 			boolean value=type==boolean.class?f.getBoolean(o):(Boolean)f.get(o);
 			CheckBox cb=new CheckBox();
 			cb.setSelected(value);
 			saver.var=()->cb.isSelected();
 			return cb;
+<<<<<<< HEAD
 		}
 
 		// int
@@ -289,6 +345,26 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 					return txt.isBlank()?0:Integer.parseInt(txt);
 				}catch(NumberFormatException e){
 					return 0;
+=======
+		}else{
+			Object value=f.get(o);
+			TextField tf=new TextField(value==null?"":String.valueOf(value));
+			saver.var=()->{
+				try{
+					String txt=tf.getText();
+					if(type==int.class||type==Integer.class){
+						Integer v=txt.isBlank()?null:Integer.parseInt(txt);
+						return type==int.class?(v==null?Integer.valueOf(0):v):v;
+					}else if(type==double.class||type==Double.class){
+						Double v=txt.isBlank()?null:Double.parseDouble(txt);
+						return type==double.class?(v==null?Double.valueOf(0d):v):v;
+					}else if(type==float.class||type==Float.class){
+						Float v=txt.isBlank()?null:Float.parseFloat(txt);
+						return type==float.class?(v==null?Float.valueOf(0f):v):v;
+					}else return txt;
+				}catch(NumberFormatException e){
+					throw new IllegalStateException(e);
+>>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 				}
 			};
 			return tf;
