@@ -38,6 +38,8 @@ public class BorderLayout implements LayoutManager{
 
     @Override
     public void layout(Panel target){
+        if(target.getWidth()<=0||target.getHeight()<=0){ return; }
+
         int top=0;
         int bottom=target.getHeight();
         int left=0;

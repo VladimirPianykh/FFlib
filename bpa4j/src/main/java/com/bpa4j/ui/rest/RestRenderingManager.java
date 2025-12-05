@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import com.bpa4j.core.EditableGroup;
+import com.bpa4j.core.EditableGroupRenderer;
 import com.bpa4j.core.NavigatorRenderer;
 import com.bpa4j.core.RegScreen;
 import com.bpa4j.core.RenderingManager;
@@ -88,7 +90,7 @@ public class RestRenderingManager implements RenderingManager{
 		Panel p=new Panel(new GridLayout(1,1,5,5));
 		p.setSize(RestRenderingManager.DEFAULT_SIZE);
 		Window w=new Window(p);
-		return new RestFeatureRenderingContext(state,w,p);
+		return new RestFeatureRenderingContext(state,w,p,null);
 	}
 	@SuppressWarnings({"unchecked"})
 	private void loadDefaults(){
@@ -103,5 +105,9 @@ public class RestRenderingManager implements RenderingManager{
 		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.ModelEditing.class,f->new RestModelEditingRenderer(f));
 		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.DatedList.class,f->new RestDatedListRenderer<>(f));
 		putEditorRenderer(com.bpa4j.editor.ModularEditor.class,e->new RestModularEditorRenderer());
+	}
+	@SuppressWarnings("unchecked")
+	public <T extends EditableGroup<?>> EditableGroupRenderer<? super T> getEditableGroupRenderer(T group){
+		return (EditableGroupRenderer<? super T>)new RestEditableGroupRenderer();
 	}
 }

@@ -11,6 +11,7 @@ import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
+import com.bpa4j.ui.rest.abstractui.Window;
 
 /**
  * REST implementation of {@link ModularEditorRenderer}.
@@ -20,14 +21,28 @@ import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
 public class RestModularEditorRenderer implements ModularEditorRenderer{
 	public static class RestModulesRenderingContext implements ModulesRenderingContext{
 		private final RestFeatureRenderingContext base;
-		public RestModulesRenderingContext(RestFeatureRenderingContext base){
+		private Window w;
+		private Panel target;
+		public RestModulesRenderingContext(RestFeatureRenderingContext base,Window w,Panel target){
 			this.base=base;
+			this.w=w;
+			this.target=target;
 		}
-		public RestFeatureRenderingContext getBase(){
-			return base;
-		}
+		// public RestFeatureRenderingContext getBase(){
+		// 	return base;
+		// }
 		public Panel getTarget(){
-			return base.getTarget();
+			return target;
+		}
+		public void show(){
+			base.getState().showWindow(w);
+		}
+		public void close(){
+			base.getState().close(w);
+			base.rebuild();
+		}
+		public void rebuild(){
+			base.rebuild();
 		}
 	}
 	private static class RestDummyModuleRenderer<M extends EditorModule> implements ModuleRenderer<M>{
@@ -53,15 +68,19 @@ public class RestModularEditorRenderer implements ModularEditorRenderer{
 		}
 		return new RestDummyModuleRenderer<>();
 	}
+	public Panel content=new Panel();
+	public Window window=new Window(content);
+	public RestModularEditorRenderer(){
+		window.setSize(RestRenderingManager.DEFAULT_SIZE);
+		content.setSize(RestRenderingManager.DEFAULT_SIZE);
+	}
 	public ModulesRenderingContext getModulesRenderingContext(FeatureRenderingContext context){
 		if(!(context instanceof RestFeatureRenderingContext))throw new IllegalArgumentException("RestModularEditorRenderer requires RestFeatureRenderingContext.");
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)context;
-		Panel target=rctx.getTarget();
-		target.removeAll();
-		return new RestModulesRenderingContext(rctx);
+		return new RestModulesRenderingContext(rctx,window,content);
 	}
 	public void constructEditor(Editable editable,boolean isNew,Runnable deleter,ModularEditor editor,FeatureRenderingContext context,ModulesRenderingContext moduleContext){
 		RestModulesRenderingContext rctx=(RestModulesRenderingContext)moduleContext;
-		rctx.getBase().rebuild();
+		rctx.show();
 	}
 }

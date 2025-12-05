@@ -26,7 +26,9 @@ import com.bpa4j.Wrapper;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.defaults.features.transmission_contracts.DatedList;
-import com.bpa4j.defaults.features.transmission_contracts.DatedList.DateRenderingContext;
+import com.bpa4j.defaults.features.transmission_contracts.Calendar;
+import com.bpa4j.ui.swing.features.SwingCalendarRenderer.SwingDateRenderingContext;
+import com.bpa4j.feature.DaterRenderer;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.feature.FeatureRenderer;
@@ -34,16 +36,24 @@ import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
+import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.SwingEditorEntryRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 
 public class SwingDatedListRenderer<T extends Editable> implements FeatureRenderer<DatedList<T>>{
-	public static class SwingDatedListRenderingContext implements DateRenderingContext{
+	public static class SwingDatedListRenderingContext implements SwingDateRenderingContext{
 		private JPanel target;
 		public SwingDatedListRenderingContext(JPanel target){
 			this.target=target;
 		}
-		public JPanel getTarget(){
-			return target;
+		// public JPanel getTarget(){
+		// 	return target;
+		// }
+		public void addComponent(JComponent c){
+			target.add(c);
+		}
+		@SuppressWarnings("unchecked")
+		public <E> DaterRenderer<E> getRenderer(Dater<E> dater){
+			return Calendar.getDaterRenderer((Class<? extends Dater<E>>)dater.getClass());
 		}
 	}
 	private DatedList<T> contract;
@@ -162,8 +172,8 @@ public class SwingDatedListRenderer<T extends Editable> implements FeatureRender
 		b.setFont(new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/20));
 		p.add(b);
 		if(finalDater!=null){
-			SwingDatedListRenderingContext dContext=new SwingDatedListRenderingContext(tab);
 			JPanel dates=new JPanel(new GridLayout(1,7));
+			SwingDatedListRenderingContext dContext=new SwingDatedListRenderingContext(dates);
 			dates.setBounds(tab.getWidth()/3,0,flag?tab.getWidth()/2:tab.getWidth()*2/3,tab.getHeight()/10);
 			for(int i=0;i<7;++i)
 				finalDater.render(t,date.var.plusDays(i),dContext);
@@ -184,7 +194,10 @@ public class SwingDatedListRenderer<T extends Editable> implements FeatureRender
 				c.setPreferredSize(new Dimension(tab.getWidth()/6,tab.getHeight()/15));
 				c.setBorder(BorderFactory.createTitledBorder(fields[i].getAnnotation(EditorEntry.class).translation()));
 				if(editors.get(i)==EditorEntryBase.class) c.add(SwingFormModuleRenderer.createEditorBase(finalDater,fields[i],saver));
-				else c.add(editors.get(i).getDeclaredConstructor().newInstance().createEditorBase(finalDater,fields[i],saver,new Wrapper<>(null)));
+				else{
+					SwingEditorEntryRenderingContext ctx=new SwingEditorEntryRenderingContext(c);
+					editors.get(i).getDeclaredConstructor().newInstance().renderEditorBase(finalDater,fields[i],saver,new Wrapper<>(null),ctx);
+				}
 				menu.add(c);
 				savers.add(saver.var);
 			}

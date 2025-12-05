@@ -6,6 +6,7 @@ import com.bpa4j.defaults.features.transmission_contracts.DisposableDocument;
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
+import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
@@ -24,6 +25,13 @@ public class RestDisposableDocumentRenderer<T extends Editable> implements Featu
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)ctx;
 		Panel target=rctx.getTarget();
 		target.removeAll();
+		int targetWidth=target.getWidth();
+		int targetHeight=target.getHeight();
+		if(targetWidth==0||targetHeight==0){
+			targetWidth=RestRenderingManager.DEFAULT_SIZE.width();
+			targetHeight=RestRenderingManager.DEFAULT_SIZE.height();
+			target.setSize(targetWidth,targetHeight);
+		}
 		target.setLayout(new FlowLayout(FlowLayout.CENTER,FlowLayout.CENTER,10,10));
 		
 		Button createBtn=new Button(currentDocument==null?"Create Document":"Edit Document");

@@ -8,9 +8,10 @@ import com.bpa4j.defaults.features.transmission_contracts.EditableList.ItemRende
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
+import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
-import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
+import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
 /**
  * REST renderer for EditableList feature.
@@ -29,7 +30,14 @@ public class RestEditableListRenderer<T extends Editable> implements FeatureRend
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)ctx;
 		Panel target=rctx.getTarget();
 		target.removeAll();
-		target.setLayout(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,5,5));
+		int targetWidth=target.getWidth();
+		int targetHeight=target.getHeight();
+		if(targetWidth==0||targetHeight==0){
+			targetWidth=RestRenderingManager.DEFAULT_SIZE.width();
+			targetHeight=RestRenderingManager.DEFAULT_SIZE.height();
+			target.setSize(targetWidth,targetHeight);
+		}
+		target.setLayout(new GridLayout(0,1,5,5));
 		
 		var group=contract.getGroup();
 

@@ -3,6 +3,7 @@ package com.bpa4j.ui.swing.editor.modules;
 import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -68,6 +69,7 @@ import com.bpa4j.ui.swing.editor.SwingFlagWEditorRenderer;
 import com.bpa4j.ui.swing.editor.SwingFunctionEditorRenderer;
 import com.bpa4j.ui.swing.editor.SwingSelectFromEditorRenderer;
 import com.bpa4j.ui.swing.editor.SwingSelectionListEditorRenderer;
+import com.bpa4j.ui.swing.features.SwingEditableListRenderer.SwingItemRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 import com.bpa4j.ui.swing.util.Message;
 import com.github.lgooddatepicker.components.DatePicker;
@@ -78,7 +80,6 @@ import com.github.lgooddatepicker.components.TimePicker;
  * @author AI-generated
  */
 public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
-	// Renderer registry for EditorEntryBase implementations
 	private static final HashMap<Class<? extends EditorEntryBase>,EditorEntryBaseRenderer> editorRenderers=new HashMap<>();
 	static{
 		editorRenderers.put(FlagWEditor.class,new SwingFlagWEditorRenderer());
@@ -88,12 +89,18 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 		editorRenderers.put(SelectionListEditor.class,new SwingSelectionListEditorRenderer());
 	}
 
-	// EditorEntryRenderingContext implementation
-	private static class SwingEditorEntryRenderingContext implements EditorEntryBase.EditorEntryRenderingContext{
+	public static class SwingEditorEntryRenderingContext implements EditorEntryBase.EditorEntryRenderingContext{
+		private JPanel target;
+		public SwingEditorEntryRenderingContext(JPanel target){
+			this.target=target;
+		}
 		public EditorEntryBaseRenderer getRenderer(EditorEntryBase base){
 			EditorEntryBaseRenderer renderer=editorRenderers.get(base.getClass());
 			if(renderer==null) throw new IllegalStateException("No renderer registered for "+base.getClass());
 			return renderer;
+		}
+		public void addComponent(JComponent c){
+			target.add(c);
 		}
 	}
 	public void createTab(Editable editable,boolean isNew,Runnable deleter,FormModule module,ModulesRenderingContext context){
@@ -173,10 +180,11 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 				c=com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.wrapEditorComponent(com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.createEditorBase(editable,f,currentSaver),font);
 			}else{
 				EditorEntryBase editorBase=a.editorBaseSource().getDeclaredConstructor().newInstance();
-				EditorEntryBase.EditorEntryRenderingContext renderingContext=new SwingEditorEntryRenderingContext();
-				EditorEntryBaseRenderer renderer=renderingContext.getRenderer(editorBase);
-				Object component=renderer.createEditorComponent(editable,f,currentSaver,demo,editorBase,renderingContext);
-				c=(JComponent)component;
+				JPanel target=new JPanel();
+				EditorEntryBase.EditorEntryRenderingContext renderingContext=new SwingEditorEntryRenderingContext(target);
+				editorBase.renderEditorBase(editable,f,currentSaver,demo,renderingContext);
+				if(target.getComponentCount()>0) c=(JComponent)target.getComponent(0);
+				else c=null;
 				if(c!=null) c=wrapEditorComponent(c,font);
 			}
 			if(currentSaver.var==null) throw new IllegalStateException("Saver for "+f.getName()+" is null.");
@@ -194,9 +202,10 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 					JList<String> l=new JList<>();
 					javax.swing.DefaultListModel<String> m=new javax.swing.DefaultListModel<>();
 					m.add(0,"");
+					final JComponent fC=c;
 					l.setCellRenderer((list,value,index,isSelected,cellHasFocus)->{
-						c.setPreferredSize(l.getSize());
-						return c;
+						fC.setPreferredSize(l.getSize());
+						return fC;
 					});
 					l.setModel(m);
 					entry.add(l);
@@ -516,36 +525,27 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 				JPanel a=new JPanel(new GridLayout(0,1));
 				EditableGroup<?> group=(EditableGroup<?>)f.get(o);
 				for(Editable editable:group){
-					JButton b=group.createElementButton(editable,null);
-					b.addActionListener(e->{
-						ProgramStarter.editor.constructEditor(editable,false,()->{
-							group.remove(editable);
-							a.remove(b);
-							a.revalidate();
-						},detached);
-					});
-					a.add(b);
+					group.renderElementButton(editable,createAddCtx(detached,a,group,editable));
 				}
-				JButton create=group.createAddButton(null);
-				create.addActionListener(e->{
+				SwingItemRenderingContext ctx=new SwingItemRenderingContext(a,e->{
 					try{
 						Editable nEditable=group.type.getDeclaredConstructor().newInstance();
 						group.add(nEditable);
-						JButton b=group.createElementButton(nEditable,null);
-						Runnable deleter=()->{
+						Component last=a.getComponent(a.getComponentCount()-1);
+						a.remove(last);
+						group.renderElementButton(nEditable,createAddCtx(detached,a,group,nEditable));
+						a.add(last);
+						ProgramStarter.editor.constructEditor(nEditable,true,()->{
 							group.remove(nEditable);
-							a.remove(b);
+							a.remove((JButton)e.getSource());
 							a.revalidate();
-						};
-						b.addActionListener(evt->ProgramStarter.editor.constructEditor(nEditable,false,deleter,detached));
-						a.add(b,a.getComponentCount()-1);
-						ProgramStarter.editor.constructEditor(nEditable,true,deleter,detached);
+						},detached);
 						a.revalidate();
 					}catch(ReflectiveOperationException ex){
 						throw new IllegalStateException(ex);
 					}
 				});
-				a.add(create);
+				group.renderAddButton(ctx);
 				saver.var=()->group;
 				return a;
 			}else if(f.getType().isEnum()){
@@ -562,6 +562,15 @@ public class SwingFormModuleRenderer implements ModuleRenderer<FormModule>{
 			throw new IllegalStateException(ex);
 		}
 		throw new UnsupportedOperationException("Component for "+f.getType()+" is not defined.");
+	}
+	private static SwingItemRenderingContext createAddCtx(FeatureRenderingContext detached,JPanel to,EditableGroup<?> group,Editable editable){
+		return new SwingItemRenderingContext(to,e->{
+			ProgramStarter.editor.constructEditor(editable,false,()->{
+				group.remove(editable);
+				to.remove((JButton)e.getSource());
+				to.revalidate();
+			},detached);
+		});
 	}
 	public static JComponent wrapEditorComponent(JComponent a,Font font){
 		a.setFont(font);

@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import javax.swing.JPanel;
-import com.bpa4j.core.Editable;
 import com.bpa4j.core.EditableGroup;
 import com.bpa4j.core.EditableGroupRenderer;
 import com.bpa4j.core.NavigatorRenderer;
@@ -69,8 +68,9 @@ public class SwingRenderingManager implements RenderingManager{
 	public FeatureRenderingContext getDetachedFeatureRenderingContext(){
 		return new DetachedCtx();
 	}
-	public EditableGroupRenderer<? extends EditableGroup<? extends Editable>> getEditableGroupRenderer(EditableGroup<? extends Editable> group){
-		return new SwingEditableGroupRenderer();
+	@SuppressWarnings("unchecked")
+	public <T extends EditableGroup<?>>EditableGroupRenderer<? super T> getEditableGroupRenderer(T group){
+		return (EditableGroupRenderer<? super T>)new SwingEditableGroupRenderer();
 	}
 	public <F extends FeatureTransmissionContract> void putFeatureRenderer(Class<F> e,Function<F,? extends FeatureRenderer<F>> renderer){
 		featureRenderers.put(e,renderer);

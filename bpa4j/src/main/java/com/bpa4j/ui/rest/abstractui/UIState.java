@@ -128,6 +128,7 @@ public class UIState{
 		invokeLater(()->{
 			windows.remove(w);
 			if(activeWindow==w)activeWindow=windows.isEmpty()?null:windows.getLast();
+			invalidate();
 		});
 	}
 }

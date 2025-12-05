@@ -10,11 +10,12 @@ import com.bpa4j.defaults.features.transmission_contracts.DatedList;
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
+import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
-import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
+import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
 /**
  * REST renderer for DatedList feature.
@@ -40,12 +41,21 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)ctx;
 		Panel target=rctx.getTarget();
 		target.removeAll();
-		Panel root=new Panel(new BorderLayout());
-		root.setSize(target.getWidth(),target.getHeight());
+
+		int targetWidth=target.getWidth();
+		int targetHeight=target.getHeight();
+		if(targetWidth==0||targetHeight==0){
+			targetWidth=RestRenderingManager.DEFAULT_SIZE.width();
+			targetHeight=RestRenderingManager.DEFAULT_SIZE.height();
+			target.setSize(targetWidth,targetHeight);
+		}
+
+		// Use GridLayout for vertical stacking
+		target.setLayout(new GridLayout(0,1,0,5));
 
 		// Top panel with date navigation
 		Panel topPanel=new Panel(new FlowLayout());
-		topPanel.setSize(root.getWidth(),40);
+		topPanel.setSize(targetWidth,40);
 
 		Button prevWeek=new Button("< Week");
 		prevWeek.setOnClick(b->{
@@ -84,14 +94,16 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 			rctx.rebuild();
 		});
 		topPanel.add(today);
+		target.add(topPanel);
 
 		// List panel
-		Panel listPanel=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,5,5));
-		listPanel.setSize(root.getWidth(),root.getHeight()-80);
+		Panel listPanel=new Panel(new GridLayout(0,1,5,5));
+		listPanel.setSize(targetWidth,400);
 		
 		Set<T> objects=contract.getObjects();
 		for(T t:objects){
 			Panel row=new Panel(new FlowLayout());
+			row.setSize(targetWidth,35);
 
 			Button itemBtn=new Button(t.name);
 			itemBtn.setOnClick(b->{
@@ -122,17 +134,17 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 			
 			listPanel.add(row);
 		}
+		target.add(listPanel);
 		
 		// Bottom panel with add button
 		Panel bottomPanel=new Panel(new FlowLayout());
-		bottomPanel.setSize(root.getWidth(),40);
+		bottomPanel.setSize(targetWidth,40);
 
 		Button addBtn=new Button("Add");
 		addBtn.setOnClick(b->{
 			try{
 				T t=contract.getType().getDeclaredConstructor().newInstance();
-				// Add to the objects set
-				contract.getObjects().add(t); //TODO: fix
+				contract.putObject(t,contract.getDateProvider().get());
 				ProgramStarter.editor.constructEditor(t,true,()->contract.removeObject(t),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 				rctx.rebuild();
 			}catch(Exception ex){
@@ -140,16 +152,9 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 			}
 		});
 		bottomPanel.add(addBtn);
+		target.add(bottomPanel);
 
-		// Layout
-		BorderLayout layout=(BorderLayout)root.getLayout();
-		layout.addLayoutComponent(topPanel,BorderLayout.NORTH);
-		layout.addLayoutComponent(listPanel,BorderLayout.CENTER);
-		layout.addLayoutComponent(bottomPanel,BorderLayout.SOUTH);
-		root.add(topPanel);
-		root.add(listPanel);
-		root.add(bottomPanel);
-		target.add(root);
+		target.update();
 	}
 	public void renderPreview(FeatureRenderingContext ctx){}
 }

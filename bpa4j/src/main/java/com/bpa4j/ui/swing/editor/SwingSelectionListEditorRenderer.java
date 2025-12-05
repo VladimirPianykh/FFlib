@@ -16,6 +16,7 @@ import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.defaults.input.Selectable;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.EditorEntryBaseRenderer;
+import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.SwingEditorEntryRenderingContext;
 
 /**
  * Swing renderer for SelectionListEditor.
@@ -23,11 +24,7 @@ import com.bpa4j.editor.EditorEntryBaseRenderer;
  */
 public class SwingSelectionListEditorRenderer implements EditorEntryBaseRenderer{
 	public void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
-		// Not used for Swing, see createEditorComponent
-	}
-	
-	@Override
-	public Object createEditorComponent(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
+		SwingEditorEntryRenderingContext ctx=(SwingEditorEntryRenderingContext)context;
 		if(f.getType()!=Selectable.class)throw new IllegalArgumentException("The field must have type Selectable<?>, but the actual type is "+f.getType()+".");
 		try{
 			Selectable<?>s=(Selectable<?>)((Selectable<?>)f.get(o)).clone();
@@ -45,7 +42,7 @@ public class SwingSelectionListEditorRenderer implements EditorEntryBaseRenderer
 			b.setLayout(new GridLayout());
 			b.add(menu);
 			saver.var=()->s;
-			return b;
+			ctx.addComponent(b);
 		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 	}
 }

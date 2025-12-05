@@ -11,11 +11,12 @@ import com.bpa4j.defaults.features.transmission_contracts.ItemList;
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
+import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
-import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
+import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
 /**
  * REST renderer for ItemList feature with filter/sorter support.
@@ -34,12 +35,21 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)ctx;
 		Panel target=rctx.getTarget();
 		target.removeAll();
-		Panel root=new Panel(new BorderLayout());
-		root.setSize(target.getWidth(),target.getHeight());
+
+		int targetWidth=target.getWidth();
+		int targetHeight=target.getHeight();
+		if(targetWidth==0||targetHeight==0){
+			targetWidth=RestRenderingManager.DEFAULT_SIZE.width();
+			targetHeight=RestRenderingManager.DEFAULT_SIZE.height();
+			target.setSize(targetWidth,targetHeight);
+		}
+
+		// Use FlowLayout TTB for vertical stacking without gaps
+		target.setLayout(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
 
 		// Create config panel for filter/sorter/actions/add
 		Panel config=new Panel(new FlowLayout());
-		config.setSize(root.getWidth(),60);
+		config.setSize(targetWidth,60);
 
 		// Title
 		Label title=new Label(contract.getFeatureName());
@@ -82,31 +92,28 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 			});
 			config.add(add);
 		}
+		target.add(config);
 
 		// Create list panel
-		Panel list=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,5,5));
-		list.setSize(root.getWidth(),root.getHeight()-config.getHeight());
+		Panel list=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
+		list.setSize(targetWidth,400);
 
 		// Apply list customizer if available
 		contract.customizeList(new RestListCustomizationRenderingContext(list));
 
-		fillList(list,rctx);
+		fillList(list,targetWidth,rctx);
+		target.add(list);
 
-		// Layout components
-		BorderLayout layout=(BorderLayout)root.getLayout();
-		layout.addLayoutComponent(config,BorderLayout.NORTH);
-		layout.addLayoutComponent(list,BorderLayout.CENTER);
-		root.add(config);
-		root.add(list);
-		target.add(root);
+		target.update();
 	}
 
-	private void fillList(Panel list,RestFeatureRenderingContext rctx){
+	private void fillList(Panel list,int targetWidth,RestFeatureRenderingContext rctx){
 		ArrayList<T> objects=contract.getObjects();
 		List<Consumer<T>> singular=contract.getSingularActions();
 
 		for(T obj:objects){
 			Panel row=new Panel(new FlowLayout());
+			row.setSize(targetWidth,35);
 
 			// Object label/button
 			if(obj instanceof Editable){

@@ -66,6 +66,9 @@ public class RestWorkFrameRenderer implements WorkFrameRenderer{
 		if(window==null||content==null){
 			throw new IllegalStateException("Work frame not shown yet.");
 		}
-		return new RestFeatureRenderingContext(state,window,content);
+		return new RestFeatureRenderingContext(state,window,content,()->{
+			workFrame.selectFeature(f);
+			state.invalidate();
+		});
 	}
 }

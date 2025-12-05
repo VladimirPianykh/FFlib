@@ -106,7 +106,7 @@ public class TextField extends Component{
 	}
 	public void modifyComponent(String id,Map<String,Object> update){
 		if(String.valueOf(getId()).equals(id)){
-			if(update.containsKey("text"))text=(String)update.get("text");
+			if(update.containsKey("text"))setText((String)update.get("text"));
 		}
 	}
 }

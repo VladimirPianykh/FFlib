@@ -11,6 +11,7 @@ import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
+import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
@@ -37,15 +38,24 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)ctx;
 		Panel target=rctx.getTarget();
 		target.removeAll();
-		Panel root=new Panel(new BorderLayout());
-		root.setSize(target.getWidth(),target.getHeight());
+
+		int targetWidth=target.getWidth();
+		int targetHeight=target.getHeight();
+		if(targetWidth==0||targetHeight==0){
+			targetWidth=RestRenderingManager.DEFAULT_SIZE.width();
+			targetHeight=RestRenderingManager.DEFAULT_SIZE.height();
+			target.setSize(targetWidth,targetHeight);
+		}
+
+		// Use GridLayout for vertical stacking
+		target.setLayout(new GridLayout(0,1,0,5));
 		
 		Field[] fields=contract.getVType().getFields();
 		int columns=fields.length+1; // +1 for the object name
 		
 		// Create table panel
 		Panel tablePanel=new Panel(new GridLayout(0,columns,5,5));
-		tablePanel.setSize(root.getWidth(),root.getHeight()-40);
+		tablePanel.setSize(targetWidth,400);
 		
 		// Header
 		tablePanel.add(new Label("Objects"));
@@ -94,10 +104,11 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 				}
 			}
 		}
+		target.add(tablePanel);
 		
 		// Add button panel
-		Panel addPanel=new Panel(new BorderLayout());
-		addPanel.setSize(root.getWidth(),40);
+		Panel addPanel=new Panel(new FlowLayout());
+		addPanel.setSize(targetWidth,40);
 		Button addBtn=new Button("Add");
 		addBtn.setOnClick(b->{
 			T o=contract.createObject();
@@ -105,14 +116,9 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 			rctx.rebuild();
 		});
 		addPanel.add(addBtn);
+		target.add(addPanel);
 		
-		// Layout
-		BorderLayout layout=(BorderLayout)root.getLayout();
-		layout.addLayoutComponent(tablePanel,BorderLayout.CENTER);
-		layout.addLayoutComponent(addPanel,BorderLayout.SOUTH);
-		root.add(tablePanel);
-		root.add(addPanel);
-		target.add(root);
+		target.update();
 	}
 
 	/**

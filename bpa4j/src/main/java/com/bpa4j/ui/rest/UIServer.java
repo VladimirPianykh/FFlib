@@ -8,7 +8,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 import com.bpa4j.ui.rest.abstractui.UIState;
 import com.bpa4j.util.codegen.server.GsonJsonProvider;
 
-
 public class UIServer{
 	private final long port;
 	private HttpServer server;

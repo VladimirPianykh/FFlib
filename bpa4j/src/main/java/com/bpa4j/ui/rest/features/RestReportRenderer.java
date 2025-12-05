@@ -7,6 +7,7 @@ import com.bpa4j.feature.DataRendererRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.feature.ReportRenderer;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
+import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
@@ -86,12 +87,19 @@ public class RestReportRenderer implements ReportRenderer{
 		target.removeAll();
 
 		// Create root panel with border layout
+		int targetWidth=target.getWidth();
+		int targetHeight=target.getHeight();
+		if(targetWidth==0||targetHeight==0){
+			targetWidth=RestRenderingManager.DEFAULT_SIZE.width();
+			targetHeight=RestRenderingManager.DEFAULT_SIZE.height();
+			target.setSize(targetWidth,targetHeight);
+		}
 		Panel root=new Panel(new BorderLayout());
-		root.setSize(target.getWidth(),target.getHeight());
+		root.setSize(targetWidth,targetHeight);
 
 		// Create header
 		Panel header=new Panel(new FlowLayout());
-		header.setSize(root.getWidth(),40);
+		header.setSize(targetWidth,40);
 		Label title=new Label(contract.getFeatureName());
 		header.add(title);
 
@@ -100,13 +108,16 @@ public class RestReportRenderer implements ReportRenderer{
 		Panel configPanel=null;
 		if(!configurators.isEmpty()){
 			configPanel=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.LTR,5,5));
-			configPanel.setSize(root.getWidth(),50);
+			configPanel.setSize(targetWidth,50);
 
 			// Set renderer source and render configurators
 			for(Report.Configurator c:configurators){
-				getConfiguratorRenderer(c).render(c,new RestConfiguratorRenderingContext(configPanel,()->{
-					//No rendering context, because everything is updated automatically right now (can be changed later).
-				}));
+				ConfiguratorRenderer<Report.Configurator> cr=getConfiguratorRenderer(c);
+				if(cr!=null){
+					cr.render(c,new RestConfiguratorRenderingContext(configPanel,()->{
+						//No rendering context, because everything is updated automatically right now (can be changed later).
+					}));
+				}
 			}
 			Label configLabel=new Label("Configurators: "+configurators.size());
 			configPanel.add(configLabel);
@@ -114,10 +125,8 @@ public class RestReportRenderer implements ReportRenderer{
 
 		// Create data panel
 		ArrayList<Report.DataRenderer> dataRenderers=contract.getDataRenderers();
-		int contentHeight=configPanel!=null?root.getHeight()-header.getHeight()-configPanel.getHeight():root.getHeight()-header.getHeight();
 
-		Panel dataPanel=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.LTR,10,10));
-		dataPanel.setSize(root.getWidth(),contentHeight);
+		Panel dataPanel=new Panel(new BorderLayout());
 
 		// Calculate grid dimensions for data renderers
 		int rendererCount=dataRenderers.size();
@@ -126,16 +135,20 @@ public class RestReportRenderer implements ReportRenderer{
 			int rows=(int)Math.ceil((double)rendererCount/cols);
 
 			// Create grid for data renderers
-			Panel grid=new Panel(new GridLayout(rows,cols,10,10)); //TODO: choose another layout (like AutoLayout in Swing version)
-			grid.setSize(dataPanel.getWidth()-20,dataPanel.getHeight()-20);
+			Panel grid=new Panel(new GridLayout(rows,cols,10,10));
 
 			// Set renderer source and render data renderers
 			for(Report.DataRenderer r:dataRenderers){
-				getDataRendererRenderer(r).render(r,new RestDataRenderingContext(grid,grid.getWidth(),grid.getHeight()));
-				// Label placeholder=new Label("DataRenderer (needs REST implementation)");
-				// grid.add(placeholder);
+				DataRendererRenderer<Report.DataRenderer> drr=getDataRendererRenderer(r);
+				if(drr!=null){
+					drr.render(r,new RestDataRenderingContext(grid,grid.getWidth(),grid.getHeight()));
+				}else{
+					grid.add(new Label("No renderer for "+r.getClass().getSimpleName()));
+				}
 			}
 
+			BorderLayout dataLayout=(BorderLayout)dataPanel.getLayout();
+			dataLayout.addLayoutComponent(grid,BorderLayout.CENTER);
 			dataPanel.add(grid);
 		}else{
 			Label noData=new Label("No data renderers configured");

@@ -31,12 +31,12 @@ public class RestFlagWEditorRenderer implements EditorEntryBaseRenderer{
 			if(disabled)f.set(o,init);
 			Component c;
 			if(editor==null){
-				RestFormModuleRenderer.createEditorComponent(o,f,subSaver,p);
-				c=p.getComponents().get(p.getComponents().size()-1);
+				c=RestFormModuleRenderer.createEditorComponent(o,f,subSaver);
 			}else{
-				editor.renderEditorBase(o,f,subSaver,demo,context);
-				// For REST, we assume the component was added to a panel
-				c=null; // Placeholder
+				Panel subTarget=new Panel();
+				RestFormModuleRenderer.RestEditorEntryRenderingContext subContext=new RestFormModuleRenderer.RestEditorEntryRenderingContext(subTarget);
+				editor.renderEditorBase(o,f,subSaver,demo,subContext);
+				c=subTarget.getComponents().isEmpty()?null:subTarget.getComponents().get(0);
 			}
 			if(disabled)f.set(o,d);
 			b.setSelected(!disabled);
@@ -45,6 +45,10 @@ public class RestFlagWEditorRenderer implements EditorEntryBaseRenderer{
 				p.add(c);
 			}
 			saver.var=()->b.isSelected()?subSaver.var.get():d;
+			// Add the panel to the context
+			if(context instanceof RestFormModuleRenderer.RestEditorEntryRenderingContext){
+				((RestFormModuleRenderer.RestEditorEntryRenderingContext)context).addComponent(p);
+			}
 		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
 	}
 }

@@ -1,12 +1,8 @@
 package com.bpa4j.ui.rest.abstractui.components.complex;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import com.bpa4j.ui.rest.abstractui.Component;
 import com.bpa4j.ui.rest.abstractui.LayoutManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
-import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
 

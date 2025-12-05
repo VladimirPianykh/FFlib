@@ -56,10 +56,10 @@ public class Panel extends Component{
 		return valid;
 	}
 	public void update(){
+		if(layoutManager!=null) layoutManager.layout(this);
 		super.update();
 		for(Component c:components)
 			c.update();
-		layoutManager.layout(this);
 		valid=true;
 	}
 	public Map<String,Object> getJson(JsonVisualContext ctx){
@@ -68,9 +68,11 @@ public class Panel extends Component{
 		return Map.of("type","panel","x",getX(),"y",getY(),"width",getWidth(),"height",getHeight(),"children",ch);
 	}
 	public void callFunction(String id){
-		for(Component c:components)c.callFunction(id);
+		for(Component c:new ArrayList<>(components))
+			c.callFunction(id);
 	}
 	public void modifyComponent(String id,Map<String,Object>update){
-		for(Component c:components)c.modifyComponent(id,update);
+		for(Component c:new ArrayList<>(components))
+			c.modifyComponent(id,update);
 	}
 }

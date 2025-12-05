@@ -9,6 +9,7 @@ import com.bpa4j.defaults.input.EmptySaver;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.EditorEntryBaseRenderer;
 import com.bpa4j.ui.rest.abstractui.components.Label;
+import com.bpa4j.ui.rest.editor.modules.RestFormModuleRenderer;
 
 /**
  * REST renderer for FunctionEditor.
@@ -18,8 +19,6 @@ public class RestFunctionEditorRenderer implements EditorEntryBaseRenderer{
 	@SuppressWarnings({"rawtypes","unchecked"})
 	public void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
 		saver.var=new EmptySaver();
-		// For REST, we would return a Label component, but renderEditorBase is void
-		// The actual rendering would need to be handled differently in REST context
 		try{
 			String text;
 			if(demo.var==null){
@@ -29,8 +28,11 @@ public class RestFunctionEditorRenderer implements EditorEntryBaseRenderer{
 					?String.valueOf(((Function)f.get(o)).apply(demo.var.get()))
 					:String.valueOf(((Supplier)f.get(o)).get());
 			}
-			// In REST, this would create a Label with the text
-			// But we can't return it from this void method
+			Label label=new Label(text);
+			// Add the label to the context
+			if(context instanceof RestFormModuleRenderer.RestEditorEntryRenderingContext){
+				((RestFormModuleRenderer.RestEditorEntryRenderingContext)context).addComponent(label);
+			}
 		}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
 	}
 }

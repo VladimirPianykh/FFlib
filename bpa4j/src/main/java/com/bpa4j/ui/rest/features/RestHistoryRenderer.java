@@ -5,6 +5,7 @@ import com.bpa4j.defaults.features.transmission_contracts.History;
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
+import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
@@ -32,18 +33,25 @@ public class RestHistoryRenderer implements FeatureRenderer<History> {
 		target.removeAll();
 		
 		// Create root panel with border layout
+		int targetWidth=target.getWidth();
+		int targetHeight=target.getHeight();
+		if(targetWidth==0||targetHeight==0){
+			targetWidth=RestRenderingManager.DEFAULT_SIZE.width();
+			targetHeight=RestRenderingManager.DEFAULT_SIZE.height();
+			target.setSize(targetWidth,targetHeight);
+		}
 		Panel root = new Panel(new BorderLayout());
-		root.setSize(target.getWidth(), target.getHeight());
+		root.setSize(targetWidth,targetHeight);
 		
 		// Create header
 		Panel header = new Panel(new FlowLayout());
-		header.setSize(root.getWidth(), 40);
+		header.setSize(targetWidth,40);
 		Label title = new Label(contract.getFeatureName());
 		header.add(title);
 		
 		// Create content area with table layout
-		Panel content = new Panel(new FlowLayout(FlowLayout.LEFT, FlowLayout.TTB, 5, 5));
-		content.setSize(root.getWidth(), root.getHeight() - header.getHeight());
+		Panel content=new Panel(new GridLayout(0,1,5,5));
+		// Size handled by BorderLayout
 		
 		// Add table headers
 		Panel tableHeader = new Panel(new GridLayout(1, 4, 5, 5));

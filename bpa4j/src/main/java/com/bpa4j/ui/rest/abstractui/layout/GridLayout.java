@@ -47,6 +47,11 @@ public class GridLayout implements LayoutManager{
         int w=target.getWidth();
         int h=target.getHeight();
 
+        if(w<=0||h<=0){
+            System.err.println("Either width or height is zero: "+w+" "+h+".");
+            return;
+        } // Cannot layout with zero dimensions
+
         w=(w-(ncols-1)*hgap)/ncols;
         h=(h-(nrows-1)*vgap)/nrows;
 

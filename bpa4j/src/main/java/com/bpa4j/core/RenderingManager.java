@@ -17,7 +17,7 @@ public interface RenderingManager{
 	<E extends IEditor>void putEditorRenderer(Class<E>e,Function<E,? extends EditorRenderer<E>>renderer);
 	WorkFrameRenderer getWorkFrameRenderer(WorkFrame wf);
 	NavigatorRenderer getNavigatorRenderer();
-	<T extends EditableGroup<? extends Editable>>EditableGroupRenderer<? super T> getEditableGroupRenderer(T group);
+	<T extends EditableGroup<?>>EditableGroupRenderer<? super T> getEditableGroupRenderer(T group);
 	RegScreen getRegistrationScreen();
 	void close();
 	FeatureRenderingContext getDetachedFeatureRenderingContext();

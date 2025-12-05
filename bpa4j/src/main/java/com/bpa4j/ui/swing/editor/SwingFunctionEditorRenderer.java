@@ -9,21 +9,18 @@ import com.bpa4j.core.EditableDemo;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.EditorEntryBaseRenderer;
 import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer;
+import com.bpa4j.ui.swing.editor.modules.SwingFormModuleRenderer.SwingEditorEntryRenderingContext;
 
 /**
  * Swing renderer for FunctionEditor.
  * @author AI-generated
  */
 public class SwingFunctionEditorRenderer implements EditorEntryBaseRenderer{
-	public void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
-		// Not used for Swing, see createEditorComponent
-	}
-	
 	@Override
 	@SuppressWarnings({"rawtypes","unchecked"})
-	public Object createEditorComponent(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
+	public void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>> saver,Wrapper<EditableDemo> demo,EditorEntryBase base,EditorEntryBase.EditorEntryRenderingContext context){
 		saver.var=new com.bpa4j.defaults.input.EmptySaver();
-		return SwingFormModuleRenderer.wrapEditorComponent(new JLabel(){
+		JLabel label=new JLabel(){
 			public String getText(){
 				try{
 					if(demo.var==null)return "Ошибка!";
@@ -32,6 +29,7 @@ public class SwingFunctionEditorRenderer implements EditorEntryBaseRenderer{
 						:String.valueOf(((Supplier)f.get(o)).get());
 				}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
 			}
-		},null);
+		};
+		((SwingEditorEntryRenderingContext)context).addComponent(SwingFormModuleRenderer.wrapEditorComponent(label,null));
 	}
 }

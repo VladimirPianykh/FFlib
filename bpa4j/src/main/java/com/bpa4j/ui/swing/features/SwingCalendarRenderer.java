@@ -22,8 +22,26 @@ import com.bpa4j.ui.swing.SwingFeatureRenderingContext;
 import com.bpa4j.ui.swing.SwingWorkFrameRenderer.SwingPreviewRenderingContext;
 import com.bpa4j.ui.swing.util.HButton;
 import com.bpa4j.ui.swing.util.PathIcon;
+import com.bpa4j.defaults.ftr_attributes.daters.EventDater;
+import com.bpa4j.defaults.ftr_attributes.daters.EmptyDater;
+import com.bpa4j.ui.swing.features.daters.SwingEventDaterRenderer;
+import com.bpa4j.ui.swing.features.daters.SwingEmptyDaterRenderer;
+import com.bpa4j.feature.DaterRenderer;
+import com.bpa4j.Dater;
 
 public class SwingCalendarRenderer<T extends Calendar.Event> implements FeatureRenderer<Calendar<T>>{
+    public static interface SwingDateRenderingContext extends Calendar.DateRenderingContext{
+        void addComponent(JComponent c);
+    }
+    
+    static{
+        loadDefaultDaterRenderers();
+    }
+    @SuppressWarnings({"rawtypes","unchecked"})
+    private static void loadDefaultDaterRenderers(){
+        Calendar.registerDaterRenderer((Class)EventDater.class,new SwingEventDaterRenderer<Calendar.Event>());
+        Calendar.registerDaterRenderer((Class)EmptyDater.class,new SwingEmptyDaterRenderer<Calendar.Event>());
+    }
     private Calendar<T> contract;
     public SwingCalendarRenderer(Calendar<T> contract){
         this.contract=contract;
@@ -125,9 +143,18 @@ public class SwingCalendarRenderer<T extends Calendar.Event> implements FeatureR
                     g.fillRect(0,0,getWidth(),getHeight());
                 }
             });
+        SwingDateRenderingContext ctx=new SwingDateRenderingContext(){
+            @SuppressWarnings("unchecked")
+            public <E> DaterRenderer<E> getRenderer(Dater<E> dater){
+                return Calendar.getDaterRenderer((Class<? extends Dater<E>>)dater.getClass());
+            }
+            public void addComponent(JComponent c){
+                panel.add(c);
+            }
+        };
         for(int i=1;i<=m.lengthOfMonth();++i){
             LocalDate d=m.atDay(i);
-            panel.add(contract.getDater().apply(contract.getEventList(d),d));
+            contract.getDater().render(contract.getEventList(d),d,ctx);
         }
         for(int i=0;i<7-m.atEndOfMonth().getDayOfWeek().getValue();++i)
             panel.add(new JComponent(){

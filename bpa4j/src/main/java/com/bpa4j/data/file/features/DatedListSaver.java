@@ -12,9 +12,10 @@ import com.bpa4j.feature.FeatureSaver;
  */
 @SuppressWarnings("rawtypes")
 public class DatedListSaver implements FeatureSaver<DatedList>{
+	@SuppressWarnings("unchecked")
 	public void save(DatedList f){
 		FileData data=(FileData)ProgramStarter.getStorageManager().getStorage();
-		Object[] featureData=new Object[]{f.getObjects(),f.getObjectsWithDaters()};
+		Object[] featureData=new Object[]{new java.util.HashSet<>(f.getObjects()),new java.util.HashMap<>(f.getObjectsWithDaters())};
 		data.getFeaturesData().put(f.getFeatureName(),featureData);
 	}
 

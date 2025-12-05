@@ -39,7 +39,7 @@ public class RestStageMapModuleRenderer implements ModuleRenderer<StageMapModule
 		if(canApprove){
 			Button approve=new Button("Approve");
 			approve.setOnClick(b->{
-				if(p.approve(comment.getText()))rctx.getBase().rebuild();
+				if(p.approve(comment.getText()))rctx.rebuild();
 			});
 			container.add(approve);
 		}
@@ -47,7 +47,7 @@ public class RestStageMapModuleRenderer implements ModuleRenderer<StageMapModule
 			Button reject=new Button("Reject");
 			reject.setOnClick(b->{
 				p.reject(comment.getText());
-				rctx.getBase().rebuild();
+				rctx.rebuild();
 			});
 			container.add(reject);
 		}

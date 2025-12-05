@@ -11,18 +11,17 @@ import com.bpa4j.feature.FeatureSaver;
  */
 public class ReportSaver implements FeatureSaver<Report>{
 	public void save(Report f){
-		FileData data = (FileData) ProgramStarter.getStorageManager().getStorage();
-		Object[] featureData = new Object[]{
-			f.getDataRenderers(),
-			f.getConfigurators()
+		FileData data=(FileData)ProgramStarter.getStorageManager().getStorage();
+		Object[] featureData=new Object[]{
+			new java.util.ArrayList<>(f.getDataRenderers()),new java.util.ArrayList<>(f.getConfigurators())
 		};
-		data.getFeaturesData().put(f.getFeatureName(), featureData);
+		data.getFeaturesData().put(f.getFeatureName(),featureData);
 	}
-	
+
 	public void load(Report f){
-		FileData data = (FileData) ProgramStarter.getStorageManager().getStorage();
-		Object[] featureData = data.getFeaturesData().get(f.getFeatureName());
-		if(featureData != null){
+		FileData data=(FileData)ProgramStarter.getStorageManager().getStorage();
+		Object[] featureData=data.getFeaturesData().get(f.getFeatureName());
+		if(featureData!=null){
 			// Renderers and configurators are loaded via add operations
 		}
 	}
