@@ -10,10 +10,10 @@ import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
+import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
-import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
@@ -35,16 +35,28 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 		RestFeatureRenderingContext rctx=(RestFeatureRenderingContext)ctx;
 		Panel target=rctx.getTarget();
 		target.removeAll();
-		Panel root=new Panel(new BorderLayout());
-		root.setSize(target.getWidth(),target.getHeight());
 
-		// Create config panel for filter/sorter/add button
-		Panel config=new Panel(new FlowLayout());
-		config.setSize(root.getWidth(),40);
+		int targetWidth=target.getWidth();
+		int targetHeight=target.getHeight();
+		if(targetWidth==0||targetHeight==0){
+			targetWidth=RestRenderingManager.DEFAULT_SIZE.width();
+			targetHeight=RestRenderingManager.DEFAULT_SIZE.height();
+			target.setSize(targetWidth,targetHeight);
+		}
 
-		// Render filter and sorter configurators
-		contract.renderFilter(rctx);
-		contract.renderSorter(rctx);
+		// Use FlowLayout TTB for main structure to stack header and table
+		target.setLayout(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,0));
+
+		// Create header panel for filter/sorter/add button
+		// We use a sub-context to direct filter/sorter components into this panel
+		Panel headerPanel=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.LTR,5,5));
+		headerPanel.setSize(targetWidth,60); // Initial height, will grow if needed
+
+		RestFeatureRenderingContext headerCtx=new RestFeatureRenderingContext(rctx.getState(),null,headerPanel,rctx::rebuild);
+
+		// Render filter and sorter configurators into header
+		contract.renderFilter(headerCtx);
+		contract.renderSorter(headerCtx);
 
 		// Add creation button if allowed
 		if(contract.getAllowCreation()){
@@ -62,24 +74,26 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 					throw new IllegalStateException(ex);
 				}
 			});
-			config.add(add);
+			headerPanel.add(add);
 		}
 
-		// Create table panel
-		Panel tablePanel=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,0));
-		tablePanel.setSize(root.getWidth(),root.getHeight()-config.getHeight());
-		fillTable(tablePanel,rctx);
+		target.add(headerPanel);
 
-		// Layout components
-		BorderLayout layout=(BorderLayout)root.getLayout();
-		layout.addLayoutComponent(config,BorderLayout.NORTH);
-		layout.addLayoutComponent(tablePanel,BorderLayout.CENTER);
-		root.add(config);
-		root.add(tablePanel);
-		target.add(root);
+		// Create table panel taking remaining space
+		// Estimate header height usage (FlowLayout might expand it)
+		// For now, give table a fixed large height to fill view, relying on FlowLayout
+		// TTB
+		int tableHeight=Math.max(400,targetHeight-80);
+		Panel tablePanel=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,0));
+		tablePanel.setSize(targetWidth,tableHeight);
+
+		fillTable(tablePanel,targetWidth,rctx);
+
+		target.add(tablePanel);
+		target.update();
 	}
 
-	private void fillTable(Panel tablePanel,RestFeatureRenderingContext rctx){
+	private void fillTable(Panel tablePanel,int targetWidth,RestFeatureRenderingContext rctx){
 		ArrayList<T> objects=contract.getObjects();
 
 		// Get fields with EditorEntry annotations
@@ -98,8 +112,22 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 
 		// Create table with columns: Object name + action buttons + fields
 		int columns=2+fields.size(); // Object button + Edit + Remove + fields
-		Panel table=new Panel(new GridLayout(0,columns,5,5));
-		table.setSize(tablePanel.getWidth(),tablePanel.getHeight());
+		int rows=objects.size()+1; // +1 for header
+		int rowHeight=40;
+		int totalHeight=Math.max(100,rows*rowHeight+(rows-1)*5); // gaps
+
+		// Ensure minimum width to prevent content crushing/wrapping
+		int minTableWidth=columns*150;
+		int finalTableWidth=Math.max(targetWidth,minTableWidth);
+
+		Panel table=new Panel(new GridLayout(rows,columns,5,5));
+		table.setSize(finalTableWidth,totalHeight);
+		tablePanel.setSize(finalTableWidth,totalHeight);
+
+		// Resize target to fit the table including header
+		Panel target=rctx.getTarget();
+		// header is ~60
+		target.setSize(finalTableWidth,60+totalHeight+20);
 
 		// Header row
 		table.add(new Label("Object"));
@@ -115,26 +143,31 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 			Label objLabel=new Label(String.valueOf(obj));
 			table.add(objLabel);
 
-			// Action buttons panel
-			Panel actionsPanel=new Panel(new FlowLayout());
+			// Action buttons - wrap both in a single panel for proper grid cell display
+			// Use GridLayout to guarantee 1 row and prevent wrapping over other rows
+			Panel actionsWrapper=new Panel(new GridLayout(1,2,5,0));
+			actionsWrapper.setSize(150,rowHeight);
 
 			Button edit=new Button("Edit");
 			edit.setOnClick(b->{
 				if(obj instanceof Editable){
-					ProgramStarter.editor.constructEditor((Editable)obj,false,()->contract.removeObject(obj),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
+					Runnable deleter=contract.getAllowDeletion()?()->contract.removeObject(obj):null;
+					ProgramStarter.editor.constructEditor((Editable)obj,false,deleter,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 					rctx.rebuild();
 				}
 			});
-			actionsPanel.add(edit);
+			actionsWrapper.add(edit);
 
-			Button remove=new Button("Remove");
-			remove.setOnClick(b->{
-				contract.removeObject(obj);
-				rctx.rebuild();
-			});
-			actionsPanel.add(remove);
+			if(contract.getAllowDeletion()){
+				Button remove=new Button("Remove");
+				remove.setOnClick(b->{
+					contract.removeObject(obj);
+					rctx.rebuild();
+				});
+				actionsWrapper.add(remove);
+			}
 
-			table.add(actionsPanel);
+			table.add(actionsWrapper);
 
 			// Field values
 			for(Field f:fields){
@@ -160,18 +193,21 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 			if(obj instanceof Editable){
 				Button edit=new Button("Edit");
 				edit.setOnClick(b->{
-					ProgramStarter.editor.constructEditor((Editable)obj,false,()->contract.removeObject(obj),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
+					Runnable deleter=contract.getAllowDeletion()?()->contract.removeObject(obj):null;
+					ProgramStarter.editor.constructEditor((Editable)obj,false,deleter,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 					rctx.rebuild();
 				});
 				row.add(edit);
 			}
 
-			Button remove=new Button("Remove");
-			remove.setOnClick(b->{
-				contract.removeObject(obj);
-				rctx.rebuild();
-			});
-			row.add(remove);
+			if(contract.getAllowDeletion()){
+				Button remove=new Button("Remove");
+				remove.setOnClick(b->{
+					contract.removeObject(obj);
+					rctx.rebuild();
+				});
+				row.add(remove);
+			}
 			list.add(row);
 		}
 	}

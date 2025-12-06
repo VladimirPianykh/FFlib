@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import com.bpa4j.Dater;
+import com.bpa4j.feature.DaterRenderer;
 import com.bpa4j.core.EditableGroup;
 import com.bpa4j.core.EditableGroupRenderer;
 import com.bpa4j.core.NavigatorRenderer;
@@ -89,7 +91,7 @@ public class RestRenderingManager implements RenderingManager{
 	public FeatureRenderingContext getDetachedFeatureRenderingContext(){
 		Panel p=new Panel(new GridLayout(1,1,5,5));
 		p.setSize(RestRenderingManager.DEFAULT_SIZE);
-		Window w=new Window(p);
+		Window w=new Window(p); //Dummy parent window
 		return new RestFeatureRenderingContext(state,w,p,null);
 	}
 	@SuppressWarnings({"unchecked"})
@@ -105,7 +107,49 @@ public class RestRenderingManager implements RenderingManager{
 		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.ModelEditing.class,f->new RestModelEditingRenderer(f));
 		putFeatureRenderer(com.bpa4j.defaults.features.transmission_contracts.DatedList.class,f->new RestDatedListRenderer<>(f));
 		putEditorRenderer(com.bpa4j.editor.ModularEditor.class,e->new RestModularEditorRenderer());
+		putDaterRenderer(com.bpa4j.defaults.ftr_attributes.daters.EventDater.class,new com.bpa4j.ui.rest.features.RestEventDaterRenderer<>());
+		putDaterRenderer(com.bpa4j.defaults.ftr_attributes.daters.EmptyDater.class,new com.bpa4j.ui.rest.features.RestEmptyDaterRenderer<>());
 	}
+	private final Map<Class<?>,Object> daterRenderers=new HashMap<>();
+
+	public void putDaterRenderer(Class<?> daterClass,Object renderer){
+		daterRenderers.put(daterClass,renderer);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <E> DaterRenderer<E> getDaterRenderer(Class<? extends Dater<E>> daterClass){
+		return (DaterRenderer<E>)daterRenderers.get(daterClass);
+	}
+
+	public static class RestDateRenderingContext implements com.bpa4j.defaults.features.transmission_contracts.Calendar.DateRenderingContext{
+		private final Panel panel;
+		private final RestRenderingManager manager;
+
+		public RestDateRenderingContext(Panel panel,RestRenderingManager manager){
+			this.panel=panel;
+			this.manager=manager;
+		}
+
+		public Panel getPanel(){
+			return panel;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <E> DaterRenderer<E> getRenderer(Dater<E> dater){
+			DaterRenderer<E> renderer=manager.getDaterRenderer((Class<? extends Dater<E>>)dater.getClass());
+			if(renderer==null){
+				// Fallback or throw?
+				// For now return a dummy renderer to avoid crash
+				return (d,t,date,ctx)->{
+					Panel p=((RestDateRenderingContext)ctx).getPanel();
+					p.add(new com.bpa4j.ui.rest.abstractui.components.Label(t.toString()));
+				};
+			}
+			return renderer;
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T extends EditableGroup<?>> EditableGroupRenderer<? super T> getEditableGroupRenderer(T group){
 		return (EditableGroupRenderer<? super T>)new RestEditableGroupRenderer();

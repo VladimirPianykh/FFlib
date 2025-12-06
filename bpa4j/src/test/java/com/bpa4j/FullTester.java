@@ -46,11 +46,12 @@ import com.bpa4j.editor.modules.LimitToModule;
 import com.bpa4j.editor.modules.LogWatchModule;
 import com.bpa4j.editor.modules.StageApprovalModule;
 import com.bpa4j.feature.Feature;
+import com.bpa4j.feature.ReportRenderer;
+import com.bpa4j.feature.ReportRenderer.ConfiguratorRenderingContext;
 import com.bpa4j.navigation.ImplementedInfo;
 import com.bpa4j.navigation.Navigator;
 import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.UIState;
-import com.bpa4j.ui.swing.features.SwingBoardRenderer;
 import com.bpa4j.ui.swing.features.SwingBoardRenderer.SwingConfiguratorRenderingContext;
 import com.bpa4j.ui.swing.features.SwingDatedListRenderer.SwingDatedListRenderingContext;
 import com.bpa4j.ui.swing.util.PathIcon;
@@ -61,6 +62,9 @@ public final class FullTester{
 		public final JSpinner spinner;
 		public SpinnerConfigurator(JSpinner spinner,java.util.function.Consumer<Runnable> saverConsumer){
 			this.spinner=spinner;
+		}
+		public void render(ReportRenderer rr,ConfiguratorRenderingContext ctx){
+			
 		}
 	}
 
@@ -208,7 +212,7 @@ public final class FullTester{
 		READ_MYCUSTOMER,
 		CREATE_MYCUSTOMER,
 		MANAGE_PROCESSABLE;
-		private AppPermission(){ProgramStarter.register(this);}
+		private AppPermission(){}
 	}
 	private FullTester(){}
 	public static void main(String[]args)throws ReflectiveOperationException,URISyntaxException{
@@ -218,6 +222,8 @@ public final class FullTester{
 
 		UIState state=new UIState();
 		ProgramStarter.setRenderingManager(new RestRenderingManager(state));
+		for(AppPermission p:AppPermission.values())
+			ProgramStarter.register(p);
 		Navigator.init();
 		ProgramStarter.welcomeMessage="";
 		ProgramStarter.authRequired=false;
@@ -263,12 +269,13 @@ public final class FullTester{
 		Board.<MyProcessable>getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){
 			private final JComboBox<Boolean>c=new JComboBox<>();
 			public void renderConfigurator(RenderingContext context){
-				SwingBoardRenderer.SwingConfiguratorRenderingContext ctx=(SwingConfiguratorRenderingContext)context;
-				c.removeAllItems();
-				c.addItem(true);
-				c.addItem(false);
-				c.addItemListener(e->ctx.getSaver().run());
-				ctx.getTarget().add(c);
+				if(context instanceof SwingConfiguratorRenderingContext ctx){
+					c.removeAllItems();
+					c.addItem(true);
+					c.addItem(false);
+					c.addItemListener(e->ctx.getSaver().run());
+					ctx.getTarget().add(c);
+				}
 			}
 			public int compare(MyProcessable o1,MyProcessable o2){
 				try{

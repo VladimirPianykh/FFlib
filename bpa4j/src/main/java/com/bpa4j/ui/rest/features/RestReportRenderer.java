@@ -1,7 +1,31 @@
 package com.bpa4j.ui.rest.features;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.function.Supplier;
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+import org.knowm.xchart.CategoryChart;
+import org.knowm.xchart.CategoryChartBuilder;
+import org.knowm.xchart.PieChart;
+import org.knowm.xchart.PieChartBuilder;
+import org.knowm.xchart.XChartPanel;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.internal.chartpart.Chart;
+import org.knowm.xchart.style.Styler.ChartTheme;
 import com.bpa4j.defaults.features.transmission_contracts.Report;
+import com.bpa4j.defaults.ftr_attributes.data_renderers.AnswerDataRenderer;
+import com.bpa4j.defaults.ftr_attributes.data_renderers.ChartDataRenderer;
+import com.bpa4j.defaults.ftr_attributes.data_renderers.TableDataRenderer;
+import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.feature.ConfiguratorRenderer;
 import com.bpa4j.feature.DataRendererRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
@@ -64,12 +88,18 @@ public class RestReportRenderer implements ReportRenderer{
 		return contract;
 	}
 
+	@SuppressWarnings("unchecked")
 	public <D extends Report.DataRenderer> DataRendererRenderer<D> getDataRendererRenderer(D dataRenderer){
-		// Return dummy renderers for now - REST implementation would need its own components
+		if(dataRenderer instanceof TableDataRenderer){
+			return (DataRendererRenderer<D>)new RestTableDataRendererRenderer();
+		}else if(dataRenderer instanceof AnswerDataRenderer){
+			return (DataRendererRenderer<D>)new RestAnswerDataRendererRenderer();
+		}else if(dataRenderer instanceof ChartDataRenderer){ return (DataRendererRenderer<D>)new RestChartDataRendererRenderer(); }
 		return null;
 	}
 
 	public <C extends Report.Configurator> ConfiguratorRenderer<C> getConfiguratorRenderer(C configurator){
+		// For now return a dummy renderer since there are no concrete Configurator implementations yet
 		return null;
 	}
 
@@ -126,6 +156,7 @@ public class RestReportRenderer implements ReportRenderer{
 		// Create data panel
 		ArrayList<Report.DataRenderer> dataRenderers=contract.getDataRenderers();
 
+
 		Panel dataPanel=new Panel(new BorderLayout());
 
 		// Calculate grid dimensions for data renderers
@@ -134,15 +165,23 @@ public class RestReportRenderer implements ReportRenderer{
 			int cols=(int)Math.ceil(Math.sqrt(rendererCount));
 			int rows=(int)Math.ceil((double)rendererCount/cols);
 
+			// Calculate grid size - use most of available space
+			int gridWidth=targetWidth;
+			int gridHeight=Math.max(400,targetHeight-140); // Leave space for header/config
+
 			// Create grid for data renderers
 			Panel grid=new Panel(new GridLayout(rows,cols,10,10));
+			grid.setSize(gridWidth,gridHeight);
+
+			// Calculate cell dimensions accounting for gaps
+			int cellWidth=(gridWidth-(cols-1)*10)/cols;
+			int cellHeight=(gridHeight-(rows-1)*10)/rows;
 
 			// Set renderer source and render data renderers
 			for(Report.DataRenderer r:dataRenderers){
-				DataRendererRenderer<Report.DataRenderer> drr=getDataRendererRenderer(r);
-				if(drr!=null){
-					drr.render(r,new RestDataRenderingContext(grid,grid.getWidth(),grid.getHeight()));
-				}else{
+				try{
+					r.render(this,new RestDataRenderingContext(grid,cellWidth,cellHeight));
+				}catch(IllegalStateException ex){
 					grid.add(new Label("No renderer for "+r.getClass().getSimpleName()));
 				}
 			}
@@ -176,9 +215,210 @@ public class RestReportRenderer implements ReportRenderer{
 
 		root.add(header);
 		target.add(root);
+		target.update();
 	}
 
 	public void renderPreview(FeatureRenderingContext ctx){
 		// Preview rendering not needed for REST
+	}
+
+	/**
+	 * DataRendererRenderer implementation for TableDataRenderer.
+	 */
+	private static class RestTableDataRendererRenderer implements DataRendererRenderer<TableDataRenderer<?>>{
+		public void render(TableDataRenderer<?> dataRenderer,DataRenderingContext ctx){
+			RestDataRenderingContext restCtx=(RestDataRenderingContext)ctx;
+			Panel panel=restCtx.getPanel();
+
+			ArrayList<?> elements=dataRenderer.getElementSupplier().get();
+			String title=dataRenderer.getTitle();
+
+			Panel wrapper=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
+			wrapper.setSize(restCtx.getWidth(),restCtx.getHeight());
+
+			if(title!=null){
+				wrapper.add(new Label(title));
+			}
+
+			if(elements.isEmpty()){
+				wrapper.add(new Label("No data"));
+			}else{
+				Field[] allFields=elements.get(0).getClass().getFields();
+				ArrayList<Field> fields=new ArrayList<>();
+				for(Field f:allFields)
+					if(f.isAnnotationPresent(EditorEntry.class)) fields.add(f);
+
+				int columns=fields.size();
+				int rows=elements.size()+1; // +1 for header
+
+				// Calculate table size
+				int tableWidth=restCtx.getWidth()-10; // Leave some margin
+				int rowHeight=30;
+				int tableHeight=Math.min(restCtx.getHeight()-40,rows*rowHeight+(rows-1)*5);
+
+				Panel table=new Panel(new GridLayout(rows,columns,5,5));
+				table.setSize(tableWidth,tableHeight);
+
+				// Header
+				for(Field f:fields){
+					table.add(new Label(f.getAnnotation(EditorEntry.class).translation()));
+				}
+
+				// Rows
+				for(Object t:elements){
+					for(Field f:fields){
+						try{
+							Object val=f.get(t);
+							table.add(new Label(val!=null?String.valueOf(val):""));
+						}catch(IllegalAccessException ex){
+							table.add(new Label("Error"));
+						}
+					}
+				}
+				wrapper.add(table);
+			}
+			panel.add(wrapper);
+		}
+	}
+
+	/**
+	 * DataRendererRenderer implementation for AnswerDataRenderer.
+	 */
+	private static class RestAnswerDataRendererRenderer implements DataRendererRenderer<AnswerDataRenderer>{
+		public void render(AnswerDataRenderer dataRenderer,DataRenderingContext ctx){
+			RestDataRenderingContext restCtx=(RestDataRenderingContext)ctx;
+			Panel panel=restCtx.getPanel();
+
+			Panel wrapper=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
+			wrapper.setSize(restCtx.getWidth(),restCtx.getHeight());
+
+			Supplier<String>[] answerers=dataRenderer.getAnswerers();
+			for(Supplier<String> s:answerers){
+				wrapper.add(new Label(s.get()));
+			}
+			panel.add(wrapper);
+		}
+	}
+
+	/**
+	 * DataRendererRenderer implementation for ChartDataRenderer.
+	 * Creates chart using Swing components, converts to image and saves to Downloads.
+	 */
+	private static class RestChartDataRendererRenderer implements DataRendererRenderer<ChartDataRenderer>{
+		public void render(ChartDataRenderer dataRenderer,DataRenderingContext ctx){
+			RestDataRenderingContext restCtx=(RestDataRenderingContext)ctx;
+			Panel panel=restCtx.getPanel();
+
+			// Access data renderer properties
+			ChartDataRenderer.ChartMode mode=dataRenderer.getMode();
+			Supplier<ArrayList<Object[]>> elementSupplier=dataRenderer.getElementSupplier();
+			String title=dataRenderer.getTitle();
+			Object[] args=dataRenderer.getArgs();
+
+			// Build the chart component (same as Swing version)
+			if(mode==null) throw new NullPointerException("Mode cannot be null.");
+			Chart<?,?> chart=switch(mode){
+				case LINEAR_EACH -> {
+					XYChart c=new XYChartBuilder().theme(ChartTheme.Matlab).title(title==null?"":title).build();
+					for(Object[] s:elementSupplier.get()){
+						c.addSeries((String)s[0],(int[])s[1],(int[])s[2]);
+					}
+					yield c;
+				}
+				case LINEAR_COMPARE -> {
+					XYChart c=new XYChartBuilder().theme(ChartTheme.Matlab).title(title==null?"":title).xAxisTitle(args.length==0?"":(String)args[0]).yAxisTitle(args.length<2?"":(String)args[1]).build();
+					ArrayList<Object[]> a=elementSupplier.get();
+					if(a.isEmpty()) yield null;
+					HashMap<String,ArrayList<Integer>> x=new HashMap<>(),y=new HashMap<>();
+					for(Object[] o:a){
+						String k=(String)o[0];
+						if(!x.containsKey(k)){
+							x.put(k,new ArrayList<>());
+							y.put(k,new ArrayList<>());
+						}
+						x.get(k).add((int)o[1]);
+						y.get(k).add((int)o[2]);
+					}
+					for(String k:x.keySet())
+						c.addSeries(k,x.get(k),y.get(k));
+					yield c;
+				}
+				case PIE -> {
+					PieChart c=new PieChartBuilder().theme(ChartTheme.Matlab).title(title==null?"":title).build();
+					for(Object[] s:elementSupplier.get())
+						c.addSeries((String)s[0],(int)s[1]);
+					yield c;
+				}
+				case BAR -> {
+					CategoryChart c=new CategoryChartBuilder().theme(ChartTheme.Matlab).title(title==null?"":title).xAxisTitle(args.length==0?"":(String)args[0]).yAxisTitle(args.length<2?"":(String)args[1]).build();
+					ArrayList<Object[]> a=elementSupplier.get();
+					if(a.isEmpty()) yield null;
+					HashMap<String,ArrayList<String>> t=new HashMap<>();
+					HashMap<String,ArrayList<Integer>> v=new HashMap<>();
+					for(int i=0;i<a.size();++i){
+						String k=(String)a.get(i)[0];
+						if(!t.containsKey(k)){
+							t.put(k,new ArrayList<>());
+							v.put(k,new ArrayList<>());
+						}
+						t.get(k).add((String)a.get(i)[1]);
+						v.get(k).add((int)a.get(i)[2]);
+					}
+					ArrayList<String> s=new ArrayList<>(t.keySet());
+					s.sort((e1,e2)->t.get(e2).size()-t.get(e1).size());
+					for(String k:s)
+						c.addSeries(k,t.get(k),v.get(k));
+					yield c;
+				}
+			};
+
+			Panel wrapper=new Panel(new FlowLayout(FlowLayout.CENTER,FlowLayout.CENTER,0,0));
+			wrapper.setSize(restCtx.getWidth(),restCtx.getHeight());
+
+			if(chart!=null){
+				// Create XChartPanel with chart
+				XChartPanel<?> chartPanel=new XChartPanel<>(chart);
+				int width=restCtx.getWidth();
+				int height=restCtx.getHeight();
+				chartPanel.setSize(width,height);
+				chartPanel.setPreferredSize(new Dimension(width,height));
+
+				// Create temporary JPanel to properly render the chart
+				JPanel tempPanel=new JPanel();
+				tempPanel.setSize(width,height);
+				tempPanel.setPreferredSize(new Dimension(width,height));
+				tempPanel.add(chartPanel);
+				tempPanel.validate();
+
+				// Convert chart panel to BufferedImage
+				BufferedImage image=new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+				Graphics2D g2=image.createGraphics();
+				g2.setColor(Color.WHITE);
+				g2.fillRect(0,0,width,height);
+				tempPanel.paint(g2);
+				g2.dispose();
+
+				// Save image to Downloads folder
+				try{
+					String home=System.getProperty("user.home");
+					String fileName=(title!=null&&!title.isEmpty())?title:"chart";
+					String outputPath=home+"\\Downloads\\"+fileName+".png";
+					File outputFile=new File(outputPath);
+					ImageIO.write(image,"png",outputFile);
+
+					// Add UI feedback
+					if(title!=null) wrapper.add(new Label(title));
+					wrapper.add(new Label("График сохранён в папку Загрузки: "+fileName+".png"));
+				}catch(IOException ex){
+					if(title!=null) wrapper.add(new Label(title));
+					wrapper.add(new Label("Ошибка при сохранении графика: "+ex.getMessage()));
+				}
+			}else{
+				if(title!=null) wrapper.add(new Label(title));
+				wrapper.add(new Label("Нет данных для отображения"));
+			}
+
+			panel.add(wrapper);
+		}
 	}
 }

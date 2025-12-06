@@ -14,13 +14,13 @@ import com.bpa4j.feature.FeatureTransmissionContract;
 public class DatedList<T extends Editable> implements FeatureTransmissionContract{
 	private static final Map<String,Feature<? extends DatedList<?>>> registeredDatedLists=new HashMap<>();
 
-	public Supplier<Set<T>> getObjectsOp;
-	public Supplier<HashMap<T,Dater<T>>> getObjectsWithDatersOp;
-	public Consumer<T> removeObjectOp;
-	public BiConsumer<T,Dater<T>> putObjectOp;
-	public Consumer<Supplier<Dater<T>>> setDateProviderOp;
-	public Supplier<Supplier<Dater<T>>> getDateProviderOp;
-	public Runnable clearObjectsOp;
+	private Supplier<Set<T>> getObjectsOp;
+	private Supplier<HashMap<T,Dater<T>>> getObjectsWithDatersOp;
+	private Consumer<T> removeObjectOp;
+	private BiConsumer<T,Dater<T>> putObjectOp;
+	private Consumer<Supplier<Dater<T>>> setDateProviderOp;
+	private Supplier<Supplier<Dater<T>>> getDateProviderOp;
+	private Runnable clearObjectsOp;
 
 	private String name;
 	private Class<T> type;

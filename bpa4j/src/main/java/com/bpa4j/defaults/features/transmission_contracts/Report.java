@@ -5,19 +5,31 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
+import com.bpa4j.feature.ConfiguratorRenderer;
+import com.bpa4j.feature.DataRendererRenderer;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
+import com.bpa4j.feature.ReportRenderer;
 
 /**
  * Transmission contract for Report feature.
  */
 public class Report implements FeatureTransmissionContract{
 	public static interface DataRenderer{
-		// <D extends DataRenderer> void setRendererSource(Function<D,? extends DataRendererRenderer<D>> rendererSource);
+		@SuppressWarnings({"rawtypes","unchecked"})
+		default void render(ReportRenderer rr,ReportRenderer.DataRenderingContext ctx){
+			DataRendererRenderer r=rr.getDataRendererRenderer(this);
+			if(r!=null)r.render(this,ctx);
+			else throw new IllegalStateException(getClass().getName()+" does not have renderer.");
+		}
 	}
 	public static interface Configurator{
-		// <C extends Configurator> void setRendererSource(Function<C,? extends ConfiguratorRenderer<C>> rendererSource);
+		@SuppressWarnings({"rawtypes","unchecked"})
+		default void render(ReportRenderer rr,ReportRenderer.ConfiguratorRenderingContext ctx){
+			ConfiguratorRenderer r=rr.getConfiguratorRenderer(this);
+			if(r!=null)r.render(this,ctx);
+			else throw new IllegalStateException(getClass().getName()+" does not have renderer.");
+		}
 	}
 	private static final Map<String,Feature<Report>> registeredReports=new HashMap<>();
 

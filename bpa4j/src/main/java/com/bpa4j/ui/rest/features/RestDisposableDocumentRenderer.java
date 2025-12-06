@@ -53,6 +53,7 @@ public class RestDisposableDocumentRenderer<T extends Editable> implements Featu
 			}
 		});
 		target.add(confirmBtn);
+		target.update();
 	}
 	public void renderPreview(FeatureRenderingContext ctx){}
 }

@@ -16,7 +16,6 @@ import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
-import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
 /**
  * REST renderer for ItemList feature with filter/sorter support.
@@ -44,7 +43,7 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 			target.setSize(targetWidth,targetHeight);
 		}
 
-		// Use FlowLayout TTB for vertical stacking without gaps
+		// Use FlowLayout TTB for vertical stacking
 		target.setLayout(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
 
 		// Create config panel for filter/sorter/actions/add
@@ -94,15 +93,23 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 		}
 		target.add(config);
 
-		// Create list panel
+		// Calculate height for list
+		ArrayList<T> objects=contract.getObjects();
+		int rowHeight=35;
+		int totalListHeight=Math.max(100,objects.size()*rowHeight+(objects.size()-1)*5);
+
+		// Create list panel with FlowLayout TTB
 		Panel list=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
-		list.setSize(targetWidth,400);
+		list.setSize(targetWidth,totalListHeight);
 
 		// Apply list customizer if available
 		contract.customizeList(new RestListCustomizationRenderingContext(list));
 
 		fillList(list,targetWidth,rctx);
 		target.add(list);
+
+		// Resize target to fit everything
+		target.setSize(targetWidth,60+totalListHeight+20);
 
 		target.update();
 	}

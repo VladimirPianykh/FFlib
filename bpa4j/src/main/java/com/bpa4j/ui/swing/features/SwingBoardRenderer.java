@@ -134,7 +134,8 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 						contract.addObject(o);
 						if(o instanceof Editable){
 							Editable editable=(Editable)o;
-							ProgramStarter.editor.constructEditor(editable,true,()->contract.removeObject(o),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
+							Runnable deleter=contract.getAllowDeletion()?()->contract.removeObject(o):null;
+							ProgramStarter.editor.constructEditor(editable,true,deleter,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 						}
 						m.setRowCount(0);
 						fillTable(m,objects);

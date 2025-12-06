@@ -15,13 +15,15 @@ import java.util.Map;
 public class EditableList<T extends Editable> implements FeatureTransmissionContract{
 	private static final Map<String,Feature<? extends EditableList<?>>> registeredLists=new HashMap<>();
 	public static interface ItemRenderingContext extends RenderingContext{}
-	public Supplier<EditableGroup<T>> getGroupOp;
-	public Supplier<T> createObjectOp;
-	public Consumer<BiConsumer<T,ItemRenderingContext>> setComponentProviderOp;
-	public BooleanSupplier getCanCreateOp;
-	public Consumer<Boolean> setCanCreateOp;
-	public Supplier<BiConsumer<T,ItemRenderingContext>> getComponentProviderOp;
-	public Consumer<Supplier<EditableGroup<T>>> setGroupSupplierOp;
+	private Supplier<EditableGroup<T>> getGroupOp;
+	private Supplier<T> createObjectOp;
+	private Consumer<BiConsumer<T,ItemRenderingContext>> setComponentProviderOp;
+	private BooleanSupplier getAllowCreationOp;
+	private Consumer<Boolean> setAllowCreationOp;
+	private Supplier<BiConsumer<T,ItemRenderingContext>> getComponentProviderOp;
+	private Consumer<Supplier<EditableGroup<T>>> setGroupSupplierOp;
+	private BooleanSupplier getAllowDeletionOp;
+	private Consumer<Boolean> setAllowDeletionOp;
 	private String name;
 	private Class<T> type;
 	public EditableList(String name,Class<T>type){
@@ -37,17 +39,23 @@ public class EditableList<T extends Editable> implements FeatureTransmissionCont
 	public void setSetComponentProviderOp(Consumer<BiConsumer<T,ItemRenderingContext>> setComponentProviderOp){
 		this.setComponentProviderOp=setComponentProviderOp;
 	}
-	public void setGetCanCreateOp(BooleanSupplier getCanCreateOp){
-		this.getCanCreateOp=getCanCreateOp;
+	public void setGetAllowCreationOp(BooleanSupplier getCanCreateOp){
+		this.getAllowCreationOp=getCanCreateOp;
 	}
-	public void setSetCanCreateOp(Consumer<Boolean> setCanCreateOp){
-		this.setCanCreateOp=setCanCreateOp;
+	public void setSetAllowCreationOp(Consumer<Boolean> setCanCreateOp){
+		this.setAllowCreationOp=setCanCreateOp;
 	}
 	public void setGetComponentProviderOp(Supplier<BiConsumer<T,ItemRenderingContext>> getComponentProviderOp){
 		this.getComponentProviderOp=getComponentProviderOp;
 	}
 	public void setSetGroupSupplierOp(Consumer<Supplier<EditableGroup<T>>> setGroupSupplierOp){
 		this.setGroupSupplierOp=setGroupSupplierOp;
+	}
+	public void setGetAllowDeletionOp(BooleanSupplier getAllowDeletionOp){
+		this.getAllowDeletionOp=getAllowDeletionOp;
+	}
+	public void setSetAllowDeletionOp(Consumer<Boolean> setAllowDeletionOp){
+		this.setAllowDeletionOp=setAllowDeletionOp;
 	}
 	public EditableGroup<T> getGroup(){
 		return getGroupOp.get();
@@ -58,11 +66,17 @@ public class EditableList<T extends Editable> implements FeatureTransmissionCont
 	public void setComponentProvider(BiConsumer<T,ItemRenderingContext> provider){
 		setComponentProviderOp.accept(provider);
 	}
-	public boolean getCanCreate(){
-		return getCanCreateOp.getAsBoolean();
+	public boolean getAllowCreation(){
+		return getAllowCreationOp.getAsBoolean();
 	}
-	public void setCanCreate(boolean canCreate){
-		setCanCreateOp.accept(canCreate);
+	public void setAllowCreation(boolean canCreate){
+		setAllowCreationOp.accept(canCreate);
+	}
+	public boolean getAllowDeletion(){
+		return getAllowDeletionOp.getAsBoolean();
+	}
+	public void setAllowDeletion(boolean allow){
+		setAllowDeletionOp.accept(allow);
 	}
 	public BiConsumer<T,ItemRenderingContext> getComponentProvider(){
 		return getComponentProviderOp.get();

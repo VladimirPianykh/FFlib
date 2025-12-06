@@ -81,6 +81,7 @@ public class RestHistoryRenderer implements FeatureRenderer<History> {
 		root.add(content);
 		
 		target.add(root);
+		target.update();
 	}
 	
 	public void renderPreview(FeatureRenderingContext ctx) {

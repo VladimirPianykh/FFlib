@@ -18,6 +18,7 @@ public class DatedListModel<T extends Editable> implements FeatureModel<DatedLis
         ftc.setGetObjectsWithDatersOp(this::getObjectsWithDaters);
         ftc.setSetDateProviderOp(this::setDateProvider);
         ftc.setRemoveObjectOp(this::removeObject);
+        ftc.setClearObjectsOp(this::clearObjects);
         ftc.setPutObjectOp(this::putObject);
         ftc.setGetDateProviderOp(this::getDateProvider);
     }
@@ -42,5 +43,8 @@ public class DatedListModel<T extends Editable> implements FeatureModel<DatedLis
     }
     public void removeObject(T object){
         objects.remove(object);
+    }
+    public void clearObjects(){
+        objects.clear();
     }
 }

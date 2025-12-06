@@ -58,7 +58,6 @@ public class SwingModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 			if(canSee)for(Editable r:group){
 				ActionListener action=new ActionListener(){
 					public void actionPerformed(ActionEvent e){
-<<<<<<< HEAD
 						ProgramStarter.editor.constructEditor(r,false,()->{
 							group.remove(r);
 							p.remove((JButton)e.getSource());
@@ -71,9 +70,6 @@ public class SwingModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 						((JButton)e.getSource()).setText(r.name);
 						p.revalidate();
 						p.repaint();
-=======
-						ProgramStarter.editor.constructEditor(r,false,()->{group.remove(r);p.remove((JButton)e.getSource());p.revalidate();},ctx);
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 					}
 				};
 				SwingItemRenderingContext itemCtx=new SwingItemRenderingContext(p,action);
@@ -83,7 +79,6 @@ public class SwingModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 				ActionListener action=new ActionListener(){
 					public void actionPerformed(ActionEvent e){
 						try{
-<<<<<<< HEAD
 							JButton addButton=(JButton)e.getSource();
 							if(ProgramStarter.editor==null)throw new NullPointerException("Editor cannot be null.");
 							Editable nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
@@ -137,12 +132,6 @@ public class SwingModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 
 							p.revalidate();
 							p.repaint();
-=======
-							if(ProgramStarter.editor==null)throw new NullPointerException("Editor cannot be null.");
-							Editable nEditable=(Editable)group.type.getDeclaredConstructor().newInstance();
-							group.add(nEditable);
-							ProgramStarter.editor.constructEditor(nEditable,true,()->{group.remove(nEditable);p.revalidate();},ctx);
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 						}catch(ReflectiveOperationException ex){throw new IllegalStateException("Editable implementations must be passed as a `type` argument and have a default constructor.",ex);}
 					}
 				};

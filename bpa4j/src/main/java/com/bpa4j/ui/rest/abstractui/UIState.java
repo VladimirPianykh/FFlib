@@ -69,7 +69,7 @@ public class UIState{
 		return invokeAndWait(()->{
 			valid=true;
 			//Window absence can be handled in a different way.
-			if(activeWindow==null)throw new IllegalStateException("No window shown.");
+			if(activeWindow==null)return Map.of();
 			JsonVisualContext ctx=new JsonVisualContext(0,0);
 			return activeWindow.getJson(ctx);
 		});

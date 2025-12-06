@@ -56,8 +56,8 @@ public class Panel extends Component{
 		return valid;
 	}
 	public void update(){
-		if(layoutManager!=null) layoutManager.layout(this);
 		super.update();
+		if(layoutManager!=null) layoutManager.layout(this);
 		for(Component c:components)
 			c.update();
 		valid=true;

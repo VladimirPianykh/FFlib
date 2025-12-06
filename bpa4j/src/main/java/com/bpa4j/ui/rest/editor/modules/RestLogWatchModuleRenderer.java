@@ -40,6 +40,8 @@ public class RestLogWatchModuleRenderer implements ModuleRenderer<LogWatchModule
 				container.add(recordPanel);
 			}
 		}
+		// Finalize this tab so next module gets a new one
+		ctx.finalizeCurrentTab();
 	}
 	
 	private String formatRecordText(ActionRecord r){

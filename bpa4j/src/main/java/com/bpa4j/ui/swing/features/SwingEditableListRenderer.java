@@ -102,13 +102,16 @@ public class SwingEditableListRenderer<T extends Editable> implements FeatureRen
 		}
 		final BiConsumer<T,ItemRenderingContext> finalProvider=componentProvider;
 		for(T t:group){
-			finalProvider.accept(t,new SwingItemRenderingContext(panel,e->ProgramStarter.editor.constructEditor(t,false,()->{
-				group.remove(t);
-				JComponent b=((JComponent)e.getSource());
-				b.getParent().remove(b);
-			},null)));
+			finalProvider.accept(t,new SwingItemRenderingContext(panel,e->{
+				Runnable deleter=getTransmissionContract().getAllowDeletion()?()->{
+					group.remove(t);
+					JComponent b=((JComponent)e.getSource());
+					b.getParent().remove(b);
+				}:null;
+				ProgramStarter.editor.constructEditor(t,false,deleter,null);
+			}));
 		}
-		if(getTransmissionContract().getCanCreate()){
+		if(getTransmissionContract().getAllowCreation()){
 			HButton add=new HButton(){
 				public void paint(Graphics g){
 					int c=50-scale*4;
@@ -122,15 +125,19 @@ public class SwingEditableListRenderer<T extends Editable> implements FeatureRen
 				try{
 					T t=group.type.getDeclaredConstructor().newInstance();
 					group.add(t);
-					ProgramStarter.editor.constructEditor(t,true,()->group.remove(t),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
+					Runnable deleter=getTransmissionContract().getAllowDeletion()?()->group.remove(t):null;
+					ProgramStarter.editor.constructEditor(t,true,deleter,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 					if(group.contains(t)){
 						Component last=panel.getComponent(panel.getComponentCount()-1); //Create button
 						panel.remove(last);
-						finalProvider.accept(t,new SwingItemRenderingContext(panel,e2->ProgramStarter.editor.constructEditor(t,false,()->{
-							group.remove(t);
-							JComponent b=((JComponent)e2.getSource());
-							b.getParent().remove(b);
-						},null)));
+						finalProvider.accept(t,new SwingItemRenderingContext(panel,e2->{
+							Runnable itemDeleter=getTransmissionContract().getAllowDeletion()?()->{
+								group.remove(t);
+								JComponent b=((JComponent)e2.getSource());
+								b.getParent().remove(b);
+							}:null;
+							ProgramStarter.editor.constructEditor(t,false,itemDeleter,null);
+						}));
 						panel.add(last);
 						panel.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()*panel.getComponentCount()/10));
 						panel.setLayout(new GridLayout(Math.max(10,group.size()+1),1));

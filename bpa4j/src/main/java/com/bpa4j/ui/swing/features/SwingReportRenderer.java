@@ -163,7 +163,7 @@ public class SwingReportRenderer implements ReportRenderer{
 			config.setPreferredSize(new Dimension(tab.getWidth(),tab.getHeight()/10));
 			for(Report.Configurator c:contract.getConfigurators()){
 				SwingConfiguratorRenderingContext ctx=new SwingConfiguratorRenderingContext(config,saver);
-				getConfiguratorRenderer(c).render(c,ctx);
+				c.render(this,ctx);
 			}
 			tab.add(config,BorderLayout.NORTH);
 		}

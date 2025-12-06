@@ -15,7 +15,6 @@ import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
-import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
 /**
  * REST renderer for DatedList feature.
@@ -50,8 +49,8 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 			target.setSize(targetWidth,targetHeight);
 		}
 
-		// Use GridLayout for vertical stacking
-		target.setLayout(new GridLayout(0,1,0,5));
+		// Use FlowLayout TTB for vertical stacking without huge gaps
+		target.setLayout(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
 
 		// Top panel with date navigation
 		Panel topPanel=new Panel(new FlowLayout());
@@ -96,11 +95,15 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 		topPanel.add(today);
 		target.add(topPanel);
 
-		// List panel
-		Panel listPanel=new Panel(new GridLayout(0,1,5,5));
-		listPanel.setSize(targetWidth,400);
-		
+		// Calculate height for list panel
 		Set<T> objects=contract.getObjects();
+		int rowHeight=35;
+		int totalListHeight=Math.max(100,objects.size()*rowHeight+(objects.size()-1)*5);
+
+		// List panel
+		Panel listPanel=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
+		listPanel.setSize(targetWidth,totalListHeight);
+
 		for(T t:objects){
 			Panel row=new Panel(new FlowLayout());
 			row.setSize(targetWidth,35);
@@ -120,14 +123,9 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 				contract.putObject(t,dater);
 			}
 			if(dater!=null){
-				// Note: In Swing, dater.apply(t, date) returns JComponent for 7-day view
-				// In REST, we cannot render JComponents, so we show a simplified view
-				// NO! TODO: paint customizable 7-day view
-				Label daterInfo=new Label("[Schedule: "+currentDate+" to "+currentDate.plusDays(6)+"]");
-				row.add(daterInfo);
-
-				// TODO: If Dater has configurable fields (EditorEntry annotations),
-				// we could add a configuration button here similar to Swing's popup menu
+				RestRenderingManager manager=(RestRenderingManager)ProgramStarter.getRenderingManager();
+				RestRenderingManager.RestDateRenderingContext daterCtx=new RestRenderingManager.RestDateRenderingContext(row,manager);
+				dater.render(t,currentDate,daterCtx);
 			}else{
 				row.add(new Label("[No schedule]"));
 			}
@@ -153,6 +151,9 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 		});
 		bottomPanel.add(addBtn);
 		target.add(bottomPanel);
+
+		// Resize target to fit everything
+		target.setSize(targetWidth,40+totalListHeight+40+20); // Top + List + Bottom + gaps
 
 		target.update();
 	}

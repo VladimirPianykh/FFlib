@@ -48,10 +48,11 @@ public class RestEditableListRenderer<T extends Editable> implements FeatureRend
 				RestItemRenderingContext restCtx=(RestItemRenderingContext)itemCtx;
 				Button itemBtn=new Button(t.name);
 				itemBtn.setOnClick(b->{
-					ProgramStarter.editor.constructEditor(t,false,()->{
+					Runnable deleter = contract.getAllowDeletion() ? () -> {
 						group.remove(t);
 						rctx.rebuild();
-					},null);
+					} : null;
+					ProgramStarter.editor.constructEditor(t, false, deleter, null);
 				});
 				restCtx.getTarget().add(itemBtn);
 			};
@@ -62,7 +63,7 @@ public class RestEditableListRenderer<T extends Editable> implements FeatureRend
 			finalProvider.accept(t,new RestItemRenderingContext(target));
 		}
 		
-		if(contract.getCanCreate()){
+		if (contract.getAllowCreation()) {
 			Button addBtn=new Button("Add");
 			addBtn.setOnClick(b->{
 				try{
@@ -82,6 +83,7 @@ public class RestEditableListRenderer<T extends Editable> implements FeatureRend
 			});
 			target.add(addBtn);
 		}
+		target.update();
 	}
 	public void renderPreview(FeatureRenderingContext ctx){}
 }

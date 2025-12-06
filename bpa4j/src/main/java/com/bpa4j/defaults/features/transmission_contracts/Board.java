@@ -24,20 +24,22 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	public static interface Filter<T extends Serializable>extends Predicate<T>{
 		default void renderConfigurator(RenderingContext ctx){}
 	}
-	public Supplier<ArrayList<T>> getObjectsOp;
-	// public Supplier<T> createObjectOp;
-	public Consumer<T> addObjectOp;
-	public Consumer<T> removeObjectOp;
-	public Consumer<Function<T,String>> setSlicerOp;
-	public Consumer<Supplier<ArrayList<T>>> setElementSupplierOp;
-	public BooleanSupplier getAllowCreationOp;
-	public Consumer<Boolean> setAllowCreationOp;
-	public Consumer<Board.Sorter<T>> setSorterOp;
-	public Consumer<Board.Filter<T>> setFilterOp;
+	private Supplier<ArrayList<T>> getObjectsOp;
+	// private Supplier<T> createObjectOp;
+	private Consumer<T> addObjectOp;
+	private Consumer<T> removeObjectOp;
+	private Consumer<Function<T,String>> setSlicerOp;
+	private Consumer<Supplier<ArrayList<T>>> setElementSupplierOp;
+	private BooleanSupplier getAllowCreationOp;
+	private BooleanSupplier getAllowDeletionOp;
+	private Consumer<Boolean> setAllowCreationOp;
+	private Consumer<Board.Sorter<T>> setSorterOp;
+	private Consumer<Board.Filter<T>> setFilterOp;
 	private Consumer<RenderingContext> renderSorterOp;
 	private Consumer<RenderingContext> renderFilterOp;
 	private Consumer<Consumer<TableCustomizationRenderingContext>> setTableCustomizerOp;
 	private Consumer<TableCustomizationRenderingContext> customizeTableOp;
+	private Consumer<Boolean> setAllowDeletionOp;
 
 	private String name;
 	private Class<T> type;
@@ -88,6 +90,12 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	public void setCustomizeTableOp(Consumer<TableCustomizationRenderingContext> customizeTableOp){
 		this.customizeTableOp=customizeTableOp;
 	}
+	public void setGetAllowDeletionOp(BooleanSupplier getAllowDeletionOp){
+		this.getAllowDeletionOp=getAllowDeletionOp;
+	}
+	public void setSetAllowDeletionOp(Consumer<Boolean> setAllowDeletionOp){
+		this.setAllowDeletionOp=setAllowDeletionOp;
+	}
 
 	public ArrayList<T> getObjects(){
 		return getObjectsOp.get();
@@ -108,6 +116,9 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	public boolean getAllowCreation(){
 		return getAllowCreationOp.getAsBoolean();
 	}
+	public boolean getAllowDeletion(){
+		return getAllowDeletionOp.getAsBoolean();
+	}
 	public Board<T> setAllowCreation(boolean allow){
 		setAllowCreationOp.accept(allow);
 		return this;
@@ -126,6 +137,10 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	}
 	public Board<T> setTableCustomizer(Consumer<TableCustomizationRenderingContext> customizer){
 		setTableCustomizerOp.accept(customizer);
+		return this;
+	}
+	public Board<T> setAllowDeletion(boolean allow){
+		setAllowDeletionOp.accept(allow);
 		return this;
 	}
 	public void renderSorter(RenderingContext ctx){

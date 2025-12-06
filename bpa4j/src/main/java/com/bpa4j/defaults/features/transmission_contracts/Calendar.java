@@ -1,5 +1,6 @@
 package com.bpa4j.defaults.features.transmission_contracts;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +14,7 @@ import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class Calendar<T extends Calendar.Event> implements FeatureTransmissionContract{
+	public static interface Event extends Serializable{}
 	public static interface DateRenderingContext{
 		<E> DaterRenderer<E> getRenderer(Dater<E> dater);
 	}
@@ -27,7 +29,6 @@ public class Calendar<T extends Calendar.Event> implements FeatureTransmissionCo
 		return (DaterRenderer<E>)daterRenderers.get(daterClass);
 	}
 
-	public static interface Event{}
 	public Supplier<HashMap<LocalDate,List<T>>> getEventsOp;
 	public BiFunction<LocalDate,List<T>,List<T>> getEventListOp;
 	public Consumer<HashMap<LocalDate,List<T>>> clearEventsOp;

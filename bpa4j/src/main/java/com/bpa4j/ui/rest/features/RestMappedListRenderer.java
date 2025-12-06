@@ -16,7 +16,6 @@ import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.components.TextField;
-import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
@@ -47,15 +46,19 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 			target.setSize(targetWidth,targetHeight);
 		}
 
-		// Use GridLayout for vertical stacking
-		target.setLayout(new GridLayout(0,1,0,5));
+		// Use FlowLayout TTB for vertical stacking
+		target.setLayout(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
 		
 		Field[] fields=contract.getVType().getFields();
 		int columns=fields.length+1; // +1 for the object name
+		int rows=contract.getObjects().size()+1; // +1 for header
 		
 		// Create table panel
-		Panel tablePanel=new Panel(new GridLayout(0,columns,5,5));
-		tablePanel.setSize(targetWidth,400);
+		Panel tablePanel=new Panel(new GridLayout(rows,columns,5,5));
+		// Calculate height similar to other renderers
+		int rowHeight=40;
+		int totalHeight=Math.max(100,rows*rowHeight+(rows-1)*5);
+		tablePanel.setSize(targetWidth,totalHeight);
 		
 		// Header
 		tablePanel.add(new Label("Objects"));
@@ -118,6 +121,9 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 		addPanel.add(addBtn);
 		target.add(addPanel);
 		
+		// Resize target
+		target.setSize(targetWidth,totalHeight+40+20);
+
 		target.update();
 	}
 

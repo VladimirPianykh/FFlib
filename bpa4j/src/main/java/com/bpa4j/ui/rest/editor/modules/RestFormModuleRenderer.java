@@ -7,11 +7,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-<<<<<<< HEAD
 import java.util.concurrent.atomic.AtomicInteger;
-=======
-import java.util.Objects;
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 import java.util.function.Supplier;
 import com.bpa4j.Wrapper;
 import com.bpa4j.core.Editable;
@@ -23,6 +19,7 @@ import com.bpa4j.defaults.input.FlagWEditor;
 import com.bpa4j.defaults.input.FunctionEditor;
 import com.bpa4j.defaults.input.SelectFromEditor;
 import com.bpa4j.defaults.input.SelectionListEditor;
+import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.editor.EditorEntryBase;
 import com.bpa4j.editor.EditorEntryBaseRenderer;
@@ -34,8 +31,12 @@ import com.bpa4j.ui.rest.abstractui.Component;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.CheckBox;
+import com.bpa4j.ui.rest.abstractui.components.ComboBox;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.components.TextField;
+import com.bpa4j.ui.rest.abstractui.components.complex.DatePicker;
+import com.bpa4j.ui.rest.abstractui.components.complex.DateTimePicker;
+import com.bpa4j.ui.rest.abstractui.components.complex.TimePicker;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 import com.bpa4j.ui.rest.editor.RestConditionalWEditorRenderer;
 import com.bpa4j.ui.rest.editor.RestFlagWEditorRenderer;
@@ -96,23 +97,43 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		}
 
 		container.removeAll();
-<<<<<<< HEAD
 		container.setLayout(new com.bpa4j.ui.rest.abstractui.layout.BorderLayout(10,10));
 
 		// Name Panel (North)
-		Panel namePanel=new Panel(new com.bpa4j.ui.rest.abstractui.layout.FlowLayout(com.bpa4j.ui.rest.abstractui.layout.FlowLayout.LEFT,com.bpa4j.ui.rest.abstractui.layout.FlowLayout.LTR,5,5));
+		Panel namePanel=new Panel(new com.bpa4j.ui.rest.abstractui.layout.BorderLayout(5,5));
 		namePanel.setSize(container.getWidth(),40);
-		namePanel.add(new Label("Name"));
+
+		Label nameLabel=new Label("Name");
+		nameLabel.setSize(50,40);
+		namePanel.add(nameLabel);
+
+		// Close Button (Right aligned in header)
+		Button deleteBtn=null;
+		if(deleter!=null){
+			deleteBtn=new Button("✕");
+			deleteBtn.setSize(40,40);
+			deleteBtn.setOnClick(b->{
+				deleter.run();
+				rctx.close();
+			});
+			namePanel.add(deleteBtn);
+		}
+
 		TextField nameField=new TextField(editable.name!=null?editable.name:"");
-		nameField.setSize(container.getWidth()-60,30);
+		// Size will be managed by BorderLayout Center
 		namePanel.add(nameField);
+
+		com.bpa4j.ui.rest.abstractui.layout.BorderLayout nameLayout=(com.bpa4j.ui.rest.abstractui.layout.BorderLayout)namePanel.getLayout();
+		nameLayout.addLayoutComponent(nameLabel,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.WEST);
+		if(deleteBtn!=null)nameLayout.addLayoutComponent(deleteBtn,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.EAST);
+		nameLayout.addLayoutComponent(nameField,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.CENTER);
 
 		// Form Panel (Center) - using GridLayout for horizontal label-editor layout
 		Panel formPanel=new Panel(new GridLayout(1,2,10,10));
 		formPanel.setSize(container.getWidth(),container.getHeight()-100);
 
 		// Button Panel (South) - vertical layout with back above OK
-		Panel buttonPanel=new Panel(new GridLayout(isNew?3:2,1,5,5));
+		Panel buttonPanel=new Panel(new GridLayout(!isNew?3:2,1,5,5));
 		buttonPanel.setSize(container.getWidth(),80);
 
 		// Collect fields and components
@@ -125,20 +146,6 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			EditorEntry a=f.getAnnotation(EditorEntry.class);
 			if(a==null)continue;
 
-=======
-		container.setLayout(new GridLayout(0,2,5,5));
-		List<Supplier<?>> savers=new ArrayList<>();
-		Label nameLabel=new Label("Name");
-		TextField nameField=new TextField(editable.name);
-		savers.add(()->editable.name=nameField.getText());
-		container.add(nameLabel);
-		container.add(nameField);
-		ArrayList<Field> editableFields=new ArrayList<>();
-		for(Field f:editable.getClass().getFields())try{
-			EditorEntry a=f.getAnnotation(EditorEntry.class);
-			if(a==null)continue;
-			editableFields.add(f);
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 			boolean hide=false,readonly=false;
 			for(String p:a.properties()){ //Handling entry flags
 				if("hide".equals(p))hide=true;
@@ -160,7 +167,6 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			if(a.editorBaseSource()==EditorEntryBase.class){
 				Wrapper<Supplier<?>> nextSaver=new Wrapper<>(null);
 				editorComponent=createEditorComponent(editable,f,nextSaver);
-<<<<<<< HEAD
 				if(nextSaver.var==null){
 					if(THROW_ON_NULL_SAVER) throw new IllegalStateException("Saver not set for field: "+f.getName());
 					nextSaver.var=new EmptySaver(); // Fallback
@@ -237,23 +243,6 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 						Object savedValue=saver.get();
 						fields.get(idx).set(editable,savedValue);
 					}
-=======
-				savers.add(nextSaver.var);
-			}else{
-				try{
-					EditorEntryBase editorBase=a.editorBaseSource().getDeclaredConstructor().newInstance();
-					Panel target=new Panel();
-					EditorEntryBase.EditorEntryRenderingContext renderingContext=new RestEditorEntryRenderingContext(target);
-					Wrapper<Supplier<?>> saver=new Wrapper<>(null);
-					Wrapper<EditableDemo> demo=new Wrapper<>(null);
-					editorBase.renderEditorBase(editable,f,saver,demo,renderingContext);
-					// Extract the component from the target panel
-					editorComponent=target.getComponents().isEmpty()?null:target.getComponents().get(0);
-					Objects.requireNonNull(saver.var,"All entry editors must set a saver.");
-					savers.add(saver.var);
-				}catch(ReflectiveOperationException e){
-					throw new IllegalStateException(e);
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 				}
 			}
 
@@ -269,29 +258,14 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			if(THROW_ON_FIELD_ACCESS_ERROR) throw new IllegalStateException("Error saving field value",ex);
 			// Fallback: continue anyway
 		}
-<<<<<<< HEAD
 	});
 
 	// Add buttons in vertical order: back above OK
-	if(isNew){
+	if(!isNew){
 		Button cancel=new Button("Cancel");
-		cancel.setOnClick(b->{
-			if(deleter!=null) deleter.run();
-			rctx.close();
-=======
-		Button ok=new Button("OK");
-		ok.setOnClick(b->{
-			for(int i=0;i<editableFields.size();++i)try{
-				editableFields.get(i).set(editable,savers.get(i).get());
-			}catch(ReflectiveOperationException ex){
-				throw new IllegalStateException(ex);
-			}
-			rctx.getBase().rebuild();
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
-		});
+		cancel.setOnClick(b->rctx.close());
 		buttonPanel.add(cancel);
 	}
-<<<<<<< HEAD
 	buttonPanel.add(back);
 	buttonPanel.add(ok);
 
@@ -308,8 +282,6 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 	}
 
 	@SuppressWarnings("unchecked")
-=======
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 	public static Component createEditorComponent(Object o,Field f,Wrapper<Supplier<?>> saver) throws IllegalAccessException{
 		Class<?>type=f.getType();
 
@@ -319,20 +291,15 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			TextField tf=new TextField(value);
 			saver.var=()->tf.getText();
 			return tf;
-<<<<<<< HEAD
 		}
 
 		// boolean/Boolean
 		else if(type==boolean.class||type==Boolean.class){
-=======
-		}else if(type==boolean.class||type==Boolean.class){
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 			boolean value=type==boolean.class?f.getBoolean(o):(Boolean)f.get(o);
 			CheckBox cb=new CheckBox();
 			cb.setSelected(value);
 			saver.var=()->cb.isSelected();
 			return cb;
-<<<<<<< HEAD
 		}
 
 		// int
@@ -345,26 +312,6 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 					return txt.isBlank()?0:Integer.parseInt(txt);
 				}catch(NumberFormatException e){
 					return 0;
-=======
-		}else{
-			Object value=f.get(o);
-			TextField tf=new TextField(value==null?"":String.valueOf(value));
-			saver.var=()->{
-				try{
-					String txt=tf.getText();
-					if(type==int.class||type==Integer.class){
-						Integer v=txt.isBlank()?null:Integer.parseInt(txt);
-						return type==int.class?(v==null?Integer.valueOf(0):v):v;
-					}else if(type==double.class||type==Double.class){
-						Double v=txt.isBlank()?null:Double.parseDouble(txt);
-						return type==double.class?(v==null?Double.valueOf(0d):v):v;
-					}else if(type==float.class||type==Float.class){
-						Float v=txt.isBlank()?null:Float.parseFloat(txt);
-						return type==float.class?(v==null?Float.valueOf(0f):v):v;
-					}else return txt;
-				}catch(NumberFormatException e){
-					throw new IllegalStateException(e);
->>>>>>> 0f4b9cb122bd5740b31d221c11e86ed0fdfa166d
 				}
 			};
 			return tf;
@@ -445,47 +392,98 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 			return tf;
 		}
 
-		// LocalDate
+		// LocalDate - use DatePicker
 		else if(type==LocalDate.class){
 			LocalDate value=(LocalDate)f.get(o);
-			TextField tf=new TextField(value==null?"":value.toString());
-			saver.var=()->{
-				String txt=tf.getText();
-				return txt.isBlank()?null:LocalDate.parse(txt);
-			};
-			return tf;
+			DatePicker dp=new DatePicker(value!=null?value:LocalDate.now());
+			saver.var=()->dp.getDate();
+			return dp;
 		}
 
-		// LocalTime
+		// LocalTime - use TimePicker
 		else if(type==LocalTime.class){
 			LocalTime value=(LocalTime)f.get(o);
-			TextField tf=new TextField(value==null?"":value.toString());
-			saver.var=()->{
-				String txt=tf.getText();
-				return txt.isBlank()?null:LocalTime.parse(txt);
-			};
-			return tf;
+			TimePicker tp=new TimePicker(value!=null?value:LocalTime.now());
+			saver.var=()->tp.getTime();
+			return tp;
 		}
 
-		// LocalDateTime
+		// LocalDateTime - use DateTimePicker
 		else if(type==LocalDateTime.class){
 			LocalDateTime value=(LocalDateTime)f.get(o);
-			TextField tf=new TextField(value==null?"":value.toString());
-			saver.var=()->{
-				String txt=tf.getText();
-				return txt.isBlank()?null:LocalDateTime.parse(txt);
-			};
-			return tf;
+			DateTimePicker dtp=new DateTimePicker(value!=null?value:LocalDateTime.now());
+			saver.var=()->dtp.getDateTime();
+			return dtp;
 		}
 
-		// Editable subclasses - display as text field with name
+		// Editable subclasses - use ComboBox if registered, Button otherwise
 		else if(Editable.class.isAssignableFrom(type)){
-			Editable value=(Editable)f.get(o);
-			TextField tf=new TextField(value==null?"":value.name);
-			tf.setEditable(false); // Make read-only since we can't edit complex objects in REST easily
-			saver.var=()->value; // Return the original value unchanged
-			return tf;
+			try{
+				// Try to get registered group - if successful, use ComboBox
+				ComboBox cb=new ComboBox();
+				EditableGroup<? extends Editable> group=ProgramStarter.getStorageManager().getStorage().getGroup((Class<? extends Editable>)type);
+				ArrayList<String> items=new ArrayList<>();
+				ArrayList<Editable> editables=new ArrayList<>();
+				for(Editable e:group){
+					items.add(e.name);
+					editables.add(e);
+				}
+				cb.setItems(items);
+
+				Editable currentVal=(Editable)f.get(o);
+				if(currentVal!=null){
+					int index=editables.indexOf(currentVal);
+					if(index>=0) cb.setSelectedIndex(index);
+				}
+
+				saver.var=()->{
+					int idx=cb.getSelectedIndex();
+					if(idx>=0&&idx<editables.size()) return editables.get(idx);
+					return currentVal; // Return current value if nothing selected
+				};
+				return cb;
+			}catch(IllegalArgumentException exception){
+				// Group not registered - use Button to open editor
+				Wrapper<Editable> value=new Wrapper<>((Editable)f.get(o));
+				Button a=new Button(value.var==null?"":value.var.name);
+
+				// Action for editing existing object
+				Runnable edit=()->{
+					if(value.var!=null){
+						ProgramStarter.editor.constructEditor(value.var,false,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
+					}
+				};
+
+				// If value is null, first click creates new object
+				if(value.var==null){
+					a.setOnClick(btn->{
+						try{
+							f.set(o,type.getDeclaredConstructor().newInstance());
+							value.var=(Editable)f.get(o);
+							ProgramStarter.editor.constructEditor(value.var,true,()->{
+								try{
+									f.set(o,null);
+									value.var=null;
+									btn.setText("");
+								}catch(IllegalAccessException ex){
+									throw new IllegalStateException(ex);
+								}
+							},ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
+							btn.setText(value.var.name);
+							btn.setOnClick(b->edit.run());
+						}catch(ReflectiveOperationException ex){
+							throw new IllegalStateException(ex);
+						}
+					});
+				}else{
+					a.setOnClick(btn->edit.run());
+				}
+
+				saver.var=()->value.var;
+				return a;
+			}
 		}
+
 
 		// EditableGroup - display as text field showing count
 		else if(EditableGroup.class.isAssignableFrom(type)){
@@ -505,7 +503,9 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 				String txt=tf.getText();
 				try{
 					// Parse enum from string
-					return Enum.valueOf((Class<Enum>)type,txt);
+					@SuppressWarnings("rawtypes")
+					Enum en=Enum.valueOf((Class<Enum>)type,txt);
+					return en;
 				}catch(IllegalArgumentException e){
 					return value; // Return original value if parsing fails
 				}

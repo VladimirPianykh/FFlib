@@ -13,6 +13,7 @@ import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
+import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
 public class RestModelEditingRenderer implements FeatureRenderer<ModelEditing>{
@@ -48,37 +49,45 @@ public class RestModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 			target.setSize(targetWidth,targetHeight);
 		}
 
+
 		target.setLayout(new GridLayout(1,columns,10,10));
-		int columnWidth=Math.max(targetWidth/columns,100);
+		// Calculate total height to ensure scrolling/visibility
+		// Estimate height based on max group size
+		int maxGroupSize=0;
+		for(EditableGroup<?> g:groups){
+			if(!g.invisible) maxGroupSize=Math.max(maxGroupSize,g.size());
+		}
+		int estimatedHeight=Math.max(400,(maxGroupSize+2)*40);
+		target.setSize(targetWidth,estimatedHeight);
+
+		// Calculate column width: distribute full width minus gaps evenly
+		int totalGaps=(columns-1)*10;
+		int columnWidth=(targetWidth-totalGaps)/columns;
 
 		for(EditableGroup<?> group:groups){
 			if(group.invisible)continue;
-			Panel column=new Panel();
-			column.setLayout(null);
-			column.setSize(columnWidth,Math.max(targetHeight,400));
-
-			int y=0;
+			// Use FlowLayout TTB for column
+			Panel column=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
+			column.setSize(columnWidth,estimatedHeight);
 
 			Label header=new Label(group.type.getSimpleName()+" ("+group.size()+")");
-			header.setBounds(0,y,columnWidth,25);
+			header.setSize(columnWidth,25); // Stretch to column width
 			column.add(header);
-			y+=30;
 
 			for(Editable item:group){
 				String name=item.name;
 				if(name==null||name.isBlank()) name="[Unnamed]";
 				Button itemBtn=new Button(name);
-				itemBtn.setBounds(0,y,columnWidth,30);
+				itemBtn.setSize(columnWidth,30); // Stretch to column width
 				itemBtn.setOnClick(b->{
 					if(contract.editOp!=null) contract.editOp.accept(item);
 					ProgramStarter.editor.constructEditor(item,false,null,rctx);
 				});
 				column.add(itemBtn);
-				y+=35;
 			}
 
 			Button addBtn=new Button("Add");
-			addBtn.setBounds(0,y,columnWidth,30);
+			addBtn.setSize(columnWidth,30); // Stretch to column width
 			addBtn.setOnClick(b->{
 				try{
 					Editable newItem=(Editable)group.type.getDeclaredConstructor().newInstance();

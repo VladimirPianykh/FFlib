@@ -18,18 +18,18 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	public static interface ListCustomizationRenderingContext{}
 	private static final Map<String,Feature<? extends ItemList<?>>> registeredLists=new HashMap<>();
 
-	public Supplier<ArrayList<T>> getObjectsOp;
-	public Supplier<T> createObjectOp;
-	public Consumer<T> addObjectOp;
-	public Consumer<T> removeObjectOp;
-	public Consumer<Function<T,String>> setSlicerOp;
-	public Consumer<Supplier<ArrayList<T>>> setElementSupplierOp;
-	public BooleanSupplier getAllowCreationOp;
-	public Consumer<Boolean> setAllowCreationOp;
-	public Consumer<Consumer<List<T>>> addCollectiveActionOp;
-	public Consumer<Consumer<T>> addSingularActionOp;
-	public Consumer<Board.Sorter<T>> setSorterOp;
-	public Consumer<Board.Filter<T>> setFilterOp;
+	private Supplier<ArrayList<T>> getObjectsOp;
+	private Supplier<T> createObjectOp;
+	private Consumer<T> addObjectOp;
+	private Consumer<T> removeObjectOp;
+	private Consumer<Function<T,String>> setSlicerOp;
+	private Consumer<Supplier<ArrayList<T>>> setElementSupplierOp;
+	private BooleanSupplier getAllowCreationOp;
+	private Consumer<Boolean> setAllowCreationOp;
+	private Consumer<Consumer<List<T>>> addCollectiveActionOp;
+	private Consumer<Consumer<T>> addSingularActionOp;
+	private Consumer<Board.Sorter<T>> setSorterOp;
+	private Consumer<Board.Filter<T>> setFilterOp;
 	private Consumer<RenderingContext> renderFilterOp;
 	private Consumer<RenderingContext> renderSorterOp;
 	private Supplier<List<Consumer<List<T>>>> getCollectiveActionsOp;

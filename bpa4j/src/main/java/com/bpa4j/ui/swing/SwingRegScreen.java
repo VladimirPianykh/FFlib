@@ -136,6 +136,6 @@ public class SwingRegScreen implements RegScreen{
 		}
 		f.add(confirm);
 		f.setVisible(true);
-		while(f.isVisible())Thread.onSpinWait();
+		// while(f.isVisible())Thread.onSpinWait();
 	}
 }

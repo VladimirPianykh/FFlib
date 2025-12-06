@@ -225,5 +225,188 @@ Report.getReport("report")
 - настройку `ModularEditor` и подключение модулей;
 - регистрацию и настройку фич: `Board`, `Calendar`, `Report`, `ItemList`, `DatedList`.
 
+
+## REST UI и менеджеры компоновки
+
+### Архитектура REST UI
+BPA4j поддерживает два типа пользовательского интерфейса:
+- **Swing UI** — традиционный десктопный интерфейс на основе Java Swing
+- **REST UI** — веб-интерфейс, работающий через HTTP API
+
+REST UI использует абстрактные компоненты (`com.bpa4j.ui.rest.abstractui.*`), которые сериализуются в JSON и отправляются клиенту. Клиент (браузер) отображает эти компоненты как HTML элементы.
+
+### Менеджеры компоновки (Layout Managers)
+
+REST UI предоставляет три основных менеджера компоновки:
+
+#### 1. GridLayout
+Размещает компоненты в сетке с фиксированным количеством строк и столбцов.
+
+```java
+// Создание GridLayout: rows, columns, hgap, vgap
+Panel panel = new Panel(new GridLayout(3, 2, 5, 5));
+```
+
+**Особенности:**
+- Все ячейки имеют одинаковый размер
+- Компоненты добавляются слева направо, сверху вниз
+- Если `rows=0`, количество строк вычисляется автоматически
+- Если `columns=0`, количество столбцов вычисляется автоматически
+- Размер ячейки = `(targetSize - gaps) / count`
+
+**Использование:**
+- Таблицы данных (`RestBoardRenderer`, `RestReportRenderer`)
+- Календарные сетки (`RestCalendarRenderer`)
+- Равномерное распределение элементов
+
+#### 2. FlowLayout
+Размещает компоненты последовательно в заданном направлении.
+
+```java
+// Горизонтальное размещение (слева направо)
+Panel panel = new Panel(new FlowLayout(FlowLayout.LEFT, FlowLayout.LTR, 5, 5));
+
+// Вертикальное размещение (сверху вниз)
+Panel panel = new Panel(new FlowLayout(FlowLayout.LEFT, FlowLayout.TTB, 0, 5));
+```
+
+**Константы направления:**
+- `FlowLayout.LTR` — слева направо (left-to-right)
+- `FlowLayout.TTB` — сверху вниз (top-to-bottom)
+
+**Константы выравнивания:**
+- `FlowLayout.LEFT` — выравнивание по левому краю
+- `FlowLayout.CENTER` — выравнивание по центру
+- `FlowLayout.RIGHT` — выравнивание по правому краю
+
+**Особенности:**
+- Компоненты сохраняют свой предпочтительный размер
+- Автоматический перенос на новую строку/столбец при нехватке места
+- Поддерживает горизонтальные и вертикальные отступы (hgap, vgap)
+
+**Использование:**
+- Списки элементов (`RestItemListRenderer`, `RestDatedListRenderer`)
+- Панели кнопок (`RestWorkFrameRenderer`)
+- Вертикальное стекирование без растяжения
+
+#### 3. BorderLayout
+Размещает компоненты в пяти областях: NORTH, SOUTH, EAST, WEST, CENTER.
+
+```java
+Panel panel = new Panel(new BorderLayout(5, 5)); // hgap, vgap
+BorderLayout layout = (BorderLayout) panel.getLayout();
+
+// Добавление компонентов в области
+layout.addLayoutComponent(header, BorderLayout.NORTH);
+layout.addLayoutComponent(content, BorderLayout.CENTER);
+panel.add(header);
+panel.add(content);
+```
+
+**Области:**
+- `BorderLayout.NORTH` — верхняя область (фиксированная высота)
+- `BorderLayout.SOUTH` — нижняя область (фиксированная высота)
+- `BorderLayout.EAST` — правая область (фиксированная ширина)
+- `BorderLayout.WEST` — левая область (фиксированная ширина)
+- `BorderLayout.CENTER` — центральная область (занимает оставшееся пространство)
+
+**Особенности:**
+- CENTER растягивается на всё доступное пространство
+- NORTH/SOUTH определяют высоту по `getPreferredSize()`
+- EAST/WEST определяют ширину по `getPreferredSize()`
+- Компоненты в краевых областях растягиваются в перпендикулярном направлении
+
+**Использование:**
+- Основная структура окон (`RestCalendarRenderer`, `RestReportRenderer`)
+- Разделение на header/content/footer
+- Навигационные панели
+
+### Лучшие практики для REST UI
+
+#### Явное указание размеров
+В REST UI важно явно указывать размеры компонентов:
+
+```java
+// Проверка и установка размера по умолчанию
+int targetWidth = target.getWidth();
+int targetHeight = target.getHeight();
+if (targetWidth == 0 || targetHeight == 0) {
+    targetWidth = RestRenderingManager.DEFAULT_SIZE.width();
+    targetHeight = RestRenderingManager.DEFAULT_SIZE.height();
+    target.setSize(targetWidth, targetHeight);
+}
+```
+
+#### Расчёт размеров для списков
+Для динамических списков рассчитывайте высоту на основе количества элементов:
+
+```java
+int rowHeight = 35;
+int totalHeight = Math.max(100, objects.size() * rowHeight + (objects.size() - 1) * 5);
+listPanel.setSize(targetWidth, totalHeight);
+target.setSize(targetWidth, 60 + totalHeight + 20); // header + list + footer
+```
+
+#### Учёт отступов в GridLayout
+При расчёте размеров ячеек учитывайте отступы:
+
+```java
+int totalGaps = (columns - 1) * hgap;
+int cellWidth = (targetWidth - totalGaps) / columns;
+```
+
+#### Обновление UI
+Всегда вызывайте `target.update()` после модификации компонентов:
+
+```java
+target.add(panel);
+target.update(); // Обязательно!
+```
+
+#### Выбор правильного Layout Manager
+- **GridLayout** — для таблиц с равными ячейками
+- **FlowLayout TTB** — для вертикальных списков без растяжения
+- **FlowLayout LTR** — для горизонтальных панелей кнопок
+- **BorderLayout** — для структурирования окна на области
+
+### Примеры использования
+
+#### Вертикальный список
+```java
+Panel list = new Panel(new FlowLayout(FlowLayout.LEFT, FlowLayout.TTB, 0, 5));
+list.setSize(targetWidth, totalHeight);
+for (Object item : items) {
+    Panel row = new Panel(new FlowLayout());
+    row.setSize(targetWidth, 35);
+    row.add(new Label(item.toString()));
+    list.add(row);
+}
+```
+
+#### Таблица данных
+```java
+int rows = data.size() + 1; // +1 для заголовка
+int columns = fields.size();
+Panel table = new Panel(new GridLayout(rows, columns, 5, 5));
+int cellWidth = (targetWidth - (columns - 1) * 5) / columns;
+int totalHeight = rows * 40 + (rows - 1) * 5;
+table.setSize(targetWidth, totalHeight);
+```
+
+#### Структура окна
+```java
+Panel root = new Panel(new BorderLayout());
+Panel header = new Panel(new FlowLayout());
+header.setSize(targetWidth, 60);
+Panel content = new Panel(new FlowLayout(FlowLayout.LEFT, FlowLayout.TTB, 0, 5));
+
+BorderLayout layout = (BorderLayout) root.getLayout();
+layout.addLayoutComponent(header, BorderLayout.NORTH);
+layout.addLayoutComponent(content, BorderLayout.CENTER);
+root.add(header);
+root.add(content);
+```
+
 ## Лицензия
 Apache License 2.0. См. `bpa4j/pom.xml`.
+

@@ -88,14 +88,17 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 	}
 	public void setSlicer(Function<T,String> slicer){
 		// Slicer implementation would go here - handled by renderer
+		//TODO: implement
 	}
 	public void setElementSupplier(Supplier<ArrayList<T>> supplier){
+		// if(supplier!=null)setAllowCreation(false);
 		this.elementSupplier=supplier;
 	}
 	public boolean getAllowCreation(){
 		return allowCreation;
 	}
 	public void setAllowCreation(boolean allow){
+        // if(allow&&elementSupplier!=null)throw new IllegalStateException(BoardModel.CREATE_WITH_SUPPLIER_MESSAGE);
 		this.allowCreation=allow;
 	}
 	public void addCollectiveAction(Consumer<List<T>> action){

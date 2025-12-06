@@ -12,6 +12,7 @@
 		"scope":"java",
 		"prefix":"_start",
 		"body":[
+			"for(AppPermission p:AppPermission.values())ProgramStarter.register(p);",
 			"Navigator.init();",
 			"ProgramStarter.welcomeMessage=\"$1\";",
 			"ProgramStarter.authRequired=${2|false,true|};",
@@ -42,7 +43,7 @@
 			"}",
 			"public enum AppPermission implements Permission{",
 				"\t$2;",
-				"\tprivate AppPermission(){ProgramStarter.register(this);}",
+				"\tprivate AppPermission(){}",
 			"}"
 		],
 		"description":"Create Role and Permission enum-implementations"

@@ -40,7 +40,7 @@ public class RestWorkFrameRenderer implements WorkFrameRenderer{
 		}
 		root=new Panel(new BorderLayout());
 		root.setSize(RestRenderingManager.DEFAULT_SIZE);
-		featureBar=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,5,5));
+		featureBar=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.LTR,5,5));
 		featureBar.setSize(root.getWidth(),80);
 		content=new Panel(new GridLayout(1,1,5,5));
 		content.setSize(root.getWidth(),root.getHeight()-featureBar.getHeight());
@@ -49,8 +49,12 @@ public class RestWorkFrameRenderer implements WorkFrameRenderer{
 		layout.addLayoutComponent(content,BorderLayout.CENTER);
 		root.add(featureBar);
 		root.add(content);
+		Button exit=new Button("✕");
+		exit.setOnClick(btn->workFrame.exit());
+		featureBar.add(exit);
 		for(WorkFrame.FeatureEntry<?>entry:workFrame.getFeatures()){
 			Button b=new Button(entry.toString());
+			b.setSize(150,35); // Make buttons larger for better visibility
 			b.setOnClick(btn->{
 				workFrame.selectFeature(entry);
 				state.invalidate();
