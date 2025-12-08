@@ -27,6 +27,6 @@ public class ImageDisplayModule implements EditorModule{
 	}
 	@SuppressWarnings("unchecked")
 	public <M extends EditorModule> void setRendererSource(Function<M,? extends ModuleRenderer<M>> rendererSource){
-		this.rendererSource=(Function<EditorModule,ModuleRenderer<ImageDisplayModule>>)rendererSource;
+		this.rendererSource = (Function<EditorModule, ModuleRenderer<ImageDisplayModule>>) (Function<?, ?>) rendererSource;
 	}
 }

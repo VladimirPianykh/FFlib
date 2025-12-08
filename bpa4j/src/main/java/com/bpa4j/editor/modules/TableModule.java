@@ -52,6 +52,6 @@ public class TableModule implements EditorModule{
     }
     @SuppressWarnings("unchecked")
     public <M extends EditorModule> void setRendererSource(java.util.function.Function<M,? extends ModuleRenderer<M>> rendererSource){
-        this.rendererSource=(java.util.function.Function<EditorModule,ModuleRenderer<TableModule>>)rendererSource;
+        this.rendererSource=(java.util.function.Function<EditorModule,ModuleRenderer<TableModule>>)(java.util.function.Function<?,?>)rendererSource;
     }
 }

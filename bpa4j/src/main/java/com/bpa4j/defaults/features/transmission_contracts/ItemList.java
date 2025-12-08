@@ -19,7 +19,6 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	private static final Map<String,Feature<? extends ItemList<?>>> registeredLists=new HashMap<>();
 
 	private Supplier<ArrayList<T>> getObjectsOp;
-	private Supplier<T> createObjectOp;
 	private Consumer<T> addObjectOp;
 	private Consumer<T> removeObjectOp;
 	private Consumer<Function<T,String>> setSlicerOp;
@@ -46,9 +45,6 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 
 	public void setGetObjectsOp(Supplier<ArrayList<T>> getObjectsOp){
 		this.getObjectsOp=getObjectsOp;
-	}
-	public void setCreateObjectOp(Supplier<T> createObjectOp){
-		this.createObjectOp=createObjectOp;
 	}
 	public void setAddObjectOp(Consumer<T> addObjectOp){
 		this.addObjectOp=addObjectOp;

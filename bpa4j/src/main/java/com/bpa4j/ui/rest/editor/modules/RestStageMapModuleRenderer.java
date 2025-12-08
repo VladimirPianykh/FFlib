@@ -51,5 +51,7 @@ public class RestStageMapModuleRenderer implements ModuleRenderer<StageMapModule
 			});
 			container.add(reject);
 		}
+		// Finalize this tab so next module gets a new one
+		rctx.finalizeCurrentTab();
 	}
 }

@@ -279,6 +279,8 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 	container.add(buttonPanel);
 
 	updateUI.run();
+	// Finalize this tab so next module gets a new one
+	rctx.finalizeCurrentTab();
 	}
 
 	@SuppressWarnings("unchecked")

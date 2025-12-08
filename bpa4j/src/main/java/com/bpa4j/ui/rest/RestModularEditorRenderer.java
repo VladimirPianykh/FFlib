@@ -11,12 +11,11 @@ import com.bpa4j.editor.modules.LogWatchModule;
 import com.bpa4j.editor.modules.StageMapModule;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.abstractui.Panel;
+import com.bpa4j.ui.rest.abstractui.Window;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
-import com.bpa4j.ui.rest.abstractui.Window;
-import com.bpa4j.ui.rest.RestRenderingManager;
 
 /**
  * REST implementation of {@link ModularEditorRenderer}.

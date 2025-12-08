@@ -11,7 +11,7 @@
 	</scm>
 	<groupId>io.github.vladimirpianykh</groupId>
 	<artifactId>bpa4j</artifactId>
-	<version>1.0.19</version>
+	<version>1.0.20</version>
 	<packaging>jar</packaging>
 	<description>
 		A DI-based library for blazing-fast business-process automation applications development.

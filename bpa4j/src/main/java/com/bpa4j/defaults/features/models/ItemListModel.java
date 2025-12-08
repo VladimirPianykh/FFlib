@@ -40,7 +40,7 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 		this.ftc=ftc;
 		ftc.setGetObjectsOp(this::getObjects);
 		ftc.setAddObjectOp(this::addObject);
-		ftc.setCreateObjectOp(this::createObject);
+		// ftc.setCreateObjectOp(this::createObject);
 		ftc.setRemoveObjectOp(this::removeObject);
 		ftc.setSetElementSupplierOp(this::setElementSupplier);
 		ftc.setGetAllowCreationOp(this::getAllowCreation);
