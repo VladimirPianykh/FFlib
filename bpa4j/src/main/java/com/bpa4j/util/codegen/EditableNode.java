@@ -18,6 +18,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.bpa4j.core.Editable;
+import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.Wrapper;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -219,7 +221,7 @@ public class EditableNode extends ClassNode{
 	/**
 	 * Constructs a new node with the designated file.
 	 */
-	public EditableNode(File file,String objectName,Property...properties){
+	public EditableNode(File file,String objectName,String basePackage,Property...properties){
 		super(file);
 		this.objectName=objectName.replaceAll("[!@#$%&*]","").trim();
 		if(objectName.isEmpty()) objectName=null;
@@ -228,10 +230,10 @@ public class EditableNode extends ClassNode{
 			file.createNewFile();
 			Wrapper<Integer> index=new Wrapper<>(0);
 			String s=String.format("""
-					package com.ntoproject.editables.registered;
+					package %s.editables.registered;
 
-					import com.bpa4j.core.Data.Editable;
-					import com.bpa4j.editor.EditorEntry;
+					import %s;
+					import %s;
 
 					public class %s extends Editable{
 					"""+Stream.of(properties).map(p->p.getCode("var"+(++index.var))).collect(Collectors.joining("\n"))+"""
@@ -239,7 +241,7 @@ public class EditableNode extends ClassNode{
 							super("Нов %s");
 						}
 					}
-					""",name,name,objectName==null?"":objectName);
+					""",basePackage,Editable.class.getName(),EditorEntry.class.getName(),name,name,objectName==null?"":objectName);
 			Files.writeString(file.toPath(),s);
 		}catch(IOException ex){
 			throw new UncheckedIOException(ex);

@@ -783,16 +783,28 @@ public class ProjectGraph{
 	public void runServer(long port){
 		new ProjectServer(this,port);
 	}
+	private String resolveProjectPackage(){
+		try{
+			Optional<Path> graphFile=Files.walk(projectFolder.toPath()).filter(p->p.getFileName().toString().equals("ProjectGraph.java")).findFirst();
+			if(graphFile.isPresent()){
+				Path rel=projectFolder.toPath().relativize(graphFile.get().getParent());
+				String pkg=rel.toString().replace(File.separatorChar,'.');
+				if(!pkg.isBlank()) return pkg;
+			}
+		}catch(IOException ex){
+			throw new UncheckedIOException(ex);
+		}
+		Package p=ProjectGraph.class.getPackage();
+		return p==null?"":p.getName();
+	}
 	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties){
 		if(name==null||name.isBlank()) throw new IllegalArgumentException("Name "+name+" is not a valid identifier.");
-		File file=new File(projectFolder,"com");
-		if(file.isDirectory()){
-			file=new File(Stream.of(file.listFiles()).filter(f->f.isDirectory()).findAny().get(),"editables/registered/"+name+".java");
-		}else{
-			file=new File(projectFolder,name+".java");
-		}
+		String basePackage=resolveProjectPackage();
+		if(basePackage.isBlank()) throw new IllegalStateException("Unable to resolve project package");
+		Path editableDir=projectFolder.toPath().resolve(basePackage.replace('.','/')).resolve("editables/registered");
+		File file=editableDir.resolve(name+".java").toFile();
 		file.getParentFile().mkdirs();
-		EditableNode n=new EditableNode(file,objectName,properties);
+		EditableNode n=new EditableNode(file,objectName,basePackage,properties);
 		nodes.add(n);
 		return n;
 	}
