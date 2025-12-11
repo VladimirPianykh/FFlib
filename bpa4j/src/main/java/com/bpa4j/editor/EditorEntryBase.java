@@ -18,8 +18,8 @@ public interface EditorEntryBase{
 	 * @param f - field to create editor for
 	 * @param saver - {@code Wrapper} which {@code var} field must be set to supplier that returns the updated field value
 	 * @param demo - {@code EditableDemo} link that <b>cannot be used during creation</b>
-	 * @param context - {@code EditorEntryRenderingContext} </b>
-	 * @returns object representing entry editor ({@code JComponent} for Swing)
+	 * @param context - {@code EditorEntryRenderingContext}
+	 * @return object representing entry editor ({@code JComponent} for Swing)
 	 */
 	default void renderEditorBase(Object o,Field f,Wrapper<Supplier<?>>saver,Wrapper<EditableDemo>demo,EditorEntryRenderingContext context){
 		context.getRenderer(this).renderEditorBase(o,f,saver,demo,this,context);

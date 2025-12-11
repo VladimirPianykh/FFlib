@@ -1,4 +1,4 @@
-{
+﻿{
 	"Add new editable field":{
 		"scope":"java",
 		"prefix":"_ef",
@@ -39,7 +39,7 @@
 					"\t\t()->new Permission[]{},",
 					"\t\t()->new Feature[]{}",
 				"\t);",
-				"\tprivate AppRole(Supplier<Permission[]>p,Supplier<Feature[]>f){SwingUtilities.invokeLater(()->ProgramStarter.register(this,f.get(),p.get()));}",
+				"\tprivate AppRole(Supplier<Permission[]>p,Supplier<Feature<?>[]>f){SwingUtilities.invokeLater(()->ProgramStarter.register(this,f.get(),p.get()));}",
 			"}",
 			"public enum AppPermission implements Permission{",
 				"\t$2;",
@@ -138,7 +138,7 @@
 		"scope":"java",
 		"prefix":"_function",
 		"body":[
-			"static Function<${TM_FILENAME_BASE},${1:String}>${2:function}=e->$0",
+			"static Function<${TM_FILENAME_BASE},${1:String}>${2:function}=e->$0"
 		],
 		"description":""
 	},

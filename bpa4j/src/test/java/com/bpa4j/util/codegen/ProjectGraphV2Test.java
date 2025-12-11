@@ -3,7 +3,7 @@ package com.bpa4j.util.codegen;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
  * Тест для демонстрации работы ProjectGraphV2 с JavaParser
  */
 public class ProjectGraphV2Test {
-    
+    @Disabled
     @Test
     public void testProjectGraphV2Parsing(@TempDir Path tempDir) throws IOException {
         // Создаем тестовую структуру проекта

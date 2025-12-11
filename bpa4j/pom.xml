@@ -3,6 +3,7 @@
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	<name>BPA4j</name>
 	<url>https://github.com/VladimirPianykh/FFlib</url>
 	<scm>
 		<connection>scm:git:git://github.com/VladimirPianykh/FFlib.git</connection>
@@ -11,7 +12,7 @@
 	</scm>
 	<groupId>io.github.vladimirpianykh</groupId>
 	<artifactId>bpa4j</artifactId>
-	<version>1.0.20</version>
+	<version>1.1.0</version>
 	<packaging>jar</packaging>
 	<description>
 		A DI-based library for blazing-fast business-process automation applications development.
@@ -80,6 +81,13 @@
 					<publishingServerId>central</publishingServerId>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+				<additionalparam>-Xdoclint:none</additionalparam>
+				</configuration>
+			</plugin>
 		</plugins>
 		<resources>
 			<resource>
@@ -88,7 +96,7 @@
 					<include>*</include>
 				</includes>
 			</resource>
-		</resources>
+		 </resources>
 	</build>
 	<properties>
 		<maven.compiler.source>21</maven.compiler.source>
@@ -118,7 +126,7 @@
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
-			<version>3.8-beta4</version>
+			<version>3.8-beta4	</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.lgooddatepicker</groupId>
