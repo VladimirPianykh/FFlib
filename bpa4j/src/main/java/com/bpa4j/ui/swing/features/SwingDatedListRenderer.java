@@ -182,6 +182,7 @@ public class SwingDatedListRenderer<T extends Editable> implements FeatureRender
 				dates.removeAll();
 				for(int i=0;i<7;++i)
 					finalDater.render(t,date.var.plusDays(i),dContext);
+				dates.revalidate();
 			});
 			p.add(dates);
 		}

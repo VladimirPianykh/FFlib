@@ -2,6 +2,7 @@ package com.bpa4j.defaults.ftr_attributes.data_renderers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Supplier;
 import javax.swing.JComponent;
 import org.knowm.xchart.CategoryChart;
@@ -21,21 +22,7 @@ import com.bpa4j.defaults.features.transmission_contracts.Report;
  */
 public final class ChartDataRenderer implements Report.DataRenderer{
 	// private Function<ChartDataRenderer,DataRendererRenderer<ChartDataRenderer>> rendererSource;
-
-	public static enum ChartMode{
-		LINEAR_EACH,
-		LINEAR_COMPARE,
-		PIE,
-		BAR
-	}
-	private ChartMode mode;
-	private Supplier<ArrayList<Object[]>> elementSupplier;
-	private String title;
-	private Object[] args;
-
-	/**
-	 * @param mode - chart type to display
-	 * @param elementSupplier <p>- supplier of rendering data.</p>
+	/*
 	 * Type - Formatting - Arguments:
 	 * <ul>
 	 * <li>LINEAR_EACH - {title, x array, y array} - {}</li>
@@ -43,6 +30,21 @@ public final class ChartDataRenderer implements Report.DataRenderer{
 	 * <li>PIE - {title, value} - {}</li>
 	 * <li>BAR - {group name, category name, value} - {x axis name, y axis name}</li>
 	 * </ul>
+	 */
+	public static enum ChartMode{
+		LINEAR_EACH,
+		LINEAR_COMPARE,
+		PIE,
+		BAR
+	}
+	private ChartMode mode;
+	private Supplier<? extends List<Object[]>> elementSupplier;
+	private String title;
+	private Object[] args;
+
+	/**
+	 * @param mode - chart type to display
+	 * @param elementSupplier <p>- supplier of rendering data.</p>
 	 */
 	public ChartDataRenderer(ChartMode mode,Supplier<ArrayList<Object[]>> elementSupplier,Object...args){
 		this.mode=mode;
@@ -78,7 +80,7 @@ public final class ChartDataRenderer implements Report.DataRenderer{
 					.theme(ChartTheme.Matlab)
 						.title(title==null?"":title).xAxisTitle(args.length==0?"":(String)args[0]).yAxisTitle(args.length<2?"":(String)args[1])
 					.build();
-				ArrayList<Object[]> a=elementSupplier.get();
+				List<Object[]> a=elementSupplier.get();
 				if(a.isEmpty()) yield null;
 				HashMap<String,ArrayList<Integer>> x=new HashMap<>(),y=new HashMap<>();
 				for(Object[] o:a){
@@ -108,7 +110,7 @@ public final class ChartDataRenderer implements Report.DataRenderer{
 					.theme(ChartTheme.Matlab)
 						.title(title==null?"":title).xAxisTitle(args.length==0?"":(String)args[0]).yAxisTitle(args.length<2?"":(String)args[1])
 					.build();
-				ArrayList<Object[]> a=elementSupplier.get();
+				List<Object[]> a=elementSupplier.get();
 				if(a.isEmpty()) yield null;
 				HashMap<String,ArrayList<String>> t=new HashMap<>();
 				HashMap<String,ArrayList<Integer>> v=new HashMap<>();
@@ -136,7 +138,7 @@ public final class ChartDataRenderer implements Report.DataRenderer{
 		return mode;
 	}
 
-	public Supplier<ArrayList<Object[]>> getElementSupplier(){
+	public Supplier<? extends List<Object[]>> getElementSupplier(){
 		return elementSupplier;
 	}
 

@@ -23,10 +23,6 @@ public final class DefaultTestSourceRegistry{
     };
     private static final Map<Class<?>,Supplier<?>> DEFAULT_SOURCES=new HashMap<>();
 	static{
-		DEFAULT_SOURCES.put(String.class,()->{
-			int r=(int)(Math.random()*names.length);
-			return names[r];
-		});
 		DEFAULT_SOURCES.put(Integer.class,()->(int)(Math.random()*1000));
 		DEFAULT_SOURCES.put(int.class,()->(int)(Math.random()*1000));
 		DEFAULT_SOURCES.put(Double.class,()->Math.random()*1000);
@@ -46,11 +42,16 @@ public final class DefaultTestSourceRegistry{
 	}
 	private DefaultTestSourceRegistry(){}
 	public static <T> Supplier<T> getDefaultSource(Class<T> type){
+		if(type.isEnum())return ()->{
+			T[]values=type.getEnumConstants();
+			return values[(int)(Math.random()*values.length)];
+		};
 		@SuppressWarnings("unchecked")
 		Supplier<T> supplier=(Supplier<T>)DEFAULT_SOURCES.get(type);
 		return supplier;
 	}
 	public static boolean hasDefaultSource(Class<?> type){
+		if(type.isEnum())return true;
 		return DEFAULT_SOURCES.containsKey(type);
 	}
 	public static Set<Class<?>> getRegisteredTypes(){

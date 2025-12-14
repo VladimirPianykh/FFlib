@@ -17,6 +17,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 import java.util.function.Supplier;
 import javax.swing.BorderFactory;
@@ -301,7 +302,7 @@ public class SwingReportRenderer implements ReportRenderer{
 
 			// Access data renderer properties
 			ChartDataRenderer.ChartMode mode=dataRenderer.getMode();
-			Supplier<ArrayList<Object[]>> elementSupplier=dataRenderer.getElementSupplier();
+			Supplier<? extends List<Object[]>> elementSupplier=dataRenderer.getElementSupplier();
 			String title=dataRenderer.getTitle();
 			Object[] args=dataRenderer.getArgs();
 
@@ -317,7 +318,7 @@ public class SwingReportRenderer implements ReportRenderer{
 				}
 				case LINEAR_COMPARE->{
 					XYChart c=new XYChartBuilder().theme(ChartTheme.Matlab).title(title==null?"":title).xAxisTitle(args.length==0?"":(String)args[0]).yAxisTitle(args.length<2?"":(String)args[1]).build();
-					ArrayList<Object[]> a=elementSupplier.get();
+					List<Object[]> a=elementSupplier.get();
 					if(a.isEmpty()) yield null;
 					HashMap<String,ArrayList<Integer>> x=new HashMap<>(),y=new HashMap<>();
 					for(Object[] o:a){
@@ -341,23 +342,27 @@ public class SwingReportRenderer implements ReportRenderer{
 				}
 				case BAR->{
 					CategoryChart c=new CategoryChartBuilder().theme(ChartTheme.Matlab).title(title==null?"":title).xAxisTitle(args.length==0?"":(String)args[0]).yAxisTitle(args.length<2?"":(String)args[1]).build();
-					ArrayList<Object[]> a=elementSupplier.get();
+					List<Object[]> a=elementSupplier.get();
 					if(a.isEmpty()) yield null;
-					HashMap<String,ArrayList<String>> t=new HashMap<>();
-					HashMap<String,ArrayList<Integer>> v=new HashMap<>();
-					for(int i=0;i<a.size();++i){
-						String k=(String)a.get(i)[0];
-						if(!t.containsKey(k)){
-							t.put(k,new ArrayList<>());
-							v.put(k,new ArrayList<>());
-						}
-						t.get(k).add((String)a.get(i)[1]);
-						v.get(k).add((int)a.get(i)[2]);
+					HashMap<String,HashMap<String,Integer>> seriesData=new HashMap<>();
+					for(Object[] row:a){
+						String k=(String)row[0];
+						String category=(String)row[1];
+						int value=(int)row[2];
+						seriesData.computeIfAbsent(k,key->new HashMap<>()).put(category,value);
 					}
-					ArrayList<String> s=new ArrayList<>(t.keySet());
-					s.sort((e1,e2)->t.get(e2).size()-t.get(e1).size());
-					for(String k:s)
-						c.addSeries(k,t.get(k),v.get(k));
+					java.util.LinkedHashSet<String> categorySet=new java.util.LinkedHashSet<>();
+					for(HashMap<String,Integer> data:seriesData.values())
+						categorySet.addAll(data.keySet());
+					ArrayList<String> categoryList=new ArrayList<>(categorySet);
+					ArrayList<String> s=new ArrayList<>(seriesData.keySet());
+					s.sort((e1,e2)->seriesData.get(e2).size()-seriesData.get(e1).size());
+					for(String k:s){
+						ArrayList<Integer> values=new ArrayList<>();
+						for(String cat:categoryList)
+							values.add(seriesData.get(k).getOrDefault(cat,0));
+						c.addSeries(k,categoryList,values);
+					}
 					yield c;
 				}
 			};

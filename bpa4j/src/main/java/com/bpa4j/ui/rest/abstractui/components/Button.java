@@ -1,11 +1,12 @@
 package com.bpa4j.ui.rest.abstractui.components;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+import com.bpa4j.ui.rest.abstractui.Color;
 import com.bpa4j.ui.rest.abstractui.Component;
 import com.bpa4j.ui.rest.abstractui.Size;
 import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.function.Consumer;
 
 /**
  * A push button component that can trigger an action when clicked.
@@ -18,28 +19,13 @@ public class Button extends Component{
     private boolean enabled=true;
     private Consumer<Button> onClick;
     private Size preferredSize=new Size(80,30);
+    private Color background=null;
     public Button(){
         this("");
     }
     public Button(String text){
         this.text=text!=null?text:"";
         setSize(preferredSize);
-    }
-    public String getText(){
-        return text;
-    }
-    public void setText(String text){
-        this.text=text!=null?text:"";
-        invalidateParent();
-    }
-    public boolean isEnabled(){
-        return enabled;
-    }
-    public void setEnabled(boolean enabled){
-        if(this.enabled!=enabled){
-            this.enabled=enabled;
-            invalidateParent();
-        }
     }
     public void setOnClick(Consumer<Button> action){
         this.onClick=action;
@@ -64,7 +50,24 @@ public class Button extends Component{
         json.put("text",text);
         json.put("enabled",enabled);
         json.put("onClick",onClick==null?null:getId()+"/onClick");
+        if(background!=null)json.put("background",background);
         return json;
+    }
+    public String getText(){
+        return text;
+    }
+    public void setText(String text){
+        this.text=text!=null?text:"";
+        invalidateParent();
+    }
+    public boolean isEnabled(){
+        return enabled;
+    }
+    public void setEnabled(boolean enabled){
+        if(this.enabled!=enabled){
+            this.enabled=enabled;
+            invalidateParent();
+        }
     }
     public Size getPreferredSize(){
         return preferredSize;
@@ -72,6 +75,12 @@ public class Button extends Component{
     public void setPreferredSize(Size size){
         this.preferredSize=size;
         setSize(size);
+    }
+    public Color getBackground(){
+        return background;
+    }
+    public void setBackground(Color background){
+        this.background=background;
     }
     private void invalidateParent(){
         if(getParent()!=null){

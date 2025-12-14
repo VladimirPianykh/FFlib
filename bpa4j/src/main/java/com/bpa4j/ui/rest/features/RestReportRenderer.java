@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Supplier;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
@@ -233,11 +234,16 @@ public class RestReportRenderer implements ReportRenderer{
 			ArrayList<?> elements=dataRenderer.getElementSupplier().get();
 			String title=dataRenderer.getTitle();
 
-			Panel wrapper=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
+			// Use BorderLayout to fill space
+			Panel wrapper=new Panel(new BorderLayout());
 			wrapper.setSize(restCtx.getWidth(),restCtx.getHeight());
 
 			if(title!=null){
-				wrapper.add(new Label(title));
+				Panel titlePanel=new Panel(new FlowLayout(FlowLayout.LEFT));
+				titlePanel.setSize(restCtx.getWidth(),30); // Explicit height for title
+				titlePanel.add(new Label(title));
+				((BorderLayout)wrapper.getLayout()).addLayoutComponent(titlePanel,BorderLayout.NORTH);
+				wrapper.add(titlePanel);
 			}
 
 			if(elements.isEmpty()){
@@ -249,15 +255,20 @@ public class RestReportRenderer implements ReportRenderer{
 					if(f.isAnnotationPresent(EditorEntry.class)) fields.add(f);
 
 				int columns=fields.size();
+				// Use a fixed large number of rows for "filling" behavior, or calculate based on height?
+				// Better: Keep GridLayout but set its size to full available height.
+				// The GridLayout in this framework seems to distribute space evenly.
+				// If we want the table to fill the area, we pass the full height.
+
 				int rows=elements.size()+1; // +1 for header
 
-				// Calculate table size
-				int tableWidth=restCtx.getWidth()-10; // Leave some margin
-				int rowHeight=30;
-				int tableHeight=Math.min(restCtx.getHeight()-40,rows*rowHeight+(rows-1)*5);
+				// Calculate available height for table
+				int headerHeight=(title!=null)?30:0;
+				int availableHeight=restCtx.getHeight()-headerHeight-10; // -10 for margins
 
+				// Ensure table fills the available space
 				Panel table=new Panel(new GridLayout(rows,columns,5,5));
-				table.setSize(tableWidth,tableHeight);
+				table.setSize(restCtx.getWidth()-10,availableHeight);
 
 				// Header
 				for(Field f:fields){
@@ -275,6 +286,7 @@ public class RestReportRenderer implements ReportRenderer{
 						}
 					}
 				}
+				((BorderLayout)wrapper.getLayout()).addLayoutComponent(table,BorderLayout.CENTER);
 				wrapper.add(table);
 			}
 			panel.add(wrapper);
@@ -289,10 +301,18 @@ public class RestReportRenderer implements ReportRenderer{
 			RestDataRenderingContext restCtx=(RestDataRenderingContext)ctx;
 			Panel panel=restCtx.getPanel();
 
+			// Use BorderLayout to fill space
 			Panel wrapper=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
 			wrapper.setSize(restCtx.getWidth(),restCtx.getHeight());
 
 			Supplier<String>[] answerers=dataRenderer.getAnswerers();
+
+			// If we have answerers, we could try to distribute them or just list them.
+			// Currently FlowLayout TTB simply stacks them.
+			// To fill space better, we could perhaps use a GridLayout if we wanted equal sizing,
+			// but for text answers, simple stacking is usually fine as long as the container is large enough.
+			// The wrapper size is now explicitly set to full height.
+
 			for(Supplier<String> s:answerers){
 				wrapper.add(new Label(s.get()));
 			}
@@ -311,7 +331,7 @@ public class RestReportRenderer implements ReportRenderer{
 
 			// Access data renderer properties
 			ChartDataRenderer.ChartMode mode=dataRenderer.getMode();
-			Supplier<ArrayList<Object[]>> elementSupplier=dataRenderer.getElementSupplier();
+			Supplier<? extends List<Object[]>> elementSupplier=dataRenderer.getElementSupplier();
 			String title=dataRenderer.getTitle();
 			Object[] args=dataRenderer.getArgs();
 
@@ -327,7 +347,7 @@ public class RestReportRenderer implements ReportRenderer{
 				}
 				case LINEAR_COMPARE -> {
 					XYChart c=new XYChartBuilder().theme(ChartTheme.Matlab).title(title==null?"":title).xAxisTitle(args.length==0?"":(String)args[0]).yAxisTitle(args.length<2?"":(String)args[1]).build();
-					ArrayList<Object[]> a=elementSupplier.get();
+					List<Object[]> a=elementSupplier.get();
 					if(a.isEmpty()) yield null;
 					HashMap<String,ArrayList<Integer>> x=new HashMap<>(),y=new HashMap<>();
 					for(Object[] o:a){
@@ -351,7 +371,7 @@ public class RestReportRenderer implements ReportRenderer{
 				}
 				case BAR -> {
 					CategoryChart c=new CategoryChartBuilder().theme(ChartTheme.Matlab).title(title==null?"":title).xAxisTitle(args.length==0?"":(String)args[0]).yAxisTitle(args.length<2?"":(String)args[1]).build();
-					ArrayList<Object[]> a=elementSupplier.get();
+					List<Object[]> a=elementSupplier.get();
 					if(a.isEmpty()) yield null;
 					HashMap<String,ArrayList<String>> t=new HashMap<>();
 					HashMap<String,ArrayList<Integer>> v=new HashMap<>();

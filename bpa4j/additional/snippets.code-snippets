@@ -16,7 +16,7 @@
 			"Navigator.init();",
 			"ProgramStarter.welcomeMessage=\"$1\";",
 			"ProgramStarter.authRequired=${2|false,true|};",
-			"if(ProgramStarter.firstLaunch){",
+			"if(ProgramStarter.getStorageManager().isFirstLaunch()){",
 				"\t//Регистрация пользователей",
 				"\t$0",
 				"\t//Декларация групп",
@@ -160,9 +160,9 @@
 		"body":[
 			"public class ${TM_FILENAME_BASE} extends BLFeatureManager<$1>{",
 				"\tpublic static final ${TM_FILENAME_BASE} instance=new ${TM_FILENAME_BASE}();",
-				"\tpublic $1 register(){",
-					"\t\t$1 f=$2.register$0;",
-					"\t\treturn f;",
+				"\tpublic Feature<$1> register(){",
+					"\t\tFeature<$1> f=$2.register$0;",
+					"\t\treturn f",
 				"\t}",
 			"}"
 		],

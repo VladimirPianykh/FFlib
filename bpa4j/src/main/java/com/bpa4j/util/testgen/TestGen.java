@@ -1,4 +1,5 @@
 package com.bpa4j.util.testgen;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.EditableGroup;
 import com.bpa4j.core.ProgramStarter;
@@ -57,6 +59,7 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 	public static <T extends Editable> TestGen<T> gen(Class<T> type){
 		return new TestGen<>(type);
 	}
+	
 	public TestGen<T> withField(String name, Object valueOrSupplier){
 		fieldOverrides.put(name,valueOrSupplier);
 		return this;
@@ -97,7 +100,8 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 		verificationPolicy=policy;
 		return this;
 	}
-	public TestGen<T> to(EditableGroup<T> target, int amount){
+	
+	public TestGen<T> to(EditableGroup<T> target,int amount){
 		this.target=target;
 		this.amount=amount;
 		this.currentIndex=0;
@@ -131,6 +135,9 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 		}
 		return array;
 	}
+	public Stream<T>stream(int n){
+		return Stream.generate(this).limit(n);
+	}
 	public TestGen<T> clone(){
 		TestGen<T> copy=new TestGen<>(type);
 		copy.amount=amount;
@@ -148,8 +155,13 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 		return copy;
 	}
 	@Override
-	@SuppressWarnings("unchecked")
 	public T get(){
+		T t;
+		do t=create();while(t==null);
+		return t;
+	}
+	@SuppressWarnings("unchecked")
+	private T create(){
 		try{
 			T e=type.getDeclaredConstructor().newInstance();
 			if(template!=null){
@@ -169,6 +181,8 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 			if(p==null&&a!=null&&a.nameProvider()!=NameProvider.class)p=a.nameProvider().getDeclaredConstructor().newInstance();
 			Verifier v=verifier;
 			if(v==null&&a!=null&&a.verifier()!=Verifier.class)v=a.verifier().getDeclaredConstructor().newInstance();
+			
+			//Fields
 			for(Field f:type.getFields()){
 				if(skipFields.contains(f.getName()))continue;
 				if(Editable.class.isAssignableFrom(f.getType())&&f.isAnnotationPresent(EditorEntry.class)){
@@ -196,6 +210,8 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 					}
 				}
 			}
+
+			//Name
 			if(p!=null)e.name=p.provideName(e);
 			else if(nameSupplier instanceof Supplier)e.name=((Supplier<String>)nameSupplier).get();
 			else if(nameSupplier instanceof String)e.name=(String)nameSupplier;
@@ -206,16 +222,13 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 				String verdict=v.verify(e,e,true);
 				if(!verdict.isEmpty()){
 					switch(verificationPolicy){
-						case THROW:
-							throw new IllegalStateException(e.name+" of type "+type.getName()+" is invalid. Verifier verdict: "+verdict);
-						case WARN:
-							System.err.println("WARNING: "+e.name+" of type "+type.getName()+" is invalid. Verifier verdict: "+verdict);
-							break;
-						case DELETE:
+						case THROW->throw new IllegalStateException(e.name+" of type "+type.getName()+" is invalid. Verifier verdict: "+verdict);
+						case WARN->System.err.println("WARNING: "+e.name+" of type "+type.getName()+" is invalid. Verifier verdict: "+verdict);
+						case DELETE->{
 							System.err.println("WARNING: Deleted "+e.name+" of type "+type.getName()+" because it is invalid. Verifier verdict: "+verdict);
 							return null;
-						case IGNORE:
-							break;
+						}
+						case IGNORE->{}
 					}
 				}
 			}

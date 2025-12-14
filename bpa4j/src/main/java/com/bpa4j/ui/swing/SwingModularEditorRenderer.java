@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dialog.ModalityType;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +40,16 @@ public class SwingModularEditorRenderer implements ModularEditorRenderer{
 			return dialog;
 		}
 	}
+	private static Window getFreeWindow(Window parent){
+		Window[] windows=Window.getWindows();
+		for(int i=windows.length-1;i>=0;--i){
+			if(windows[i].isDisplayable()&&windows[i].isVisible()){
+				parent=windows[i];
+				break;
+			}
+		}
+		return parent;
+	}
 	public HashMap<Class<? extends EditorModule>,Supplier<? extends ModuleRenderer<?>>>moduleRenderers=new HashMap<>();
 	public Supplier<? extends ModuleRenderer<?>>defaultModuleRenderer=()->null;
 	public SwingModularEditorRenderer(){
@@ -46,7 +57,11 @@ public class SwingModularEditorRenderer implements ModularEditorRenderer{
 	}
 	public ModulesRenderingContext getModulesRenderingContext(FeatureRenderingContext context){
 		SwingFeatureRenderingContext ctx=(SwingFeatureRenderingContext)context;
-		JDialog d=new JDialog(ctx.getWindow(),ModalityType.APPLICATION_MODAL);
+		Window parent=ctx.getWindow();
+		if(parent==null){
+			parent=getFreeWindow(parent);
+		}
+		JDialog d=new JDialog(parent,ModalityType.APPLICATION_MODAL);
 		d.setSize(Root.SCREEN_SIZE);
 		return new SwingModuleRenderingContext(d);
 	}

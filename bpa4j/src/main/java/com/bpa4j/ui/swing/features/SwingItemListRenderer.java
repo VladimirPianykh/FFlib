@@ -78,7 +78,7 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 		t.setFixedCellHeight(tab.getHeight()/10);
 		t.setFont(new Font(Font.DIALOG,Font.ITALIC,tab.getHeight()/30));
 		JScrollPane sPane=new JScrollPane(t);
-		sPane.setBorder(BorderFactory.createTitledBorder(null,"Задания",0,0,new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/50),Color.WHITE));
+		sPane.setBorder(BorderFactory.createTitledBorder(null,contract.getTitle(),0,0,new Font(Font.DIALOG,Font.PLAIN,tab.getHeight()/50),Color.WHITE));
 		ArrayList<String> s=new ArrayList<>();
 		for(Field f:getType().getFields())
 			if(f.isAnnotationPresent(EditorEntry.class)) s.add(f.getAnnotation(EditorEntry.class).translation());

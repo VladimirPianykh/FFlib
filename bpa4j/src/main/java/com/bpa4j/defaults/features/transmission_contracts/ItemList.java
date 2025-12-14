@@ -35,6 +35,8 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	private Supplier<List<Consumer<T>>> getSingularActionsOp;
 	private Consumer<Consumer<ListCustomizationRenderingContext>> setListCustomizerOp;
 	private Consumer<ListCustomizationRenderingContext> customizeListOp;
+	private Supplier<String> getTitleOp;
+	private Consumer<String> setTitleOp;
 
 	private String name;
 	private Class<T> type;
@@ -93,6 +95,12 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	}
 	public void setCustomizeListOp(Consumer<ListCustomizationRenderingContext> customizeListOp){
 		this.customizeListOp=customizeListOp;
+	}
+	public void setSetTitleOp(Consumer<String> setTitleOp){
+		this.setTitleOp=setTitleOp;
+	}
+	public void setGetTitleOp(Supplier<String> getTitleOp){
+		this.getTitleOp=getTitleOp;
 	}
 
 	public ArrayList<T> getObjects(){
@@ -161,6 +169,15 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	}
 	public Consumer<Consumer<ListCustomizationRenderingContext>> getSetListCustomizerOp(){
 		return setListCustomizerOp;
+	}
+
+	public String getTitle(){
+		if(getTitleOp!=null) return getTitleOp.get();
+		return getFeatureName();
+	}
+	public ItemList<T> setTitle(String title){
+		if(setTitleOp!=null) setTitleOp.accept(title);
+		return this;
 	}
 
 	/**

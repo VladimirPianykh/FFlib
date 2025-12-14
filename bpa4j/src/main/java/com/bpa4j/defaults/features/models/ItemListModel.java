@@ -23,6 +23,7 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 			out.defaultWriteObject();
 		}
 	};
+	private String title;
 	private transient ArrayList<Consumer<List<T>>> collectiveActions=new ArrayList<>();
 	private transient ArrayList<Consumer<T>> singularActions=new ArrayList<>();
 	private transient Supplier<ArrayList<T>> elementSupplier;
@@ -56,6 +57,8 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 		ftc.setGetCollectiveActionsOp(this::getCollectiveActions);
 		ftc.setSetListCustomizerOp(this::setListCustomizer);
 		ftc.setCustomizeListOp(this::customizeList);
+		ftc.setGetTitleOp(this::getTitle);
+		ftc.setSetTitleOp(this::setTitle);
 	}
 	public ItemList<T> getTransmissionContract(){
 		return ftc;
@@ -136,5 +139,11 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 	}
 	public void customizeList(ListCustomizationRenderingContext ctx){
 		if(listCustomizer!=null)listCustomizer.accept(ctx);
+	}
+	public String getTitle(){
+		return title!=null?title:ftc.getFeatureName();
+	}
+	public void setTitle(String title){
+		this.title=title;
 	}
 }

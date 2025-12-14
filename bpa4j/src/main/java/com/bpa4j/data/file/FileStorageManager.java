@@ -72,10 +72,11 @@ public class FileStorageManager implements StorageManager{
 		}catch(IOException ex){
 			throw new UncheckedIOException(ex);
 		}
-		firstLaunch=(!new File(folder+"Data.ser"+version).exists()&&url==null);
+		File file=new File(folder,"data.bin");
+		firstLaunch=(!file.exists()&&url==null);
 		loadDefaults();
 		// Load persisted data
-		data.load(new File(folder,"data.bin"));
+		data.load(file);
 	}
 	public File getFolder(){
 		return folder;
