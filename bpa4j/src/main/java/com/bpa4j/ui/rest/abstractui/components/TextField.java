@@ -1,5 +1,6 @@
 package com.bpa4j.ui.rest.abstractui.components;
 
+import com.bpa4j.ui.rest.abstractui.Color;
 import com.bpa4j.ui.rest.abstractui.Component;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.Size;
@@ -22,6 +23,8 @@ public class TextField extends Component{
 	private Consumer<String> onTextChanged;
 	private Consumer<TextField> onAction;
 	private Size preferredSize=new Size(150,25);
+	private Color background=new Color(100,0,0);
+	private Color foreground=new Color(255,255,255);
 	public TextField(){
 		setSize(preferredSize);
 	}
@@ -89,6 +92,8 @@ public class TextField extends Component{
 		json.put("text",text);
 		json.put("editable",editable);
 		json.put("maxLength",maxLength);
+		if(foreground!=null) json.put("foreground",foreground.value());
+		if(background!=null) json.put("background",background.value());
 		return json;
 	}
 	public Size getPreferredSize(){
@@ -107,6 +112,24 @@ public class TextField extends Component{
 	public void modifyComponent(String id,Map<String,Object> update){
 		if(String.valueOf(getId()).equals(id)){
 			if(update.containsKey("text"))setText((String)update.get("text"));
+		}
+	}
+	public Color getBackground(){
+		return background;
+	}
+	public void setBackground(Color background){
+		this.background=background;
+		if(getParent()!=null&&getParent() instanceof Panel){
+			((Panel)getParent()).invalidate();
+		}
+	}
+	public Color getForeground(){
+		return foreground;
+	}
+	public void setForeground(Color foreground){
+		this.foreground=foreground;
+		if(getParent()!=null&&getParent() instanceof Panel){
+			((Panel)getParent()).invalidate();
 		}
 	}
 }

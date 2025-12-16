@@ -19,7 +19,8 @@ public class Button extends Component{
     private boolean enabled=true;
     private Consumer<Button> onClick;
     private Size preferredSize=new Size(80,30);
-    private Color background=null;
+    private Color background=new Color(100,0,0);
+    private Color foreground=new Color(255,255,255);
     public Button(){
         this("");
     }
@@ -50,7 +51,8 @@ public class Button extends Component{
         json.put("text",text);
         json.put("enabled",enabled);
         json.put("onClick",onClick==null?null:getId()+"/onClick");
-        if(background!=null)json.put("background",background);
+        if(foreground!=null) json.put("foreground",foreground.value());
+        if(background!=null) json.put("background",background.value());
         return json;
     }
     public String getText(){

@@ -1,5 +1,6 @@
 package com.bpa4j.ui.rest.abstractui.components;
 
+import com.bpa4j.ui.rest.abstractui.Color;
 import com.bpa4j.ui.rest.abstractui.Component;
 import com.bpa4j.ui.rest.abstractui.Size;
 import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
@@ -14,6 +15,8 @@ public class TextArea extends Component{
 	private boolean editable=true;
 	private int maxLength=Integer.MAX_VALUE;
 	private Size preferredSize=new Size(200,80);
+	private Color background=new Color(100,0,0);
+	private Color foreground=new Color(255,255,255);
 
 	public TextArea(){
 		setSize(preferredSize);
@@ -70,6 +73,8 @@ public class TextArea extends Component{
 		json.put("text",text);
 		json.put("editable",editable);
 		json.put("maxLength",maxLength);
+		if(foreground!=null) json.put("foreground",foreground.value());
+		if(background!=null) json.put("background",background.value());
 		return json;
 	}
 
@@ -85,5 +90,19 @@ public class TextArea extends Component{
 		if(String.valueOf(getId()).equals(id)){
 			if(update.containsKey("text"))text=(String)update.get("text");
 		}
+	}
+	public Color getBackground(){
+		return background;
+	}
+	public void setBackground(Color background){
+		this.background=background;
+		if(getParent()!=null) getParent().invalidate();
+	}
+	public Color getForeground(){
+		return foreground;
+	}
+	public void setForeground(Color foreground){
+		this.foreground=foreground;
+		if(getParent()!=null) getParent().invalidate();
 	}
 }
