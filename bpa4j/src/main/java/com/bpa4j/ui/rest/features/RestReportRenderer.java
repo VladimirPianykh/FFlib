@@ -234,16 +234,11 @@ public class RestReportRenderer implements ReportRenderer{
 			ArrayList<?> elements=dataRenderer.getElementSupplier().get();
 			String title=dataRenderer.getTitle();
 
-			// Use BorderLayout to fill space
-			Panel wrapper=new Panel(new BorderLayout());
+			Panel wrapper=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
 			wrapper.setSize(restCtx.getWidth(),restCtx.getHeight());
 
 			if(title!=null){
-				Panel titlePanel=new Panel(new FlowLayout(FlowLayout.LEFT));
-				titlePanel.setSize(restCtx.getWidth(),30); // Explicit height for title
-				titlePanel.add(new Label(title));
-				((BorderLayout)wrapper.getLayout()).addLayoutComponent(titlePanel,BorderLayout.NORTH);
-				wrapper.add(titlePanel);
+				wrapper.add(new Label(title));
 			}
 
 			if(elements.isEmpty()){
@@ -255,20 +250,15 @@ public class RestReportRenderer implements ReportRenderer{
 					if(f.isAnnotationPresent(EditorEntry.class)) fields.add(f);
 
 				int columns=fields.size();
-				// Use a fixed large number of rows for "filling" behavior, or calculate based on height?
-				// Better: Keep GridLayout but set its size to full available height.
-				// The GridLayout in this framework seems to distribute space evenly.
-				// If we want the table to fill the area, we pass the full height.
-
 				int rows=elements.size()+1; // +1 for header
 
-				// Calculate available height for table
-				int headerHeight=(title!=null)?30:0;
-				int availableHeight=restCtx.getHeight()-headerHeight-10; // -10 for margins
+				// Calculate table size
+				int tableWidth=restCtx.getWidth()-10; // Leave some margin
+				int rowHeight=30;
+				int tableHeight=Math.min(restCtx.getHeight()-40,rows*rowHeight+(rows-1)*5);
 
-				// Ensure table fills the available space
 				Panel table=new Panel(new GridLayout(rows,columns,5,5));
-				table.setSize(restCtx.getWidth()-10,availableHeight);
+				table.setSize(tableWidth,tableHeight);
 
 				// Header
 				for(Field f:fields){
@@ -286,7 +276,6 @@ public class RestReportRenderer implements ReportRenderer{
 						}
 					}
 				}
-				((BorderLayout)wrapper.getLayout()).addLayoutComponent(table,BorderLayout.CENTER);
 				wrapper.add(table);
 			}
 			panel.add(wrapper);
@@ -301,18 +290,10 @@ public class RestReportRenderer implements ReportRenderer{
 			RestDataRenderingContext restCtx=(RestDataRenderingContext)ctx;
 			Panel panel=restCtx.getPanel();
 
-			// Use BorderLayout to fill space
 			Panel wrapper=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
 			wrapper.setSize(restCtx.getWidth(),restCtx.getHeight());
 
 			Supplier<String>[] answerers=dataRenderer.getAnswerers();
-
-			// If we have answerers, we could try to distribute them or just list them.
-			// Currently FlowLayout TTB simply stacks them.
-			// To fill space better, we could perhaps use a GridLayout if we wanted equal sizing,
-			// but for text answers, simple stacking is usually fine as long as the container is large enough.
-			// The wrapper size is now explicitly set to full height.
-
 			for(Supplier<String> s:answerers){
 				wrapper.add(new Label(s.get()));
 			}

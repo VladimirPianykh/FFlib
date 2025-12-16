@@ -1,5 +1,6 @@
 package com.bpa4j.ui.rest.abstractui.components;
 
+import com.bpa4j.ui.rest.abstractui.Color;
 import com.bpa4j.ui.rest.abstractui.Component;
 import com.bpa4j.ui.rest.abstractui.Size;
 import com.bpa4j.ui.rest.abstractui.UIState.JsonVisualContext;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 public class Label extends Component{
 	private String text="";
 	private Size preferredSize=new Size(100,20);
+	private Color foreground=new Color(255,255,255);
 
 	public Label(){
 		setSize(preferredSize);
@@ -41,6 +43,7 @@ public class Label extends Component{
 		json.put("width",getWidth());
 		json.put("height",getHeight());
 		json.put("text",text);
+		if(foreground!=null) json.put("foreground",foreground.value());
 		return json;
 	}
 
@@ -51,5 +54,12 @@ public class Label extends Component{
 	public void setPreferredSize(Size size){
 		this.preferredSize=size;
 		setSize(size);
+	}
+	public Color getForeground(){
+		return foreground;
+	}
+	public void setForeground(Color foreground){
+		this.foreground=foreground;
+		if(getParent()!=null) getParent().invalidate();
 	}
 }
