@@ -12,6 +12,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
@@ -58,13 +59,15 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 		contract.renderFilter(rctx);
 		contract.renderSorter(rctx);
 
-		// Collective actions
+		// Collective actions (secondary; highlight with ACCENT text only)
 		List<Consumer<List<T>>> collective=contract.getCollectiveActions();
 		if(!collective.isEmpty()){
 			AtomicInteger idx=new AtomicInteger(1);
 			for(Consumer<List<T>> action:collective){
 				int i=idx.getAndIncrement();
 				Button b=new Button("Collective "+i);
+				b.setBackground(RestTheme.MAIN);
+				b.setForeground(RestTheme.ACCENT_TEXT);
 				b.setOnClick(btn->{
 					List<T> current=new ArrayList<>(contract.getObjects());
 					action.accept(current);
@@ -74,9 +77,11 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 			}
 		}
 
-		// Add button
+		// Add button (not mandatory action: ACCENT as foreground only)
 		if(contract.getAllowCreation()){
 			Button add=new Button("Add");
+			add.setBackground(RestTheme.MAIN);
+			add.setForeground(RestTheme.ACCENT_TEXT);
 			add.setOnClick(b->{
 				try{
 					T o=getType().getDeclaredConstructor().newInstance();
@@ -125,6 +130,7 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 			// Object label/button
 			if(obj instanceof Editable){
 				Button itemBtn=new Button(String.valueOf(obj));
+				itemBtn.setBackground(RestTheme.MAIN);
 				itemBtn.setOnClick(b->{
 					ProgramStarter.editor.constructEditor((Editable)obj,false,()->contract.removeObject(obj),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 					rctx.rebuild();
@@ -140,6 +146,8 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 			for(Consumer<T> action:singular){
 				int i=idx.getAndIncrement();
 				Button b=new Button("Action "+i);
+				b.setBackground(RestTheme.MAIN);
+				b.setForeground(RestTheme.ACCENT_TEXT);
 				b.setOnClick(btn->{
 					action.accept(obj);
 					rctx.rebuild();

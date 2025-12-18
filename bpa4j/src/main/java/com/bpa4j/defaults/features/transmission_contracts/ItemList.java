@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.bpa4j.core.RenderingContext;
+import com.bpa4j.defaults.features.transmission_contracts.Board.Slicer;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
@@ -37,6 +38,7 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	private Consumer<ListCustomizationRenderingContext> customizeListOp;
 	private Supplier<String> getTitleOp;
 	private Consumer<String> setTitleOp;
+	private Function<Function<T,String>,Slicer<T>> generateSlicerOp;
 
 	private String name;
 	private Class<T> type;
@@ -101,6 +103,9 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	}
 	public void setGetTitleOp(Supplier<String> getTitleOp){
 		this.getTitleOp=getTitleOp;
+	}
+	public void setGenerateSlicerOp(Function<Function<T,String>,Slicer<T>> generateSlicerOp){
+		this.generateSlicerOp=generateSlicerOp;
 	}
 
 	public ArrayList<T> getObjects(){
@@ -169,6 +174,9 @@ public class ItemList<T extends Serializable> implements FeatureTransmissionCont
 	}
 	public Consumer<Consumer<ListCustomizationRenderingContext>> getSetListCustomizerOp(){
 		return setListCustomizerOp;
+	}
+	public Slicer<T>generateSlicer(Function<T,String>sliceFunction){
+		return generateSlicerOp.apply(sliceFunction);
 	}
 
 	public String getTitle(){

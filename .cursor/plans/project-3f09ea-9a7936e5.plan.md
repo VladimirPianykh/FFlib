@@ -1,4 +1,9 @@
-<!-- 9a7936e5-709d-48ab-ba74-3b0b8a88ede2 a7860da5-14ad-4800-8a87-58073092acba -->
+---
+name: "ProjectGraph Diagnostic Service: Plan"
+overview: ""
+todos: []
+---
+
 # ProjectGraph Diagnostic Service: Plan
 
 This plan describes key diagnostic checks to be implemented in `ProjectGraph.java` for automatic problem detection, based on code analysis and runtime inspection (where possible).

@@ -90,8 +90,7 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 		objects.remove(object);
 	}
 	public void setSlicer(Function<T,String> slicer){
-		// Slicer implementation would go here - handled by renderer
-		//TODO: implement
+		this.filter=getTransmissionContract().generateSlicer(slicer);
 	}
 	public void setElementSupplier(Supplier<ArrayList<T>> supplier){
 		// if(supplier!=null)setAllowCreation(false);

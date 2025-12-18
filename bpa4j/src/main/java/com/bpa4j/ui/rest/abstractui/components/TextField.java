@@ -23,8 +23,8 @@ public class TextField extends Component{
 	private Consumer<String> onTextChanged;
 	private Consumer<TextField> onAction;
 	private Size preferredSize=new Size(150,25);
-	private Color background=new Color(100,0,0);
-	private Color foreground=new Color(255,255,255);
+	private Color background;
+	private Color foreground;
 	public TextField(){
 		setSize(preferredSize);
 	}

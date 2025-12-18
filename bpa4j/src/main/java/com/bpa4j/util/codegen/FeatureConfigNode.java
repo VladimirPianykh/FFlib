@@ -13,6 +13,6 @@ public class FeatureConfigNode extends ProjectNode{
 	public FeatureConfigNode(File location,String featureName){
 		super(location);
 		this.featureName=featureName;
-		//TODO: parse
+		//TODO: #5 Parse FeatureConfigNode
 	}
 }

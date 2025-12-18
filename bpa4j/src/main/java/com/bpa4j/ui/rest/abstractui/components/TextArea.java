@@ -15,8 +15,8 @@ public class TextArea extends Component{
 	private boolean editable=true;
 	private int maxLength=Integer.MAX_VALUE;
 	private Size preferredSize=new Size(200,80);
-	private Color background=new Color(100,0,0);
-	private Color foreground=new Color(255,255,255);
+	private Color background;
+	private Color foreground;
 
 	public TextArea(){
 		setSize(preferredSize);

@@ -10,6 +10,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
@@ -79,6 +80,7 @@ public class RestModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 				if(name==null||name.isBlank()) name="[Unnamed]";
 				Button itemBtn=new Button(name);
 				itemBtn.setSize(columnWidth,30); // Stretch to column width
+				itemBtn.setBackground(RestTheme.MAIN);
 				itemBtn.setOnClick(b->{
 					if(contract.editOp!=null) contract.editOp.accept(item);
 					ProgramStarter.editor.constructEditor(item,false,null,rctx);
@@ -88,6 +90,8 @@ public class RestModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 
 			Button addBtn=new Button("Add");
 			addBtn.setSize(columnWidth,30); // Stretch to column width
+			addBtn.setBackground(RestTheme.MAIN);
+			addBtn.setForeground(RestTheme.ACCENT_TEXT);
 			addBtn.setOnClick(b->{
 				try{
 					Editable newItem=(Editable)group.type.getDeclaredConstructor().newInstance();

@@ -56,20 +56,28 @@ public class RestHistoryRenderer implements FeatureRenderer<History> {
 		// Add table headers
 		Panel tableHeader = new Panel(new GridLayout(1, 4, 5, 5));
 		tableHeader.setSize(content.getWidth(), 30);
-		tableHeader.add(new Label("Логин"));
-		tableHeader.add(new Label("Время входа"));
-		tableHeader.add(new Label("Время выхода"));
-		tableHeader.add(new Label("IP"));
+		Label login=new Label("Логин");
+		tableHeader.add(login);
+		Label inTime=new Label("Время входа");
+		tableHeader.add(inTime);
+		Label outTime=new Label("Время выхода");
+		tableHeader.add(outTime);
+		Label ip=new Label("IP");
+		tableHeader.add(ip);
 		content.add(tableHeader);
 		
 		// Add history entries
 		User.getActiveUser().history.descendingIterator().forEachRemaining(entry -> {
 			Panel row = new Panel(new GridLayout(1, 4, 5, 5));
 			row.setSize(content.getWidth(), 25);
-			row.add(new Label(entry.login));
-			row.add(new Label(entry.inTime.toString()));
-			row.add(new Label(entry.outTime == null ? "---" : entry.outTime.toString()));
-			row.add(new Label(entry.ip.toString()));
+			Label l1=new Label(entry.login);
+			row.add(l1);
+			Label l2=new Label(entry.inTime.toString());
+			row.add(l2);
+			Label l3=new Label(entry.outTime==null?"---":entry.outTime.toString());
+			row.add(l3);
+			Label l4=new Label(entry.ip.toString());
+			row.add(l4);
 			content.add(row);
 		});
 		

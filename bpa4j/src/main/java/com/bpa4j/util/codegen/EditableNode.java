@@ -62,7 +62,7 @@ public class EditableNode extends ClassNode{
 		}
 
 		public String getCode(String prompt){
-			return type==null?"\t//TODO: add property \""+name+"\"\n":String.format("""
+			return type==null?"\t//FIXME: add property \""+name+"\"\n":String.format("""
 						@EditorEntry(translation="%s")
 						public %s %s;
 					""",name,type.toString(),prompt);
@@ -102,7 +102,7 @@ public class EditableNode extends ClassNode{
 
 				if(this.type==null){
 					// Найти TO_DO-комментарий и заменить на поле
-					Optional<LineComment> todoComment=cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("TODO: add property \""+name+"\"")).findFirst();
+					Optional<LineComment> todoComment=cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("FIXME: add property \""+name+"\"")).findFirst();
 
 					if(todoComment.isPresent()){
 						// Удалить комментарий и добавить поле
@@ -112,7 +112,7 @@ public class EditableNode extends ClassNode{
 						Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
 						if(clazz.isPresent()){
-							// TODO: Implement field creation with JavaParser
+							// TODO: #3 Implement field creation with JavaParser
 							// FieldDeclaration newField = new FieldDeclaration();
 							// newField.setCommonType(StaticJavaParser.parseType(type.toString()));
 							// newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(type.toString()), "var" + (int)(Math.random() * 9999900 + 100)));
@@ -127,7 +127,7 @@ public class EditableNode extends ClassNode{
 					}).findFirst();
 
 					if(field.isPresent()){
-						// TODO: Implement field type change with JavaParser
+						// TODO: #4 Implement field type change with JavaParser
 						// field.get().setCommonType(StaticJavaParser.parseType(type.toString()));
 					}
 				}
@@ -206,8 +206,8 @@ public class EditableNode extends ClassNode{
 				});
 
 				// Найти TO DO-комментарии для свойств
-				cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("TODO: add property")).forEach(comment->{
-					Matcher m=Pattern.compile("TODO:\\s*add property\\s*\"(.*?)\"").matcher(comment.getContent());
+				cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("FIXME: add property")).forEach(comment->{
+					Matcher m=Pattern.compile("FIXME:\\s*add property\\s*\"(.*?)\"").matcher(comment.getContent());
 					if(m.find()){
 						properties.add(new Property(m.group(1),null));
 					}
@@ -278,7 +278,7 @@ public class EditableNode extends ClassNode{
 			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
 			if(clazz.isPresent()){
-				// TODO: Implement field creation with JavaParser
+				// TODO: #3 Implement field creation with JavaParser
 				// FieldDeclaration newField = new FieldDeclaration();
 				// newField.setCommonType(StaticJavaParser.parseType(property.type.toString()));
 				// newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(property.type.toString()), varName));
@@ -303,7 +303,7 @@ public class EditableNode extends ClassNode{
 			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
 			if(clazz.isPresent()){
-				// TODO: Implement field creation with JavaParser
+				// TODO: #3 Implement field creation with JavaParser
 				// for (Property prop : properties) {
 				//     FieldDeclaration newField = new FieldDeclaration();
 				//     newField.setCommonType(StaticJavaParser.parseType(prop.type.toString()));

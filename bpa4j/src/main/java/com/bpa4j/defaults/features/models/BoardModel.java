@@ -71,9 +71,9 @@ public class BoardModel<T extends Serializable> implements FeatureModel<Board<T>
     public void removeObject(T object){
         getPrimaryObjects().remove(object);
     }
-    public void setSlicer(Function<T,String> slicer){
+    public void setSlicer(Function<T,String> sliceFunction){
         // Slicer implementation would go here - handled by renderer
-        //TODO: implement
+        setFilter(getTransmissionContract().generateSlicer(sliceFunction));
     }
     public void setSorter(Board.Sorter<T> sorter){
         this.sorter=sorter;

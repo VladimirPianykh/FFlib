@@ -38,6 +38,11 @@ public class SwingItemListRenderer<T extends Serializable> implements FeatureRen
 	private ItemList<T> contract;
 	public SwingItemListRenderer(ItemList<T> contract){
 		this.contract=contract;
+		contract.setGenerateSlicerOp(f->new SwingBoardRenderer.SwingSlicer<T>(f){
+			public java.util.List<T> getObjects(){
+				return contract.getObjects();
+			}
+		});
 	}
 	public ItemList<T> getTransmissionContract(){
 		return contract;

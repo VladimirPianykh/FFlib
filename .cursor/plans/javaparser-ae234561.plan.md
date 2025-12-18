@@ -1,4 +1,36 @@
-<!-- ae234561-b72a-4ec8-ae3e-422ad2c8fd6e 80246d8f-6794-4a06-98a1-7c3f83721d80 -->
+---
+name: Миграция ProjectGraph на JavaParser
+overview: ""
+todos:
+  - id: 285d7355-5709-4eb2-a8f2-e7cd3364f914
+    content: Добавить зависимость JavaParser в pom.xml
+    status: pending
+  - id: 3a382f1f-663f-4713-87b2-05b7fd1648b6
+    content: Создать PermissionsNodeV2 с парсингом enum Permission через JavaParser
+    status: pending
+  - id: 563bca49-4028-42d2-acaf-08cf491a4941
+    content: Создать RolesNodeV2 с парсингом enum Role и лямбда-выражений
+    status: pending
+  - id: 3c7997f8-18a9-4c91-ae06-faa4d5fbdea5
+    content: Создать EditableNodeV2 с парсингом классов Editable и аннотаций @EditorEntry
+    status: pending
+  - id: 9299d3ca-1925-44e9-9713-241d09bfa014
+    content: Создать ClassNodeV2 с функцией переименования через JavaParser
+    status: pending
+  - id: 34d68f40-bc90-436a-8db8-e96d979ded8e
+    content: Создать ProjectGraphV2, интегрирующий все V2-классы
+    status: pending
+  - id: 2486ce5f-1216-493d-ab2a-6b9eec304682
+    content: Протестировать парсинг всех типов узлов
+    status: pending
+  - id: 8b7b6318-51d3-41b4-b100-a0353666fb65
+    content: Протестировать все операции модификации (add/remove/change)
+    status: pending
+  - id: 507c075c-7769-4569-a52b-667db353c79a
+    content: Переименовать классы и переключиться на V2 реализацию
+    status: pending
+---
+
 # Миграция ProjectGraph на JavaParser
 
 ## Обзор
@@ -25,7 +57,7 @@
 
 - `"(\\w+)\\s*((?: (?:extends|implements) .*?\\s*){0,2})\\s*\\{"` — находит определение класса
 - `"@EditorEntry\\s*\\(.*?translation\\s*=\\s*\"(.*?)\".*?\\).*?(\\w+)\\s*\\w+;"` — находит поля с аннотацией @EditorEntry
-- `"//\\s*TODO:\\s*add property\\s*\"(.*?)\""` — находит TODO-комментарии для свойств
+- `"//\\s*FIXME:\\s*add property\\s*\"(.*?)\""` — находит FIXME-комментарии для свойств
 - `"\\w+\\s*\\(\\)\\s*\\{[\n\\s]*super\\(\"(?:нов[^ ]* )?(.*?)\""` — извлекает objectName из конструктора
 - Модификация: добавление/удаление полей, изменение типов и имен
 
@@ -75,7 +107,7 @@
 - Фильтровать по `extends Editable`
 - Извлекать поля с `@EditorEntry` через `field.getAnnotationByName("EditorEntry")`
 - Парсить параметр `translation` из аннотации
-- Находить TODO-комментарии через `field.getComment()`
+- Находить FIXME-комментарии через `field.getComment()`
 - Извлекать objectName из конструктора через `cu.findAll(ConstructorDeclaration.class)` и анализ `super()` вызова
 - Модификация: использовать `classDecl.addField()`, `field.remove()`, `field.setType()`
 
@@ -116,15 +148,3 @@
 - Поддержка сложных конструкций Java
 - Упрощение модификации кода через JavaParser API
 - Сохранение обратной совместимости через параллельную реализацию
-
-### To-dos
-
-- [ ] Добавить зависимость JavaParser в pom.xml
-- [ ] Создать PermissionsNodeV2 с парсингом enum Permission через JavaParser
-- [ ] Создать RolesNodeV2 с парсингом enum Role и лямбда-выражений
-- [ ] Создать EditableNodeV2 с парсингом классов Editable и аннотаций @EditorEntry
-- [ ] Создать ClassNodeV2 с функцией переименования через JavaParser
-- [ ] Создать ProjectGraphV2, интегрирующий все V2-классы
-- [ ] Протестировать парсинг всех типов узлов
-- [ ] Протестировать все операции модификации (add/remove/change)
-- [ ] Переименовать классы и переключиться на V2 реализацию

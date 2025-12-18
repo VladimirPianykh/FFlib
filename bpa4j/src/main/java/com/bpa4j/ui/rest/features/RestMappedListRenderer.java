@@ -12,6 +12,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
@@ -61,10 +62,12 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 		tablePanel.setSize(targetWidth,totalHeight);
 		
 		// Header
-		tablePanel.add(new Label("Objects"));
+		Label objectsHeader=new Label("Objects");
+		tablePanel.add(objectsHeader);
 		for(Field f:fields){
 			EditorEntry entry=f.getAnnotation(EditorEntry.class);
-			tablePanel.add(new Label(entry!=null?entry.translation():f.getName()));
+			Label h=new Label(entry!=null?entry.translation():f.getName());
+			tablePanel.add(h);
 		}
 		
 		// Get componentProvider or use default
@@ -73,6 +76,7 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 			componentProvider=(t,itemCtx)->{
 				RestItemRenderingContext restCtx=(RestItemRenderingContext)itemCtx;
 				Button itemBtn=new Button(t.name);
+				itemBtn.setBackground(RestTheme.MAIN);
 				itemBtn.setOnClick(b->{
 					ProgramStarter.editor.constructEditor(t,false,null,null);
 				});
@@ -92,6 +96,7 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 				try{
 					Object val=f.get(value);
 					TextField textField=new TextField(val!=null?String.valueOf(val):"");
+					textField.setBackground(RestTheme.MAIN);
 					textField.setOnTextChanged(newText->{
 						try{
 							// Try to convert and set the value
@@ -109,10 +114,12 @@ public class RestMappedListRenderer<T extends Editable,V extends Serializable> i
 		}
 		target.add(tablePanel);
 		
-		// Add button panel
+		// Add button panel (not mandatory -> ACCENT as foreground only)
 		Panel addPanel=new Panel(new FlowLayout());
 		addPanel.setSize(targetWidth,40);
 		Button addBtn=new Button("Add");
+		addBtn.setBackground(RestTheme.MAIN);
+		addBtn.setForeground(RestTheme.ACCENT_TEXT);
 		addBtn.setOnClick(b->{
 			T o=contract.createObject();
 			ProgramStarter.editor.constructEditor(o,true,null,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());

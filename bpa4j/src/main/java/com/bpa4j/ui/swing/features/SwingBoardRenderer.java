@@ -12,9 +12,15 @@ import java.awt.image.BufferedImage;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
+import java.util.function.Function;
 import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -23,6 +29,7 @@ import com.bpa4j.core.Editable;
 import com.bpa4j.core.ProgramStarter;
 import com.bpa4j.core.RenderingContext;
 import com.bpa4j.defaults.features.transmission_contracts.Board;
+import com.bpa4j.defaults.features.transmission_contracts.Board.Slicer;
 import com.bpa4j.defaults.features.transmission_contracts.Board.TableCustomizationRenderingContext;
 import com.bpa4j.defaults.table.FieldCellValue;
 import com.bpa4j.defaults.table.FormCellEditor;
@@ -35,20 +42,57 @@ import com.bpa4j.ui.swing.util.AutoLayout;
 import com.bpa4j.ui.swing.util.HButton;
 
 public class SwingBoardRenderer<T extends Serializable> implements FeatureRenderer<Board<T>>{
+	public static abstract class SwingSlicer<T extends Serializable>extends Slicer<T>{
+		public SwingSlicer(Function<T,String> sliceFunction){
+			super(sliceFunction);
+		}
+		public void renderConfigurator(RenderingContext ctx){
+			SwingConfiguratorRenderingContext swingCtx=(SwingConfiguratorRenderingContext)ctx;
+			JPanel panel=swingCtx.getTarget();
+			panel.removeAll();
+
+			// Get all groups to choose from
+			List<T> currentList=getObjects();
+			Set<String> groups=new LinkedHashSet<>();
+			for(T t:currentList){
+				String group=group(t);
+				if(group!=null) groups.add(group);
+			}
+			groups.add(null); // Option for "no filter"
+
+			String[] groupArray=groups.toArray(new String[0]);
+			String current=getCurrentGroup();
+
+			JComboBox<String> groupSelector=new JComboBox<>(groupArray);
+			groupSelector.setSelectedItem(current);
+
+			groupSelector.addActionListener(e->{
+				setCurrentGroup((String)groupSelector.getSelectedItem());
+				swingCtx.getSaver().run();
+			});
+
+			panel.setLayout(new BorderLayout());
+			panel.add(new JLabel("Группа:"),BorderLayout.WEST);
+			panel.add(groupSelector,BorderLayout.CENTER);
+			panel.revalidate();
+			panel.repaint();
+		}
+		public abstract List<T>getObjects();
+	}
 	public static class SwingConfiguratorRenderingContext implements RenderingContext{
 		private Runnable saver;
-    	private JPanel target;
-    	public SwingConfiguratorRenderingContext(JPanel target,Runnable saver){
-    		this.target=target;
+		private JPanel target;
+		public SwingConfiguratorRenderingContext(JPanel target,Runnable saver){
+			this.target=target;
 			this.saver=saver;
-    	}
-    	public JPanel getTarget(){
-    		return target;
-    	}
+		}
+		public JPanel getTarget(){
+			return target;
+		}
 		public Runnable getSaver(){
 			return saver;
 		}
-    }
+	}
 	public static class SwingTableCustomizationRenderingContext implements TableCustomizationRenderingContext{
 		private JTable table;
 		public SwingTableCustomizationRenderingContext(JTable table){
@@ -61,6 +105,11 @@ public class SwingBoardRenderer<T extends Serializable> implements FeatureRender
 	private Board<T> contract;
 	public SwingBoardRenderer(Board<T> contract){
 		this.contract=contract;
+		contract.setGenerateSlicerOp(f->new SwingSlicer<T>(f){
+			public List<T> getObjects(){
+				return contract.getObjects();
+			}
+		});
 	}
 	public Board<T> getTransmissionContract(){
 		return contract;

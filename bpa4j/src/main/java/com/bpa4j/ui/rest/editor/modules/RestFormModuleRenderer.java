@@ -27,6 +27,7 @@ import com.bpa4j.editor.ModularEditorRenderer.ModulesRenderingContext;
 import com.bpa4j.editor.ModuleRenderer;
 import com.bpa4j.editor.modules.FormModule;
 import com.bpa4j.ui.rest.RestModularEditorRenderer.RestModulesRenderingContext;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Component;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
@@ -76,8 +77,12 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 	private static final boolean THROW_ON_NULL_EDITABLE=true;
 	private static final boolean THROW_ON_NULL_CONTEXT=true;
 	private static final boolean THROW_ON_NULL_SAVER=true;
-	private static final boolean THROW_ON_FIELD_ACCESS_ERROR=false;
-
+	private static final boolean THROW_ON_FIELD_ACCESS_ERROR=true;
+	private static void decorateOkButton(Button okButton,boolean done){
+		okButton.setText(done?"Done":"Next");
+		okButton.setBackground(done?RestTheme.ACCENT:RestTheme.MAIN);
+		okButton.setForeground(done?RestTheme.ON_ACCENT:null);
+	}
 	public void createTab(Editable editable,boolean isNew,Runnable deleter,FormModule module,ModulesRenderingContext ctx){
 		// Defensive checks
 		if(editable==null){
@@ -112,6 +117,8 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		if(deleter!=null){
 			deleteBtn=new Button("✕");
 			deleteBtn.setSize(40,40);
+			deleteBtn.setBackground(RestTheme.DANGER);
+			deleteBtn.setForeground(RestTheme.ON_DANGER);
 			deleteBtn.setOnClick(b->{
 				deleter.run();
 				rctx.close();
@@ -125,7 +132,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 
 		com.bpa4j.ui.rest.abstractui.layout.BorderLayout nameLayout=(com.bpa4j.ui.rest.abstractui.layout.BorderLayout)namePanel.getLayout();
 		nameLayout.addLayoutComponent(nameLabel,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.WEST);
-		if(deleteBtn!=null)nameLayout.addLayoutComponent(deleteBtn,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.EAST);
+		if(deleteBtn!=null) nameLayout.addLayoutComponent(deleteBtn,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.EAST);
 		nameLayout.addLayoutComponent(nameField,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.CENTER);
 
 		// Form Panel (Center) - using GridLayout for horizontal label-editor layout
@@ -142,150 +149,149 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		List<Component> components=new ArrayList<>();
 		List<String> labels=new ArrayList<>();
 
-		for(Field f:editable.getClass().getFields())try{
-			EditorEntry a=f.getAnnotation(EditorEntry.class);
-			if(a==null)continue;
+		for(Field f:editable.getClass().getFields())
+			try{
+				EditorEntry a=f.getAnnotation(EditorEntry.class);
+				if(a==null) continue;
 
-			boolean hide=false,readonly=false;
-			for(String p:a.properties()){ //Handling entry flags
-				if("hide".equals(p))hide=true;
-				if("readonly".equals(p)||(!isNew&&"initonly".equals(p)))readonly=true;
-			}
-			if(hide)continue;
-
-			fields.add(f);
-			labels.add(a.translation()!=null?a.translation():"");
-
-			if(readonly){
-				Object value=f.get(editable);
-				components.add(new Label(value==null?"":String.valueOf(value)));
-				savers.add(new EmptySaver());
-				continue;
-			}
-
-			Component editorComponent;
-			if(a.editorBaseSource()==EditorEntryBase.class){
-				Wrapper<Supplier<?>> nextSaver=new Wrapper<>(null);
-				editorComponent=createEditorComponent(editable,f,nextSaver);
-				if(nextSaver.var==null){
-					if(THROW_ON_NULL_SAVER) throw new IllegalStateException("Saver not set for field: "+f.getName());
-					nextSaver.var=new EmptySaver(); // Fallback
+				boolean hide=false,readonly=false;
+				for(String p:a.properties()){ //Handling entry flags
+					if("hide".equals(p)) hide=true;
+					if("readonly".equals(p)||(!isNew&&"initonly".equals(p))) readonly=true;
 				}
-				savers.add(nextSaver.var);
+				if(hide) continue;
+
+				fields.add(f);
+				labels.add(a.translation()!=null?a.translation():"");
+
+				if(readonly){
+					Object value=f.get(editable);
+					components.add(new Label(value==null?"":String.valueOf(value)));
+					savers.add(new EmptySaver());
+					continue;
+				}
+
+				Component editorComponent;
+				if(a.editorBaseSource()==EditorEntryBase.class){
+					Wrapper<Supplier<?>> nextSaver=new Wrapper<>(null);
+					editorComponent=createEditorComponent(editable,f,nextSaver);
+					if(nextSaver.var==null){
+						if(THROW_ON_NULL_SAVER) throw new IllegalStateException("Saver not set for field: "+f.getName());
+						nextSaver.var=new EmptySaver(); // Fallback
+					}
+					savers.add(nextSaver.var);
+				}else{
+					EditorEntryBase editorBase=a.editorBaseSource().getDeclaredConstructor().newInstance();
+					Panel target=new Panel();
+					target.setLayout(new com.bpa4j.ui.rest.abstractui.layout.FlowLayout(com.bpa4j.ui.rest.abstractui.layout.FlowLayout.LEFT,com.bpa4j.ui.rest.abstractui.layout.FlowLayout.LTR,5,5));
+					EditorEntryBase.EditorEntryRenderingContext renderingContext=new RestEditorEntryRenderingContext(target);
+					Wrapper<Supplier<?>> saver=new Wrapper<>(null);
+					Wrapper<EditableDemo> demo=new Wrapper<>(null);
+					editorBase.renderEditorBase(editable,f,saver,demo,renderingContext);
+					editorComponent=target.getComponents().isEmpty()?null:target;
+					if(saver.var==null){
+						if(THROW_ON_NULL_SAVER) throw new IllegalStateException("All entry editors must set a saver for field: "+f.getName());
+						saver.var=new EmptySaver(); // Fallback
+					}
+					savers.add(saver.var);
+				}
+				components.add(editorComponent);
+
+			}catch(Exception ex){
+				if(THROW_ON_FIELD_ACCESS_ERROR) throw new IllegalStateException("Error processing field: "+f.getName(),ex);
+				// Fallback: skip this field and continue
+			}
+
+		AtomicInteger currentIndex=new AtomicInteger(0);
+		Button back=new Button("Back");
+		Button ok=new Button();
+		decorateOkButton(ok,false);
+		Runnable updateUI=()->{
+			formPanel.removeAll();
+			if(fields.isEmpty()){
+				formPanel.add(new Label("No fields to edit."));
+				back.setEnabled(false);
+				decorateOkButton(ok,true);
+				return;
+			}
+
+			int idx=currentIndex.get();
+			// Show label and component in horizontal GridLayout
+			Label l=new Label(labels.get(idx));
+			formPanel.add(l);
+
+			Component c=components.get(idx);
+			if(c!=null){
+				formPanel.add(c);
 			}else{
-				EditorEntryBase editorBase=a.editorBaseSource().getDeclaredConstructor().newInstance();
-				Panel target=new Panel();
-				target.setLayout(new com.bpa4j.ui.rest.abstractui.layout.FlowLayout(com.bpa4j.ui.rest.abstractui.layout.FlowLayout.LEFT,com.bpa4j.ui.rest.abstractui.layout.FlowLayout.LTR,5,5));
-				EditorEntryBase.EditorEntryRenderingContext renderingContext=new RestEditorEntryRenderingContext(target);
-				Wrapper<Supplier<?>> saver=new Wrapper<>(null);
-				Wrapper<EditableDemo> demo=new Wrapper<>(null);
-				editorBase.renderEditorBase(editable,f,saver,demo,renderingContext);
-				editorComponent=target.getComponents().isEmpty()?null:target;
-				if(saver.var==null){
-					if(THROW_ON_NULL_SAVER) throw new IllegalStateException("All entry editors must set a saver for field: "+f.getName());
-					saver.var=new EmptySaver(); // Fallback
-				}
-				savers.add(saver.var);
+				formPanel.add(new Label("")); // Empty placeholder for grid layout
 			}
-			components.add(editorComponent);
 
-		}catch(Exception ex){
-			if(THROW_ON_FIELD_ACCESS_ERROR) throw new IllegalStateException("Error processing field: "+f.getName(),ex);
-			// Fallback: skip this field and continue
-		}
+			back.setEnabled(idx>0);
+			decorateOkButton(ok,idx==fields.size()-1);
 
-	AtomicInteger currentIndex=new AtomicInteger(0);
-	Button back=new Button("Back");
-	Button ok=new Button("Next");
-
-	Runnable updateUI=()->{
-		formPanel.removeAll();
-		if(fields.isEmpty()){
-			formPanel.add(new Label("No fields to edit."));
-			back.setEnabled(false);
-			ok.setText("Done");
-			return;
-		}
-
-		int idx=currentIndex.get();
-		// Show label and component in horizontal GridLayout
-		Label l=new Label(labels.get(idx));
-		formPanel.add(l);
-
-		Component c=components.get(idx);
-		if(c!=null){
-			formPanel.add(c);
-		}else{
-			formPanel.add(new Label("")); // Empty placeholder for grid layout
-		}
-
-		back.setEnabled(idx>0);
-		ok.setText(idx==fields.size()-1?"Done":"Next");
-
-		formPanel.update();
-	};
-
-	back.setOnClick(b->{
-		int idx=currentIndex.get();
-		if(idx>0){
-			currentIndex.decrementAndGet();
-			updateUI.run();
-		}
-	});
-
-	ok.setOnClick(b->{
-		try{
-			if(!fields.isEmpty()){
-				int idx=currentIndex.get();
-				if(idx>=0&&idx<savers.size()){ // Defensive check
-					Supplier<?> saver=savers.get(idx);
-					if(saver!=null&&!(saver instanceof EmptySaver)){
-						Object savedValue=saver.get();
-						fields.get(idx).set(editable,savedValue);
+			formPanel.update();
+		};
+		back.setOnClick(b->{
+			int idx=currentIndex.get();
+			if(idx>0){
+				currentIndex.decrementAndGet();
+				updateUI.run();
+			}
+		});
+		ok.setOnClick(b->{
+			try{
+				if(!fields.isEmpty()){
+					int idx=currentIndex.get();
+					if(idx>=0&&idx<savers.size()){ // Defensive check
+						Supplier<?> saver=savers.get(idx);
+						if(saver!=null&&!(saver instanceof EmptySaver)){
+							Object savedValue=saver.get();
+							fields.get(idx).set(editable,savedValue);
+						}
 					}
 				}
-			}
 
-			if(currentIndex.get()<fields.size()-1){
-				currentIndex.incrementAndGet();
-				updateUI.run();
-			}else{
-				String name=nameField.getText();
-				editable.name=name!=null?name:"";
-				rctx.close();
+				if(currentIndex.get()<fields.size()-1){
+					currentIndex.incrementAndGet();
+					updateUI.run();
+				}else{
+					String name=nameField.getText();
+					editable.name=name!=null?name:"";
+					rctx.close();
+				}
+			}catch(Exception ex){
+				if(THROW_ON_FIELD_ACCESS_ERROR) throw new IllegalStateException("Error saving field value",ex);
+				// Fallback: continue anyway
 			}
-		}catch(Exception ex){
-			if(THROW_ON_FIELD_ACCESS_ERROR) throw new IllegalStateException("Error saving field value",ex);
-			// Fallback: continue anyway
+		});
+
+		// Add buttons in vertical order: back above OK
+		if(!isNew){
+			Button cancel=new Button("Cancel");
+			cancel.setOnClick(b->rctx.close());
+			buttonPanel.add(cancel);
 		}
-	});
+		buttonPanel.add(back);
+		buttonPanel.add(ok);
 
-	// Add buttons in vertical order: back above OK
-	if(!isNew){
-		Button cancel=new Button("Cancel");
-		cancel.setOnClick(b->rctx.close());
-		buttonPanel.add(cancel);
-	}
-	buttonPanel.add(back);
-	buttonPanel.add(ok);
+		com.bpa4j.ui.rest.abstractui.layout.BorderLayout layout=(com.bpa4j.ui.rest.abstractui.layout.BorderLayout)container.getLayout();
+		layout.addLayoutComponent(namePanel,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.NORTH);
+		layout.addLayoutComponent(formPanel,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.CENTER);
+		layout.addLayoutComponent(buttonPanel,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.SOUTH);
 
-	com.bpa4j.ui.rest.abstractui.layout.BorderLayout layout=(com.bpa4j.ui.rest.abstractui.layout.BorderLayout)container.getLayout();
-	layout.addLayoutComponent(namePanel,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.NORTH);
-	layout.addLayoutComponent(formPanel,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.CENTER);
-	layout.addLayoutComponent(buttonPanel,com.bpa4j.ui.rest.abstractui.layout.BorderLayout.SOUTH);
+		container.add(namePanel);
+		container.add(formPanel);
+		container.add(buttonPanel);
 
-	container.add(namePanel);
-	container.add(formPanel);
-	container.add(buttonPanel);
-
-	updateUI.run();
-	// Finalize this tab so next module gets a new one
-	rctx.finalizeCurrentTab();
+		updateUI.run();
+		// Finalize this tab so next module gets a new one
+		rctx.finalizeCurrentTab();
 	}
 
 	@SuppressWarnings("unchecked")
 	public static Component createEditorComponent(Object o,Field f,Wrapper<Supplier<?>> saver) throws IllegalAccessException{
-		Class<?>type=f.getType();
+		Class<?> type=f.getType();
 
 		// String
 		if(type==String.class){
@@ -485,7 +491,6 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 				return a;
 			}
 		}
-
 
 		// EditableGroup - display as text field showing count
 		else if(EditableGroup.class.isAssignableFrom(type)){

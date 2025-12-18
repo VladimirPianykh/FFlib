@@ -11,6 +11,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
@@ -58,9 +59,11 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 		contract.renderFilter(headerCtx);
 		contract.renderSorter(headerCtx);
 
-		// Add creation button if allowed
+		// Add creation button if allowed (not mandatory -> ACCENT as foreground only)
 		if(contract.getAllowCreation()){
 			Button add=new Button("Add");
+			add.setBackground(RestTheme.MAIN);
+			add.setForeground(RestTheme.ACCENT_TEXT);
 			add.setOnClick(b->{
 				try{
 					T o=getType().getDeclaredConstructor().newInstance();
@@ -130,11 +133,14 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 		target.setSize(finalTableWidth,60+totalHeight+20);
 
 		// Header row
-		table.add(new Label("Object"));
-		table.add(new Label("Actions"));
+		Label objectHeader=new Label("Object");
+		table.add(objectHeader);
+		Label actionsHeader=new Label("Actions");
+		table.add(actionsHeader);
 		for(Field f:fields){
 			String fieldName=f.getAnnotation(EditorEntry.class).translation();
-			table.add(new Label(fieldName));
+			Label h=new Label(fieldName);
+			table.add(h);
 		}
 
 		// Data rows
@@ -149,6 +155,8 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 			actionsWrapper.setSize(150,rowHeight);
 
 			Button edit=new Button("Edit");
+			edit.setBackground(RestTheme.MAIN);
+			edit.setForeground(RestTheme.ACCENT_TEXT);
 			edit.setOnClick(b->{
 				if(obj instanceof Editable){
 					Runnable deleter=contract.getAllowDeletion()?()->contract.removeObject(obj):null;
@@ -160,6 +168,8 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 
 			if(contract.getAllowDeletion()){
 				Button remove=new Button("Remove");
+				remove.setBackground(RestTheme.DANGER);
+				remove.setForeground(RestTheme.ON_DANGER);
 				remove.setOnClick(b->{
 					contract.removeObject(obj);
 					rctx.rebuild();
@@ -173,9 +183,11 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 			for(Field f:fields){
 				try{
 					Object value=f.get(obj);
-					table.add(new Label(value!=null?String.valueOf(value):""));
+					Label cell=new Label(value!=null?String.valueOf(value):"");
+					table.add(cell);
 				}catch(IllegalAccessException e){
-					table.add(new Label("N/A"));
+					Label na=new Label("N/A");
+					table.add(na);
 				}
 			}
 		}
@@ -192,6 +204,8 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 
 			if(obj instanceof Editable){
 				Button edit=new Button("Edit");
+				edit.setBackground(RestTheme.MAIN);
+				edit.setForeground(RestTheme.ACCENT_TEXT);
 				edit.setOnClick(b->{
 					Runnable deleter=contract.getAllowDeletion()?()->contract.removeObject(obj):null;
 					ProgramStarter.editor.constructEditor((Editable)obj,false,deleter,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
@@ -202,6 +216,8 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 
 			if(contract.getAllowDeletion()){
 				Button remove=new Button("Remove");
+				remove.setBackground(RestTheme.DANGER);
+				remove.setForeground(RestTheme.ON_DANGER);
 				remove.setOnClick(b->{
 					contract.removeObject(obj);
 					rctx.rebuild();

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,6 +25,32 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	public static interface Filter<T extends Serializable>extends Predicate<T>{
 		default void renderConfigurator(RenderingContext ctx){}
 	}
+	/**
+	 * Basic interface for adding filtering by group.
+	 * Must be overriden by the renderer to manage group's selection.
+	 */
+	public static abstract class Slicer<T extends Serializable> implements Filter<T>{
+		private final Function<T,String>sliceFunction;
+		private String currentGroup;
+		public Slicer(Function<T,String>sliceFunction){
+			Objects.requireNonNull(sliceFunction);
+			this.sliceFunction=sliceFunction;
+		}
+		public String group(T t){
+			return sliceFunction.apply(t);
+		}
+		public boolean test(T t){
+			String cg=getCurrentGroup();
+			return cg==null||group(t).equals(cg);
+		}
+		public String getCurrentGroup(){
+			return currentGroup;
+		}
+		public void setCurrentGroup(String currentGroup){
+			this.currentGroup=currentGroup;
+		}
+		public abstract void renderConfigurator(RenderingContext ctx);
+	}
 	private Supplier<ArrayList<T>> getObjectsOp;
 	// private Supplier<T> createObjectOp;
 	private Consumer<T> addObjectOp;
@@ -40,6 +67,7 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	private Consumer<Consumer<TableCustomizationRenderingContext>> setTableCustomizerOp;
 	private Consumer<TableCustomizationRenderingContext> customizeTableOp;
 	private Consumer<Boolean> setAllowDeletionOp;
+	private Function<Function<T,String>,Slicer<T>> generateSlicerOp;
 
 	private String name;
 	private Class<T> type;
@@ -95,6 +123,9 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	}
 	public void setSetAllowDeletionOp(Consumer<Boolean> setAllowDeletionOp){
 		this.setAllowDeletionOp=setAllowDeletionOp;
+	}
+	public void setGenerateSlicerOp(Function<Function<T,String>,Slicer<T>> generateSlicerOp){
+		this.generateSlicerOp=generateSlicerOp;
 	}
 
 	public ArrayList<T> getObjects(){
@@ -154,6 +185,9 @@ public class Board<T extends Serializable> implements FeatureTransmissionContrac
 	}
 	public Class<T> getType(){
 		return type;
+	}
+	public Slicer<T> generateSlicer(Function<T,String>sliceFunction){
+		return generateSlicerOp.apply(sliceFunction);
 	}
 	public void customizeTable(TableCustomizationRenderingContext ctx){
 		customizeTableOp.accept(ctx);

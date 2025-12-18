@@ -66,7 +66,7 @@ public class RolesNode extends ProjectNode {
 						}
 						
 						// Второй аргумент - лямбда для features (пока не обрабатываем)
-						// TODO: parse features
+						// TODO: #6 Parse features
 					}
 					
 					roles.add(new RoleRepresentation(name, permissions, features));

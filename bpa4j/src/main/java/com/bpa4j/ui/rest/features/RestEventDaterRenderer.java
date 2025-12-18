@@ -36,9 +36,11 @@ public class RestEventDaterRenderer<T extends Calendar.Event> implements DaterRe
                     try {
                         Object value = f.get(event);
                         String label = f.getAnnotation(EditorEntry.class).translation();
-                        eventPanel.add(new Label(label + ": " + value));
+                        Label l=new Label(label+": "+value);
+                        eventPanel.add(l);
                     } catch (IllegalAccessException e) {
-                        eventPanel.add(new Label("Error reading field"));
+                        Label err=new Label("Error reading field");
+                        eventPanel.add(err);
                     }
                 }
             }

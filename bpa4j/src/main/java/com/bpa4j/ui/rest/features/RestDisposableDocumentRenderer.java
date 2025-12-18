@@ -7,6 +7,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
@@ -34,7 +35,10 @@ public class RestDisposableDocumentRenderer<T extends Editable> implements Featu
 		}
 		target.setLayout(new FlowLayout(FlowLayout.CENTER,FlowLayout.CENTER,10,10));
 		
+		// Edit/create is useful but not final action -> ACCENT as foreground only
 		Button createBtn=new Button(currentDocument==null?"Create Document":"Edit Document");
+		createBtn.setBackground(RestTheme.MAIN);
+		createBtn.setForeground(RestTheme.ACCENT_TEXT);
 		createBtn.setOnClick(b->{
 			if(currentDocument==null){
 				currentDocument=contract.createDocument();
@@ -44,7 +48,10 @@ public class RestDisposableDocumentRenderer<T extends Editable> implements Featu
 		});
 		target.add(createBtn);
 		
+		// Primary \"done\" action -> single ACCENT background on this screen
 		Button confirmBtn=new Button("Confirm");
+		confirmBtn.setBackground(RestTheme.ACCENT);
+		confirmBtn.setForeground(RestTheme.ON_ACCENT);
 		confirmBtn.setOnClick(b->{
 			if(currentDocument!=null){
 				contract.processDocument(currentDocument);

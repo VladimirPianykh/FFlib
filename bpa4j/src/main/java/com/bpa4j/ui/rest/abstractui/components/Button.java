@@ -19,8 +19,8 @@ public class Button extends Component{
     private boolean enabled=true;
     private Consumer<Button> onClick;
     private Size preferredSize=new Size(80,30);
-    private Color background=new Color(100,0,0);
-    private Color foreground=new Color(255,255,255);
+    private Color background;
+    private Color foreground;
     public Button(){
         this("");
     }
@@ -83,6 +83,12 @@ public class Button extends Component{
     }
     public void setBackground(Color background){
         this.background=background;
+    }
+    public Color getForeground(){
+        return foreground;
+    }
+    public void setForeground(Color foreground){
+        this.foreground=foreground;
     }
     private void invalidateParent(){
         if(getParent()!=null){

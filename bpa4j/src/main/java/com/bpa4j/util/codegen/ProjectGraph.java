@@ -612,7 +612,7 @@ public class ProjectGraph{
 	private static ArrayList<DiagnosticService> diagnosticServices=new ArrayList<>();
 	static{
 		// diagnosticServices.add();
-		//TODO: add diagnostic services
+		//TODO: #2 add diagnostic services
 	}
 	private JavaParser parser=new JavaParser();
 	private ArrayList<Problem> problemsCache;

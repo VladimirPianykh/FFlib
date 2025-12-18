@@ -11,6 +11,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
@@ -109,6 +110,7 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 			row.setSize(targetWidth,35);
 
 			Button itemBtn=new Button(t.name);
+			itemBtn.setBackground(RestTheme.MAIN);
 			itemBtn.setOnClick(b->{
 				ProgramStarter.editor.constructEditor(t,false,()->contract.removeObject(t),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
 				rctx.rebuild();
@@ -134,11 +136,13 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 		}
 		target.add(listPanel);
 		
-		// Bottom panel with add button
+		// Bottom panel with add button (not mandatory -> ACCENT as foreground only)
 		Panel bottomPanel=new Panel(new FlowLayout());
 		bottomPanel.setSize(targetWidth,40);
 
 		Button addBtn=new Button("Add");
+		addBtn.setBackground(RestTheme.MAIN);
+		addBtn.setForeground(RestTheme.ACCENT_TEXT);
 		addBtn.setOnClick(b->{
 			try{
 				T t=contract.getType().getDeclaredConstructor().newInstance();

@@ -9,6 +9,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
@@ -47,6 +48,7 @@ public class RestEditableListRenderer<T extends Editable> implements FeatureRend
 			componentProvider=(t,itemCtx)->{
 				RestItemRenderingContext restCtx=(RestItemRenderingContext)itemCtx;
 				Button itemBtn=new Button(t.name);
+				itemBtn.setBackground(RestTheme.MAIN);
 				itemBtn.setOnClick(b->{
 					Runnable deleter = contract.getAllowDeletion() ? () -> {
 						group.remove(t);
@@ -65,6 +67,8 @@ public class RestEditableListRenderer<T extends Editable> implements FeatureRend
 		
 		if (contract.getAllowCreation()) {
 			Button addBtn=new Button("Add");
+			addBtn.setBackground(RestTheme.MAIN);
+			addBtn.setForeground(RestTheme.ACCENT_TEXT);
 			addBtn.setOnClick(b->{
 				try{
 					T t=group.type.getDeclaredConstructor().newInstance();

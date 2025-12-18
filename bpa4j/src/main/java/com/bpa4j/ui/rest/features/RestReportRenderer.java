@@ -238,11 +238,13 @@ public class RestReportRenderer implements ReportRenderer{
 			wrapper.setSize(restCtx.getWidth(),restCtx.getHeight());
 
 			if(title!=null){
-				wrapper.add(new Label(title));
+				Label t=new Label(title);
+				wrapper.add(t);
 			}
 
 			if(elements.isEmpty()){
-				wrapper.add(new Label("No data"));
+				Label no=new Label("No data");
+				wrapper.add(no);
 			}else{
 				Field[] allFields=elements.get(0).getClass().getFields();
 				ArrayList<Field> fields=new ArrayList<>();
@@ -262,7 +264,8 @@ public class RestReportRenderer implements ReportRenderer{
 
 				// Header
 				for(Field f:fields){
-					table.add(new Label(f.getAnnotation(EditorEntry.class).translation()));
+					Label h=new Label(f.getAnnotation(EditorEntry.class).translation());
+					table.add(h);
 				}
 
 				// Rows
@@ -270,9 +273,11 @@ public class RestReportRenderer implements ReportRenderer{
 					for(Field f:fields){
 						try{
 							Object val=f.get(t);
-							table.add(new Label(val!=null?String.valueOf(val):""));
+							Label v=new Label(val!=null?String.valueOf(val):"");
+							table.add(v);
 						}catch(IllegalAccessException ex){
-							table.add(new Label("Error"));
+							Label err=new Label("Error");
+							table.add(err);
 						}
 					}
 				}
@@ -295,7 +300,8 @@ public class RestReportRenderer implements ReportRenderer{
 
 			Supplier<String>[] answerers=dataRenderer.getAnswerers();
 			for(Supplier<String> s:answerers){
-				wrapper.add(new Label(s.get()));
+				Label l=new Label(s.get());
+				wrapper.add(l);
 			}
 			panel.add(wrapper);
 		}

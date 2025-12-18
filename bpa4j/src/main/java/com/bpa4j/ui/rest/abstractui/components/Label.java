@@ -13,7 +13,7 @@ import java.util.HashMap;
 public class Label extends Component{
 	private String text="";
 	private Size preferredSize=new Size(100,20);
-	private Color foreground=new Color(255,0,0);
+	private Color foreground;
 
 	public Label(){
 		setSize(preferredSize);

@@ -50,6 +50,8 @@ public class RestWorkFrameRenderer implements WorkFrameRenderer{
 		root.add(featureBar);
 		root.add(content);
 		Button exit=new Button("✕");
+		exit.setBackground(RestTheme.DANGER);
+		exit.setForeground(RestTheme.ON_DANGER);
 		exit.setOnClick(btn->workFrame.exit());
 		featureBar.add(exit);
 		for(WorkFrame.FeatureEntry<?>entry:workFrame.getFeatures()){
