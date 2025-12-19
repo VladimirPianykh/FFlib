@@ -116,13 +116,7 @@ public class EditableNode extends ClassNode{
 						// Найти класс и добавить поле
 						Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
-						if(clazz.isPresent()){
-							clazz.get().addField(type.toString(),name,Keyword.PUBLIC);
-							// FieldDeclaration newField = new FieldDeclaration();
-							// newField.setCommonType(StaticJavaParser.parseType(type.toString()));
-							// newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(type.toString()), "var" + (int)(Math.random() * 9999900 + 100)));
-							// clazz.get().addMember(newField);
-						}
+						if(clazz.isPresent()) clazz.get().addField(type.toString(),name,Keyword.PUBLIC);
 					}
 				}else{
 					// Изменить тип существующего поля
@@ -282,7 +276,7 @@ public class EditableNode extends ClassNode{
 			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
 			if(clazz.isPresent()){
-				// TODO: #3 Implement field creation with JavaParser
+				if(clazz.isPresent()) clazz.get().addField(property.getType().toString(),name,Keyword.PUBLIC);
 				// FieldDeclaration newField = new FieldDeclaration();
 				// newField.setCommonType(StaticJavaParser.parseType(property.type.toString()));
 				// newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(property.type.toString()), varName));
