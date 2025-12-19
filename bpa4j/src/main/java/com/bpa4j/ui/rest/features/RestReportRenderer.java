@@ -33,6 +33,7 @@ import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.feature.ReportRenderer;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.BorderLayout;
@@ -183,7 +184,9 @@ public class RestReportRenderer implements ReportRenderer{
 				try{
 					r.render(this,new RestDataRenderingContext(grid,cellWidth,cellHeight));
 				}catch(IllegalStateException ex){
-					grid.add(new Label("No renderer for "+r.getClass().getSimpleName()));
+					Label no=new Label("No renderer for "+r.getClass().getSimpleName());
+					no.setForeground(RestTheme.DANGER);
+					grid.add(no);
 				}
 			}
 
@@ -274,9 +277,11 @@ public class RestReportRenderer implements ReportRenderer{
 						try{
 							Object val=f.get(t);
 							Label v=new Label(val!=null?String.valueOf(val):"");
+							v.setForeground(RestTheme.MAIN_TEXT);
 							table.add(v);
 						}catch(IllegalAccessException ex){
 							Label err=new Label("Error");
+							err.setForeground(RestTheme.DANGER);
 							table.add(err);
 						}
 					}
@@ -301,6 +306,7 @@ public class RestReportRenderer implements ReportRenderer{
 			Supplier<String>[] answerers=dataRenderer.getAnswerers();
 			for(Supplier<String> s:answerers){
 				Label l=new Label(s.get());
+				l.setForeground(RestTheme.MAIN_TEXT);
 				wrapper.add(l);
 			}
 			panel.add(wrapper);
@@ -414,7 +420,11 @@ public class RestReportRenderer implements ReportRenderer{
 					ImageIO.write(image,"png",outputFile);
 
 					// Add UI feedback
-					if(title!=null) wrapper.add(new Label(title));
+					if(title!=null){
+						Label tLabel=new Label(title);
+						tLabel.setForeground(RestTheme.MAIN_TEXT);
+						wrapper.add(tLabel);
+					}
 					wrapper.add(new Label("График сохранён в папку Загрузки: "+fileName+".png"));
 				}catch(IOException ex){
 					if(title!=null) wrapper.add(new Label(title));

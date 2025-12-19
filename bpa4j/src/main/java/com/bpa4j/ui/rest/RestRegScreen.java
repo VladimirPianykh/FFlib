@@ -44,7 +44,10 @@ public class RestRegScreen implements RegScreen{
 
 			Button loginButton=new Button("Login");
 			Button registerButton=new Button("Register");
-
+			loginButton.setBackground(RestTheme.ACCENT);
+			loginButton.setForeground(RestTheme.ON_ACCENT);
+			registerButton.setBackground(RestTheme.ACCENT);
+			registerButton.setForeground(RestTheme.ON_ACCENT);
 			loginButton.setOnClick(b->{
 				String login=loginField.getText();
 				String password=passwordField.getText();
@@ -74,6 +77,8 @@ public class RestRegScreen implements RegScreen{
 			content.add(userCombo);
 
 			Button confirmButton=new Button("Confirm");
+			confirmButton.setBackground(RestTheme.ACCENT);
+			confirmButton.setForeground(RestTheme.ON_ACCENT);
 			confirmButton.setOnClick(b->{
 				User selected=User.getUser(userCombo.getSelectedItem());
 				if(selected!=null)context.enterWithoutAuth(selected);

@@ -147,24 +147,13 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 		for(T obj:objects){
 			// Object name/identifier
 			Label objLabel=new Label(String.valueOf(obj));
+			objLabel.setForeground(RestTheme.MAIN_TEXT);
 			table.add(objLabel);
 
 			// Action buttons - wrap both in a single panel for proper grid cell display
 			// Use GridLayout to guarantee 1 row and prevent wrapping over other rows
 			Panel actionsWrapper=new Panel(new GridLayout(1,2,5,0));
 			actionsWrapper.setSize(150,rowHeight);
-
-			Button edit=new Button("Edit");
-			edit.setBackground(RestTheme.MAIN);
-			edit.setForeground(RestTheme.ACCENT_TEXT);
-			edit.setOnClick(b->{
-				if(obj instanceof Editable){
-					Runnable deleter=contract.getAllowDeletion()?()->contract.removeObject(obj):null;
-					ProgramStarter.editor.constructEditor((Editable)obj,false,deleter,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
-					rctx.rebuild();
-				}
-			});
-			actionsWrapper.add(edit);
 
 			if(contract.getAllowDeletion()){
 				Button remove=new Button("Remove");
@@ -184,9 +173,11 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 				try{
 					Object value=f.get(obj);
 					Label cell=new Label(value!=null?String.valueOf(value):"");
+					cell.setForeground(RestTheme.MAIN_TEXT);
 					table.add(cell);
 				}catch(IllegalAccessException e){
 					Label na=new Label("N/A");
+					na.setForeground(RestTheme.MAIN_TEXT);
 					table.add(na);
 				}
 			}
@@ -201,18 +192,6 @@ public class RestBoardRenderer<T extends Serializable> implements FeatureRendere
 			Panel row=new Panel(new FlowLayout());
 			Label l=new Label(String.valueOf(obj));
 			row.add(l);
-
-			if(obj instanceof Editable){
-				Button edit=new Button("Edit");
-				edit.setBackground(RestTheme.MAIN);
-				edit.setForeground(RestTheme.ACCENT_TEXT);
-				edit.setOnClick(b->{
-					Runnable deleter=contract.getAllowDeletion()?()->contract.removeObject(obj):null;
-					ProgramStarter.editor.constructEditor((Editable)obj,false,deleter,ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
-					rctx.rebuild();
-				});
-				row.add(edit);
-			}
 
 			if(contract.getAllowDeletion()){
 				Button remove=new Button("Remove");

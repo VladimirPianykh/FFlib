@@ -45,7 +45,7 @@ public class EditableGroup<T extends Editable>extends ArrayList<T>{
 	}
 	@SuppressWarnings("unchecked")
 	public boolean add(Editable e){
-		if(e.getClass()!=type)throw new RuntimeException(e.getClass()+" cannot be added to the group of type "+type);
+		if(e.getClass()!=type)throw new RuntimeException(e.getClass()+" cannot be added to the group of type "+type+".");
 		return super.add((T)e);
 	}
 	@SuppressWarnings("rawtypes")

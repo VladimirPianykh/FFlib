@@ -19,12 +19,16 @@ import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.FlowLayout;
 
 /**
- * REST renderer for ItemList feature with filter/sorter support.
- * Displays items with singular and collective actions.
+ * REST renderer for ItemList feature with selection-based UI.
+ * Displays items with checkboxes for selection, allowing users to:
+ * - Select individual items using checkboxes
+ * - Execute singular actions on all selected items
+ * - Execute collective actions on the selected items as a group
  * @author AI-generated
  */
 public class RestItemListRenderer<T extends Serializable> implements FeatureRenderer<ItemList<T>>{
 	private final ItemList<T> contract;
+	private final List<T> selectedItems=new ArrayList<>();
 	public RestItemListRenderer(ItemList<T> contract){
 		this.contract=contract;
 	}
@@ -52,14 +56,52 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 		config.setSize(targetWidth,60);
 
 		// Title
-		Label title=new Label(contract.getFeatureName());
+		Label title=new Label(contract.getTitle());
 		config.add(title);
 
 		// Render filter and sorter configurators
 		contract.renderFilter(rctx);
 		contract.renderSorter(rctx);
 
-		// Collective actions (secondary; highlight with ACCENT text only)
+		// Select All / Deselect All button
+		ArrayList<T> objects=contract.getObjects();
+		if(!objects.isEmpty()){
+			Button selectAllBtn=new Button(selectedItems.size()==objects.size()?"Deselect All":"Select All");
+			selectAllBtn.setBackground(RestTheme.MAIN);
+			selectAllBtn.setForeground(RestTheme.ACCENT_TEXT);
+			selectAllBtn.setOnClick(b->{
+				if(selectedItems.size()==objects.size()){
+					selectedItems.clear();
+				}else{
+					selectedItems.clear();
+					selectedItems.addAll(objects);
+				}
+				rctx.rebuild();
+			});
+			config.add(selectAllBtn);
+		}
+
+		// Singular actions - operate on individually selected items
+		List<Consumer<T>> singular=contract.getSingularActions();
+		if(!singular.isEmpty()){
+			AtomicInteger idx=new AtomicInteger(1);
+			for(Consumer<T> action:singular){
+				int i=idx.getAndIncrement();
+				Button b=new Button("Action "+i);
+				b.setBackground(RestTheme.MAIN);
+				b.setForeground(RestTheme.ACCENT_TEXT);
+				b.setOnClick(btn->{
+					// Execute action on each selected item
+					for(T item:new ArrayList<>(selectedItems)){
+						action.accept(item);
+					}
+					rctx.rebuild();
+				});
+				config.add(b);
+			}
+		}
+
+		// Collective actions - operate on all selected items as a list
 		List<Consumer<List<T>>> collective=contract.getCollectiveActions();
 		if(!collective.isEmpty()){
 			AtomicInteger idx=new AtomicInteger(1);
@@ -69,8 +111,7 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 				b.setBackground(RestTheme.MAIN);
 				b.setForeground(RestTheme.ACCENT_TEXT);
 				b.setOnClick(btn->{
-					List<T> current=new ArrayList<>(contract.getObjects());
-					action.accept(current);
+					action.accept(new ArrayList<>(selectedItems));
 					rctx.rebuild();
 				});
 				config.add(b);
@@ -99,9 +140,9 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 		target.add(config);
 
 		// Calculate height for list
-		ArrayList<T> objects=contract.getObjects();
+		ArrayList<T> obj=contract.getObjects();
 		int rowHeight=35;
-		int totalListHeight=Math.max(100,objects.size()*rowHeight+(objects.size()-1)*5);
+		int totalListHeight=Math.max(100,obj.size()*rowHeight+(obj.size()-1)*5);
 
 		// Create list panel with FlowLayout TTB
 		Panel list=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
@@ -110,7 +151,7 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 		// Apply list customizer if available
 		contract.customizeList(new RestListCustomizationRenderingContext(list));
 
-		fillList(list,targetWidth,rctx);
+		fillList(list,targetWidth,selectedItems,rctx);
 		target.add(list);
 
 		// Resize target to fit everything
@@ -119,41 +160,31 @@ public class RestItemListRenderer<T extends Serializable> implements FeatureRend
 		target.update();
 	}
 
-	private void fillList(Panel list,int targetWidth,RestFeatureRenderingContext rctx){
+	private void fillList(Panel list,int targetWidth,List<T> selectedItems,RestFeatureRenderingContext rctx){
 		ArrayList<T> objects=contract.getObjects();
-		List<Consumer<T>> singular=contract.getSingularActions();
 
 		for(T obj:objects){
 			Panel row=new Panel(new FlowLayout());
 			row.setSize(targetWidth,35);
 
-			// Object label/button
-			if(obj instanceof Editable){
-				Button itemBtn=new Button(String.valueOf(obj));
-				itemBtn.setBackground(RestTheme.MAIN);
-				itemBtn.setOnClick(b->{
-					ProgramStarter.editor.constructEditor((Editable)obj,false,()->contract.removeObject(obj),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
-					rctx.rebuild();
-				});
-				row.add(itemBtn);
-			}else{
-				Label l=new Label(String.valueOf(obj));
-				row.add(l);
-			}
+			// Selection checkbox
+			Button selectBtn=new Button(selectedItems.contains(obj)?"☑":"☐");
+			selectBtn.setBackground(RestTheme.MAIN);
+			selectBtn.setForeground(selectedItems.contains(obj)?RestTheme.ACCENT_TEXT:RestTheme.MAIN_TEXT);
+			selectBtn.setOnClick(b->{
+				if(selectedItems.contains(obj)){
+					selectedItems.remove(obj);
+				}else{
+					selectedItems.add(obj);
+				}
+				rctx.rebuild();
+			});
+			row.add(selectBtn);
 
-			// Singular actions
-			AtomicInteger idx=new AtomicInteger(1);
-			for(Consumer<T> action:singular){
-				int i=idx.getAndIncrement();
-				Button b=new Button("Action "+i);
-				b.setBackground(RestTheme.MAIN);
-				b.setForeground(RestTheme.ACCENT_TEXT);
-				b.setOnClick(btn->{
-					action.accept(obj);
-					rctx.rebuild();
-				});
-				row.add(b);
-			}
+			// Object label
+			Label l=new Label(String.valueOf(obj));
+			l.setForeground(RestTheme.MAIN_TEXT);
+			row.add(l);
 
 			list.add(row);
 		}

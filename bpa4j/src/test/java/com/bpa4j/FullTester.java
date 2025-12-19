@@ -262,8 +262,12 @@ public final class FullTester{
 			);
 			ProgramStarter.register(myProcessables,myThirdEditables.hide(),myFourthEditables.hide(),customers,myEditables5);
 			ProgramStarter.runProgram();
-			TestGen.generate(4,myProcessables);
-			TestGen.generate(50,myThirdEditables,myFourthEditables);
+			// TestGen.generate(4,myProcessables);
+			// TestGen.generate(50,myThirdEditables,myFourthEditables);
+			MyProcessable template=new MyProcessable();
+			template.dateField=LocalDate.now().minusDays(10);
+			TestGen.gen(MyProcessable.class).withTemplate(template).withGeneratedFields("intField").to(myProcessables,4);
+			TestGen.gen(MyEditable3.class).to(myThirdEditables,50);
 		}else ProgramStarter.runProgram();
 		GroupElementSupplier<MyProcessable>groupES=new GroupElementSupplier<>(MyProcessable.class);
 		Board.<MyProcessable>getBoard("board").setSorter(new Board.Sorter<MyProcessable>(){

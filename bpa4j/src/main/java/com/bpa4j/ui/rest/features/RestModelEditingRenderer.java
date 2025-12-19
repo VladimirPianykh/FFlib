@@ -67,6 +67,13 @@ public class RestModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 
 		for(EditableGroup<?> group:groups){
 			if(group.invisible)continue;
+
+			// Permission checks (similar to Swing)
+			boolean canSee=com.bpa4j.core.User.getActiveUser().hasPermission(com.bpa4j.defaults.DefaultPermission.READ)||com.bpa4j.core.User.registeredPermissions.stream().anyMatch(e->e.name().equals("READ_"+group.type.getSimpleName().toUpperCase())&&com.bpa4j.core.User.getActiveUser().hasPermission(e));
+			boolean canCreate=com.bpa4j.core.User.getActiveUser().hasPermission(com.bpa4j.defaults.DefaultPermission.CREATE)||com.bpa4j.core.User.registeredPermissions.stream().anyMatch(e->e.name().equals("CREATE_"+group.type.getSimpleName().toUpperCase())&&com.bpa4j.core.User.getActiveUser().hasPermission(e));
+
+			if(!canSee&&!canCreate) continue;
+
 			// Use FlowLayout TTB for column
 			Panel column=new Panel(new FlowLayout(FlowLayout.LEFT,FlowLayout.TTB,0,5));
 			column.setSize(columnWidth,estimatedHeight);
@@ -75,37 +82,38 @@ public class RestModelEditingRenderer implements FeatureRenderer<ModelEditing>{
 			header.setSize(columnWidth,25); // Stretch to column width
 			column.add(header);
 
-			for(Editable item:group){
-				String name=item.name;
-				if(name==null||name.isBlank()) name="[Unnamed]";
-				Button itemBtn=new Button(name);
-				itemBtn.setSize(columnWidth,30); // Stretch to column width
-				itemBtn.setBackground(RestTheme.MAIN);
-				itemBtn.setOnClick(b->{
-					if(contract.editOp!=null) contract.editOp.accept(item);
-					ProgramStarter.editor.constructEditor(item,false,null,rctx);
-				});
-				column.add(itemBtn);
+			if(canSee){
+				for(Editable item:group){
+					String name=item.name;
+					if(name==null||name.isBlank()) name="[Unnamed]";
+
+					Label itemLabel=new Label(name);
+					itemLabel.setSize(columnWidth,30);
+					itemLabel.setForeground(RestTheme.MAIN_TEXT);
+					column.add(itemLabel);
+				}
 			}
 
-			Button addBtn=new Button("Add");
-			addBtn.setSize(columnWidth,30); // Stretch to column width
-			addBtn.setBackground(RestTheme.MAIN);
-			addBtn.setForeground(RestTheme.ACCENT_TEXT);
-			addBtn.setOnClick(b->{
-				try{
-					Editable newItem=(Editable)group.type.getDeclaredConstructor().newInstance();
-					// group.add(newItem);
-					if(contract.createOp!=null) contract.createOp.accept(groups.indexOf(group),newItem);
+			if(canCreate){
+				Button addBtn=new Button("Add");
+				addBtn.setSize(columnWidth,30); // Stretch to column width
+				addBtn.setBackground(RestTheme.MAIN);
+				addBtn.setForeground(RestTheme.ACCENT_TEXT);
+				addBtn.setOnClick(b->{
+					try{
+						Editable newItem=(Editable)group.type.getDeclaredConstructor().newInstance();
+						// group.add(newItem);
+						if(contract.createOp!=null) contract.createOp.accept(groups.indexOf(group),newItem);
 
-					ProgramStarter.editor.constructEditor(newItem,true,()->{
-						group.remove(newItem);
-					},rctx);
-				}catch(ReflectiveOperationException e){
-					throw new IllegalStateException("Failed to create new item",e);
-				}
-			});
-			column.add(addBtn);
+						ProgramStarter.editor.constructEditor(newItem,true,()->{
+							group.remove(newItem);
+						},rctx);
+					}catch(ReflectiveOperationException e){
+						throw new IllegalStateException("Failed to create new item",e);
+					}
+				});
+				column.add(addBtn);
+			}
 			
 			target.add(column);
 		}

@@ -81,7 +81,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 	private static void decorateOkButton(Button okButton,boolean done){
 		okButton.setText(done?"Done":"Next");
 		okButton.setBackground(done?RestTheme.ACCENT:RestTheme.MAIN);
-		okButton.setForeground(done?RestTheme.ON_ACCENT:null);
+		okButton.setForeground(done?RestTheme.ON_ACCENT:RestTheme.ACCENT_TEXT);
 	}
 	public void createTab(Editable editable,boolean isNew,Runnable deleter,FormModule module,ModulesRenderingContext ctx){
 		// Defensive checks
@@ -166,7 +166,9 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 
 				if(readonly){
 					Object value=f.get(editable);
-					components.add(new Label(value==null?"":String.valueOf(value)));
+					Label vLabel=new Label(value==null?"":String.valueOf(value));
+					vLabel.setForeground(RestTheme.MAIN_TEXT);
+					components.add(vLabel);
 					savers.add(new EmptySaver());
 					continue;
 				}
@@ -204,12 +206,15 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 
 		AtomicInteger currentIndex=new AtomicInteger(0);
 		Button back=new Button("Back");
+		back.setBackground(RestTheme.MAIN);
 		Button ok=new Button();
 		decorateOkButton(ok,false);
 		Runnable updateUI=()->{
 			formPanel.removeAll();
 			if(fields.isEmpty()){
-				formPanel.add(new Label("No fields to edit."));
+				Label l=new Label("No fields to edit.");
+				l.setForeground(RestTheme.MAIN_TEXT);
+				formPanel.add(l);
 				back.setEnabled(false);
 				decorateOkButton(ok,true);
 				return;
@@ -269,6 +274,8 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		// Add buttons in vertical order: back above OK
 		if(!isNew){
 			Button cancel=new Button("Cancel");
+			cancel.setBackground(RestTheme.MAIN);
+			cancel.setForeground(RestTheme.DANGER);
 			cancel.setOnClick(b->rctx.close());
 			buttonPanel.add(cancel);
 		}
@@ -297,6 +304,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		if(type==String.class){
 			String value=(String)f.get(o);
 			TextField tf=new TextField(value);
+			tf.setForeground(RestTheme.MAIN_TEXT);
 			saver.var=()->tf.getText();
 			return tf;
 		}
@@ -314,6 +322,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		else if(type==int.class){
 			int value=f.getInt(o);
 			TextField tf=new TextField(String.valueOf(value));
+			tf.setForeground(RestTheme.MAIN_TEXT);
 			saver.var=()->{
 				String txt=tf.getText();
 				try{
@@ -329,6 +338,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		else if(type==Integer.class){
 			Integer value=(Integer)f.get(o);
 			TextField tf=new TextField(value==null?"":String.valueOf(value));
+			tf.setForeground(RestTheme.MAIN_TEXT);
 			saver.var=()->{
 				String txt=tf.getText();
 				try{
@@ -344,6 +354,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		else if(type==double.class){
 			double value=f.getDouble(o);
 			TextField tf=new TextField(String.valueOf(value));
+			tf.setForeground(RestTheme.MAIN_TEXT);
 			saver.var=()->{
 				String txt=tf.getText();
 				try{
@@ -359,6 +370,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		else if(type==Double.class){
 			Double value=(Double)f.get(o);
 			TextField tf=new TextField(value==null?"":String.valueOf(value));
+			tf.setForeground(RestTheme.MAIN_TEXT);
 			saver.var=()->{
 				String txt=tf.getText();
 				try{
@@ -374,6 +386,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		else if(type==float.class){
 			float value=f.getFloat(o);
 			TextField tf=new TextField(String.valueOf(value));
+			tf.setForeground(RestTheme.MAIN_TEXT);
 			saver.var=()->{
 				String txt=tf.getText();
 				try{
@@ -389,6 +402,7 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		else if(type==Float.class){
 			Float value=(Float)f.get(o);
 			TextField tf=new TextField(value==null?"":String.valueOf(value));
+			tf.setForeground(RestTheme.MAIN_TEXT);
 			saver.var=()->{
 				String txt=tf.getText();
 				try{

@@ -12,6 +12,7 @@ import com.bpa4j.ui.rest.RestRenderingManager;
 import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
+import com.bpa4j.ui.rest.abstractui.components.Label;
 import com.bpa4j.ui.rest.abstractui.layout.GridLayout;
 
 /**
@@ -47,16 +48,9 @@ public class RestEditableListRenderer<T extends Editable> implements FeatureRend
 		if(componentProvider==null){
 			componentProvider=(t,itemCtx)->{
 				RestItemRenderingContext restCtx=(RestItemRenderingContext)itemCtx;
-				Button itemBtn=new Button(t.name);
-				itemBtn.setBackground(RestTheme.MAIN);
-				itemBtn.setOnClick(b->{
-					Runnable deleter = contract.getAllowDeletion() ? () -> {
-						group.remove(t);
-						rctx.rebuild();
-					} : null;
-					ProgramStarter.editor.constructEditor(t, false, deleter, null);
-				});
-				restCtx.getTarget().add(itemBtn);
+				Label label=new Label(t.name);
+				label.setForeground(RestTheme.MAIN_TEXT);
+				restCtx.getTarget().add(label);
 			};
 		}
 		final BiConsumer<T,ItemRenderingContext> finalProvider=componentProvider;

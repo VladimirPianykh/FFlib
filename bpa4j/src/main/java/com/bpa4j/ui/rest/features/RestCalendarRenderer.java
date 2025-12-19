@@ -9,6 +9,7 @@ import com.bpa4j.feature.FeatureRenderer;
 import com.bpa4j.feature.FeatureRenderingContext;
 import com.bpa4j.ui.rest.RestFeatureRenderingContext;
 import com.bpa4j.ui.rest.RestRenderingManager;
+import com.bpa4j.ui.rest.RestTheme;
 import com.bpa4j.ui.rest.abstractui.Panel;
 import com.bpa4j.ui.rest.abstractui.components.Button;
 import com.bpa4j.ui.rest.abstractui.components.Label;
@@ -62,12 +63,16 @@ public class RestCalendarRenderer<T extends Calendar.Event> implements FeatureRe
 
 		// Navigation buttons
 		Button prevButton=new Button("◄ Предыдущий");
+		// prevButton.setBackground(RestTheme.MAIN_TEXT);
+		// prevButton.setForeground(RestTheme.ACCENT);
 		prevButton.setOnClick(btn->{
 			currentMonth=currentMonth.minusMonths(1);
 			rctx.rebuild();
 		});
 
 		Button nextButton=new Button("Следующий ►");
+		// nextButton.setBackground(RestTheme.MAIN_TEXT);
+		// nextButton.setForeground(RestTheme.ACCENT);
 		nextButton.setOnClick(btn->{
 			currentMonth=currentMonth.plusMonths(1);
 			rctx.rebuild();
@@ -75,6 +80,7 @@ public class RestCalendarRenderer<T extends Calendar.Event> implements FeatureRe
 
 		// Month/Year label
 		Label monthLabel=new Label(getMonthYearLabel(currentMonth));
+		// monthLabel.setForeground(RestTheme.MAIN_TEXT);
 
 		Panel leftNav=new Panel(new FlowLayout());
 		leftNav.setSize(150,header.getHeight());
@@ -102,6 +108,7 @@ public class RestCalendarRenderer<T extends Calendar.Event> implements FeatureRe
 		String[] weekdays={"Пн","Вт","Ср","Чт","Пт","Сб","Вс"};
 		for(String day:weekdays){
 			Label dayLabel=new Label(day);
+			// dayLabel.setForeground(RestTheme.MAIN_TEXT);
 			weekdayPanel.add(dayLabel);
 		}
 
@@ -154,7 +161,7 @@ public class RestCalendarRenderer<T extends Calendar.Event> implements FeatureRe
 			grid.add(dayCell);
 		}
 
-		// Fill remaining cells to complete the grid
+		// Fill reMAIN_TEXTing cells to complete the grid
 		int totalCells=firstDayOfWeek-1+daysInMonth;
 		int remainingCells=42-totalCells; // 6 rows * 7 days = 42 cells
 		for(int i=0;i<remainingCells;i++){
@@ -170,6 +177,7 @@ public class RestCalendarRenderer<T extends Calendar.Event> implements FeatureRe
 
 		// Day number label
 		Label dayLabel=new Label(String.valueOf(date.getDayOfMonth()));
+		dayLabel.setForeground(RestTheme.MAIN_TEXT);
 		cell.add(dayLabel);
 
 		// Get events for this date
@@ -177,6 +185,7 @@ public class RestCalendarRenderer<T extends Calendar.Event> implements FeatureRe
 		if(events!=null&&!events.isEmpty()){
 			// Show event count or first few events
 			Label eventCount=new Label("События: "+events.size());
+			eventCount.setForeground(RestTheme.MAIN_TEXT);
 			cell.add(eventCount);
 
 			// If there's a dater configured, use it to render events

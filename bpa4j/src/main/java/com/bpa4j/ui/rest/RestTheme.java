@@ -9,6 +9,7 @@ import com.bpa4j.ui.rest.abstractui.Color;
 public final class RestTheme{
 	private RestTheme(){}
 	public static final Color MAIN=new Color(251,237,158);
+	public static final Color MAIN_TEXT=new Color(160,70,0);
 	public static final Color ACCENT=new Color(176,232,23);
 	public static final Color ACCENT_TEXT=new Color(110,145,14);
 	public static final Color DANGER=new Color(198,64,64);

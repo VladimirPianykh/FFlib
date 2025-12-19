@@ -63,13 +63,17 @@ public class ItemListModel<T extends Serializable> implements FeatureModel<ItemL
 	public ItemList<T> getTransmissionContract(){
 		return ftc;
 	}
+	private ArrayList<T> getPrimaryObjects(){
+        ArrayList<T> o=objects;
+        if(elementSupplier!=null) o=elementSupplier.get();
+        return o;
+    }
 	@SuppressWarnings("unchecked")
 	public ArrayList<T> getObjects(){
-		ArrayList<T> o=objects;
-		if(elementSupplier!=null) o=elementSupplier.get();
+		ArrayList<T> o=getPrimaryObjects();
 		if(sorter!=null) o.sort(sorter);
 		if(filter!=null){
-			o=(ArrayList<T>)objects.clone();
+			o=(ArrayList<T>)o.clone();
 			o.removeIf(filter.negate());
 		}
 		return o;

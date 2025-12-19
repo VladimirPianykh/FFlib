@@ -1,12 +1,14 @@
 package com.bpa4j.util.testgen;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -61,29 +63,64 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 	}
 	
 	public TestGen<T> withField(String name, Object valueOrSupplier){
+		throwIfNotFillable(name);
+		skipFields.remove(name);
 		fieldOverrides.put(name,valueOrSupplier);
 		return this;
 	}
 	public TestGen<T> withFields(Map<String, Object> fieldsMap){
-		fieldOverrides.putAll(fieldsMap);
+		for(Entry<String,Object> e:fieldsMap.entrySet())
+			withField(e.getKey(),e.getValue());
+		return this;
+	}
+	/**
+	 * Reverts the effect of {@link #withField(String, Object)}, {@link #skipFields(String...)},
+	 * {@link #withTemplate(Editable)}, etc.
+	 */
+	public TestGen<T> withGeneratedFields(String...names){
+		for(String name:names){
+			skipFields.remove(name);
+			fieldOverrides.remove(name);
+		}
 		return this;
 	}
 	public TestGen<T> setDefaultSource(Class<?> fieldType, Supplier<?> source){
 		defaultSources.put(fieldType,source);
 		return this;
 	}
-	public TestGen<T> skipField(String... fieldNames){
+	public TestGen<T> skipFields(String...fieldNames){
+		for(String name:fieldNames)
+			throwIfNotFillable(name);
 		skipFields.addAll(Arrays.asList(fieldNames));
 		return this;
 	}
-	public TestGen<T> setTemplate(T template){
+	/**
+	 * Calls {@link #withField(String, Object)} with each field of the template,
+	 * except fields, which has been explicitly set or skipped by other methods.
+	 */
+	public TestGen<T> withTemplate(T template){
 		this.template=template;
+		Field[] fields=type.getDeclaredFields();
+		for(Field f:fields){
+			if(!Modifier.isStatic(f.getModifiers())&&!skipFields.contains(f.getName())&&!fieldOverrides.containsKey(f.getName())){
+				f.setAccessible(true);
+				try{
+					withField(f.getName(),f.get(template));
+				}catch(ReflectiveOperationException ex){
+					throw new IllegalStateException(ex);
+				}
+			}
+		}
 		return this;
 	}
 	public TestGen<T> withName(Object valueOrSupplier){
 		nameSupplier=valueOrSupplier;
 		return this;
 	}
+	/**
+	 * Sets the name pattern for {@code String.format}.
+	 * 
+	 */
 	public TestGen<T> withNamePattern(String pattern){
 		namePattern=pattern;
 		return this;
@@ -164,18 +201,6 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 	private T create(){
 		try{
 			T e=type.getDeclaredConstructor().newInstance();
-			if(template!=null){
-				Field[] fields=type.getDeclaredFields();
-				for(Field f:fields){
-					if(!skipFields.contains(f.getName())&&fieldOverrides.containsKey(f.getName())){
-						f.setAccessible(true);
-						Object templateValue=f.get(template);
-						if(templateValue!=null){
-							try{f.set(e,templateValue);}catch(Exception ex){}
-						}
-					}
-				}
-			}
 			Input a=type.getAnnotation(Input.class);
 			NameProvider p=nameProvider;
 			if(p==null&&a!=null&&a.nameProvider()!=NameProvider.class)p=a.nameProvider().getDeclaredConstructor().newInstance();
@@ -185,7 +210,7 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 			//Fields
 			for(Field f:type.getFields()){
 				if(skipFields.contains(f.getName()))continue;
-				if(Editable.class.isAssignableFrom(f.getType())&&f.isAnnotationPresent(EditorEntry.class)){
+				if(Editable.class.isAssignableFrom(f.getType())&&shouldBeFilled(f)){
 					try{
 						EditableGroup<?> fieldGroup=ProgramStarter.getStorageManager().getStorage().getGroup((Class<? extends Editable>)f.getType());
 						f.set(e,fieldGroup.get(currentIndex%fieldGroup.size()));
@@ -235,6 +260,16 @@ public class TestGen<T extends Editable> implements Supplier<T>{
 			currentIndex++;
 			return e;
 		}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
+	}
+	private void throwIfNotFillable(String fieldName){
+		try{
+			if(!shouldBeFilled(type.getField(fieldName))) throw new IllegalArgumentException("Field "+fieldName+" is not sutable for generation.");
+		}catch(ReflectiveOperationException ex){
+			throw new IllegalArgumentException(ex);
+		}
+	}
+	private boolean shouldBeFilled(Field f){
+		return !Modifier.isStatic(f.getModifiers())&&f.isAnnotationPresent(EditorEntry.class);
 	}
 	/**
 	 * Generates objects for the given groups randomly.

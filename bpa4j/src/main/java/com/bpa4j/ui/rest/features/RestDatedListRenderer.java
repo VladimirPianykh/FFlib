@@ -109,13 +109,9 @@ public class RestDatedListRenderer<T extends Editable> implements FeatureRendere
 			Panel row=new Panel(new FlowLayout());
 			row.setSize(targetWidth,35);
 
-			Button itemBtn=new Button(t.name);
-			itemBtn.setBackground(RestTheme.MAIN);
-			itemBtn.setOnClick(b->{
-				ProgramStarter.editor.constructEditor(t,false,()->contract.removeObject(t),ProgramStarter.getRenderingManager().getDetachedFeatureRenderingContext());
-				rctx.rebuild();
-			});
-			row.add(itemBtn);
+			Label itemLabel=new Label(t.name);
+			itemLabel.setForeground(RestTheme.MAIN_TEXT);
+			row.add(itemLabel);
 			
 			// Dater logic
 			var objectsWithDaters=contract.getObjectsWithDaters();
