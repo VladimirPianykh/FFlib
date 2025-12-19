@@ -823,7 +823,7 @@ public class ProjectGraph{
 				c.fill=GridBagConstraints.BOTH;
 				c.weighty=1;
 				c.gridheight=1;
-				JTextField name=new JTextField(p.name);
+				JTextField name=new JTextField(p.getName());
 				name.addActionListener(e->p.changeName(name.getText(),n));
 				name.addFocusListener(new FocusAdapter(){
 					public void focusLost(FocusEvent e){
@@ -834,7 +834,7 @@ public class ProjectGraph{
 				c.weightx=0.5;
 				add(name,c);
 				JComboBox<Property.PropertyType> type=new JComboBox<Property.PropertyType>(Property.PropertyType.values());
-				type.setSelectedItem(p.type);
+				type.setSelectedItem(p.getType());
 				type.addItemListener(e->{
 					if(e.getStateChange()==ItemEvent.SELECTED) p.changeType((Property.PropertyType)e.getItem(),n);
 				});
@@ -844,8 +844,8 @@ public class ProjectGraph{
 				add(type,c);
 				JPanel buttons=new JPanel();
 				JButton remove=new JButton();
+				if(p.getType()==null&&JOptionPane.showConfirmDialog(tab,"Удалить свойство "+p.getName()+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
 				remove.addActionListener(e->{
-					if(p.type==null&&JOptionPane.showConfirmDialog(tab,"Удалить свойство "+p.name+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
 					n.removeProperty(p);
 					Container parent=getParent();
 					parent.remove(this);

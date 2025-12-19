@@ -80,8 +80,8 @@ public class GraphResource{
 				List<Map<String,Object>>props=new ArrayList<>();
 				for(EditableNode.Property p:e.properties){
 					Map<String,Object>pm=new HashMap<>();
-					pm.put("name",p.name);
-					pm.put("type",p.type==null?null:p.type.name());
+					pm.put("name",p.getName());
+					pm.put("type",p.getType()==null?null:p.getType().name());
 					props.add(pm);
 				}
 				m.put("properties",props);
@@ -141,12 +141,12 @@ public class GraphResource{
 		List<?>rmPropsRaw=(List<?>)body.getOrDefault("removeProperties",List.of());
 		for(Object o:rmPropsRaw){
 			String pn=String.valueOf(o);
-			en.properties.stream().filter(p->p.name.equals(pn)).findAny().ifPresent(en::removeProperty);
+			en.properties.stream().filter(p->p.getName().equals(pn)).findAny().ifPresent(en::removeProperty);
 		}
 		List<?>chgPropsRaw=(List<?>)body.getOrDefault("changeProperties",List.of());
 		for(Object o:chgPropsRaw)if(o instanceof Map<?,?> m){
 			String pn=String.valueOf(m.get("name"));
-			EditableNode.Property prop=en.properties.stream().filter(p->p.name.equals(pn)).findAny().orElse(null);
+			EditableNode.Property prop=en.properties.stream().filter(p->p.getName().equals(pn)).findAny().orElse(null);
 			if(prop==null)continue;
 			String nn=(String)m.get("newName");
 			String nt=(String)m.get("type");
