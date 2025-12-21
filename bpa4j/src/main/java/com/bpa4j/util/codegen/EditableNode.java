@@ -23,6 +23,7 @@ import com.bpa4j.editor.EditorEntry;
 import com.bpa4j.Wrapper;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Modifier.Keyword;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
@@ -53,8 +54,8 @@ public class EditableNode extends ClassNode{
 			}
 		}
 
-		public PropertyType type;
-		public String name;
+		private PropertyType type;
+		private String name;
 
 		public Property(String name,PropertyType type){
 			this.name=name.trim();
@@ -67,7 +68,9 @@ public class EditableNode extends ClassNode{
 						public %s %s;
 					""",name,type.toString(),prompt);
 		}
-
+		public String getName(){
+			return name;
+		}
 		public void changeName(String name,EditableNode n){
 			try{
 				while(!Files.isWritable(n.location.toPath()))
@@ -92,7 +95,9 @@ public class EditableNode extends ClassNode{
 				throw new UncheckedIOException(ex);
 			}
 		}
-
+		public PropertyType getType(){
+			return type;
+		}
 		public void changeType(PropertyType type,EditableNode n){
 			try{
 				while(!Files.isWritable(n.location.toPath()))
@@ -105,19 +110,13 @@ public class EditableNode extends ClassNode{
 					Optional<LineComment> todoComment=cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("FIXME: add property \""+name+"\"")).findFirst();
 
 					if(todoComment.isPresent()){
-						// Удалить комментарий и добавить поле
+						// Удалить комментарий
 						todoComment.get().remove();
 
 						// Найти класс и добавить поле
 						Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
-						if(clazz.isPresent()){
-							// TODO: #3 Implement field creation with JavaParser
-							// FieldDeclaration newField = new FieldDeclaration();
-							// newField.setCommonType(StaticJavaParser.parseType(type.toString()));
-							// newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(type.toString()), "var" + (int)(Math.random() * 9999900 + 100)));
-							// clazz.get().addMember(newField);
-						}
+						if(clazz.isPresent()) clazz.get().addField(type.toString(),name,Keyword.PUBLIC);
 					}
 				}else{
 					// Изменить тип существующего поля
@@ -138,7 +137,6 @@ public class EditableNode extends ClassNode{
 				throw new UncheckedIOException(ex);
 			}
 		}
-
 		public String toString(){
 			return name+" ("+(type==null?"???":type.toString())+")";
 		}
@@ -278,7 +276,7 @@ public class EditableNode extends ClassNode{
 			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
 			if(clazz.isPresent()){
-				// TODO: #3 Implement field creation with JavaParser
+				if(clazz.isPresent()) clazz.get().addField(property.getType().toString(),name,Keyword.PUBLIC);
 				// FieldDeclaration newField = new FieldDeclaration();
 				// newField.setCommonType(StaticJavaParser.parseType(property.type.toString()));
 				// newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(property.type.toString()), varName));
