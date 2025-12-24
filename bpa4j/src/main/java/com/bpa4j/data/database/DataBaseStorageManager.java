@@ -68,9 +68,18 @@ public class DataBaseStorageManager{
 		public boolean dbWasCreated(){
 			return dbWasCreated;
 		}
+		public void close(){
+			if(connection!=null)try{
+				//No commit required because of auto-commit mode.
+				connection.close();
+			}catch(SQLException ex){
+				throw new IllegalStateException(ex);
+			}
+		}
 		private Connection getConnection() throws SQLException{
 			if(connection==null||!isValid(connection)){
 				connection=DriverManager.getConnection(name,user,password);
+				connection.setAutoCommit(true);
 			}
 			return connection;
 		}
@@ -103,5 +112,8 @@ public class DataBaseStorageManager{
 	}
 	<F extends FeatureTransmissionContract> void putSaver(Class<F> f,Function<F,FeatureSaver<F>> saver){
 		FunctionalRegistry.putSaver(f,saver);
+	}
+	public void close(){
+		bridge.close();
 	}
 }
