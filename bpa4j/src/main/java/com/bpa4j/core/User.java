@@ -65,7 +65,14 @@ public class User implements Serializable{
 	private static User currentUser;
 	public String login,password;
 	public Role role;
-	public int passTries,tries;
+	/**
+	 * Amount of consecutive attempts after the last successful login or the last fail2ban.
+	 */
+	private int fail2ban_tries;
+	/**
+	 * Amount of failed attempts after the last successfull login.
+	 */
+	private int tries;
 	public LocalDateTime lockTime=null;
 	public ArrayDeque<Authorization>history=new ArrayDeque<>();
 	public static HashMap<Role,Feature<?>[]>ftrMap=new HashMap<>();
@@ -125,18 +132,18 @@ public class User implements Serializable{
 			lockTime=null;
 			currentUser=this;
 			history.addFirst(new Authorization(this));
-			passTries=0;tries=0;
+			fail2ban_tries=0;tries=0;
 			Runtime.getRuntime().addShutdownHook(new Thread(){public void run(){logout();}});
 			return true;
 		}
-		else if(passTries>1){
-			passTries=2;
+		else if(fail2ban_tries>1){
+			fail2ban_tries=2;
 			lockTime=LocalDateTime.now();
 			save();
-			System.exit(1);
+			ProgramStarter.exit();
 			return false;
 		}else{
-			passTries++;tries++;
+			fail2ban_tries++;tries++;
 			save();
 			new Message("Неверный пароль.",Color.RED);
 			return false;

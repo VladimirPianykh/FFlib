@@ -147,7 +147,7 @@ public class FileData implements Data{
 		if(key==null) throw new IllegalArgumentException("Key cannot be null");
 		global.put(key,value);
 	}
-	public Object getGlobal(String key){
+	public Serializable getGlobal(String key){
 		if(key==null) throw new IllegalArgumentException("Key cannot be null");
 		return global.get(key);
 	}

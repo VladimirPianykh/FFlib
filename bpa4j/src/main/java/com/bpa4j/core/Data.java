@@ -30,7 +30,7 @@ public interface Data{
 	List<Feature<?>>getRegisteredFeatures();
 	List<User.Permission>getRegisteredPermissions();
 	List<EditableGroup<?>>getRegisteredEditableGroups();
-	
+
 	@SuppressWarnings("unchecked")
 	default<E extends Editable>EditableGroup<E>getGroup(Class<E>type){
 		for(EditableGroup<?>g:getRegisteredEditableGroups())
@@ -38,5 +38,5 @@ public interface Data{
 		throw new IllegalArgumentException("There is no registered group with type "+type+".");
 	}
 	void putGlobal(String key,Serializable value);
-	Object getGlobal(String key);
+	Serializable getGlobal(String key);
 }

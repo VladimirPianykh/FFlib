@@ -11,6 +11,9 @@ import javax.swing.ImageIcon;
 public abstract class Root{
 	public static final ClassLoader CL=ClassLoader.getSystemClassLoader(),RCL=Root.class.getClassLoader();
 	public static final Dimension SCREEN_SIZE=GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds().getSize();
+	/**
+	 * Root directory with '/' at the end.
+	 */
 	public static final String folder=System.getProperty("user.home")+"/AppData/Local/1C_application/";
 	private static final HashMap<String,ImageIcon>imageResources=new HashMap<String,ImageIcon>();
 	public static URL getResource(String name){
