@@ -116,4 +116,7 @@ public class DataBaseStorageManager{
 	public void close(){
 		bridge.close();
 	}
+	public boolean isFirstLaunch(){
+		return bridge.dbWasCreated();
+	}
 }
