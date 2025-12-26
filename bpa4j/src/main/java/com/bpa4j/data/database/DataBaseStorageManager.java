@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import com.bpa4j.core.Root;
 import com.bpa4j.feature.FeatureModel;
@@ -40,27 +41,27 @@ public class DataBaseStorageManager{
 			savers.put(f,saver);
 		}
 	}
+	/**
+	 * Supports connection with the data base.
+	 * Provides {@link DataBaseBridge#getConnection()} operation.
+	 * This connection is managed automatically and will be closed with the DataBaseBridge itself.
+	 * Thus it is unsafe to use this in a multi-threaded environment.
+	 */
 	private static class DataBaseBridge{
-		private final String name;
-		private final String user,password; //Credentials
+		private final String dbName;
+		private final String login,password;
 		private Connection connection;
 		private final boolean dbWasCreated;
-		public DataBaseBridge(String name,String user,String password){
-			this.name=name;
-			this.user=user;
+		public DataBaseBridge(String dbName,String user,String password){
+			this.dbName=dbName;
+			this.login=user;
 			this.password=password;
 			try{
-				dbWasCreated=new File(name.substring(name.indexOf("file:")+5)).exists(); //Note: possibly constrained to H2.
+				dbWasCreated=new File(dbName.substring(dbName.indexOf("file:")+5)).exists(); //Note: possibly constrained to H2.
 				getConnection(); //Ensures this is fine.
 			}catch(SQLException ex){
-				throw new IllegalStateException("Could not establish connection with "+name+".",ex);
+				throw new IllegalStateException("Could not establish connection with "+dbName+".",ex);
 			}
-		}
-		public void exec(String sql) throws SQLException{
-			getConnection().createStatement().execute(sql);
-		}
-		public ResultSet execQuery(String sql) throws SQLException{
-			return getConnection().createStatement(ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY).executeQuery(sql);
 		}
 		/**
 		 * Checks whether the database was created with this bridge.
@@ -78,7 +79,7 @@ public class DataBaseStorageManager{
 		}
 		private Connection getConnection() throws SQLException{
 			if(connection==null||!isValid(connection)){
-				connection=DriverManager.getConnection(name,user,password);
+				connection=DriverManager.getConnection(dbName,login,password);
 				connection.setAutoCommit(true);
 			}
 			return connection;
@@ -93,10 +94,13 @@ public class DataBaseStorageManager{
 	}
 	private final DataBaseBridge bridge;
 	/**
-	 * Is not protected from SQL injection.
+	 * Executes query.
+	 * Is not protected from SQL injection (altering commands are possible).
+	 * @param sql - sql query
+	 * @param resultHandler - consumer, which will get the result of this query
 	 */
-	public ResultSet execQuery(String sql) throws SQLException{
-		return bridge.execQuery(sql);
+	public void execQuery(String sql,Consumer<ResultSet>resultHandler) throws SQLException{
+		resultHandler.accept(bridge.getConnection().createStatement().executeQuery(sql));
 	}
 	public DataBaseStorageManager(String dbName){
 		bridge=new DataBaseBridge("jdbc:h2:file:"+Root.folder+"","","");

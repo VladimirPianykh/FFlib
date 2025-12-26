@@ -17,7 +17,7 @@ import com.bpa4j.core.Editable;
 /**
  * Manages SQL tables with editables as utility class.
  */
-final class EditableORM{
+public final class EditableORM{
 	private static enum SQLType{
 		VARCHAR("VARCHAR(255)"),INT("INT"),BIGINT("BIGINT"),REAL("REAL"),DOUBLE("DOUBLE PRECISION"),BOOLEAN("BOOLEAN"),DATE("DATE"),TIMESTAMP("TIMESTAMP"),BLOB("BLOB");
 		String sql;
