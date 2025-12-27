@@ -150,7 +150,7 @@ public class SwingWorkFrameRenderer extends JFrame implements WorkFrameRenderer{
 		add(exit);
 		if(User.ftrMap.get(wf.getUser().role)==null||User.ftrMap.get(wf.getUser().role).length==0){
 			new Message("Ошибка! Возможно, у вас есть устаревшее сохранение и его надо удалить (см. записку).",Color.RED);
-			throw new IllegalStateException("ftrMap does not has elements is null.");
+			throw new IllegalStateException("ftrMap does not have elements or is null.");
 		}
 		for(FeatureEntry<?>f:wf.getFeatures()){
 			WorkTabButton t=new WorkTabButton(f,content,sidebar.getComponentCount(),wf);

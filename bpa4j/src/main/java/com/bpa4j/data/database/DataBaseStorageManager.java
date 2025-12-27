@@ -47,7 +47,7 @@ public class DataBaseStorageManager{
 	 * This connection is managed automatically and will be closed with the DataBaseBridge itself.
 	 * Thus it is unsafe to use this in a multi-threaded environment.
 	 */
-	private static class DataBaseBridge{
+	static class DataBaseBridge{
 		private final String dbName;
 		private final String login,password;
 		private Connection connection;
@@ -77,7 +77,7 @@ public class DataBaseStorageManager{
 				throw new IllegalStateException(ex);
 			}
 		}
-		private Connection getConnection() throws SQLException{
+		public Connection getConnection() throws SQLException{
 			if(connection==null||!isValid(connection)){
 				connection=DriverManager.getConnection(dbName,login,password);
 				connection.setAutoCommit(true);
