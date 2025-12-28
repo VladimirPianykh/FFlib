@@ -8,7 +8,7 @@ import com.bpa4j.feature.Feature;
 
 /**
  * Persistent storage for editable groups and globals and
- * non-persistent storage for roles, features and permission.
+ * non-persistent storage for roles, features and permissions.
  */
 public interface Data{
 	void register(Role...r);
@@ -26,11 +26,11 @@ public interface Data{
 		}
 	}
 
-	List<User.Role>getRegisteredRoles();
+	List<Role>getRegisteredRoles();
 	List<Feature<?>>getRegisteredFeatures();
-	List<User.Permission>getRegisteredPermissions();
+	List<Permission>getRegisteredPermissions();
 	List<EditableGroup<?>>getRegisteredEditableGroups();
-	
+
 	@SuppressWarnings("unchecked")
 	default<E extends Editable>EditableGroup<E>getGroup(Class<E>type){
 		for(EditableGroup<?>g:getRegisteredEditableGroups())
@@ -38,5 +38,6 @@ public interface Data{
 		throw new IllegalArgumentException("There is no registered group with type "+type+".");
 	}
 	void putGlobal(String key,Serializable value);
-	Object getGlobal(String key);
+	Serializable getGlobal(String key);
+	
 }

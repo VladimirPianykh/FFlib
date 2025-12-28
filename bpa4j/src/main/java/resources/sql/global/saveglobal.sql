@@ -1,0 +1,1 @@
+INSERT INTO %s (value) VALUES (?)
