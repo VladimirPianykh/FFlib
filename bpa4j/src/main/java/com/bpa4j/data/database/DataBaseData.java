@@ -88,9 +88,13 @@ public class DataBaseData implements Data{
             else EditableORM.clearTable(conn,g.type);
             for(Editable e:g)EditableORM.writeToTable(conn,e);
         }
+
+        RawDBSaver.save(conn,globals,"globals");
     }
+    @SuppressWarnings("unchecked")
     void load(Connection conn)throws SQLException{
         if(!EditableORM.isGroupTablePresent(conn,EditableGroup.class))return;
-        //FIXME: load
+        //FIXME: load groups
+        globals=(TreeMap<String,Serializable>)RawDBSaver.load(conn,"globals");
     }
 }

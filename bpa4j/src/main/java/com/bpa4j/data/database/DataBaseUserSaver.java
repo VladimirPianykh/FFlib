@@ -20,9 +20,9 @@ import com.bpa4j.data.database.DataBaseStorageManager.DataBaseBridge;
 public class DataBaseUserSaver implements UserSaver{
 	private final DataBaseBridge bridge;
 	//Files
-	private static final String CLEAR_USERS_SQL_RESOURCE="resources/sql/clearusers.sql";
-	private static final String SAVE_USER_SQL_RESOURCE="resources/sql/saveuser.sql";
-	private static final String SELECT_USER_SQL_RESOURCE="resources/sql/selectuser.sql";
+	private static final String CLEAR_USERS_SQL_RESOURCE="resources/sql/users/clearusers.sql";
+	private static final String SAVE_USER_SQL_RESOURCE="resources/sql/users/saveuser.sql";
+	private static final String SELECT_USER_SQL_RESOURCE="resources/sql/users/selectuser.sql";
 	//Users table column indexes
 	private static final int COL_LOGIN=1;
 	private static final int COL_PASSWORD=2;

@@ -22,6 +22,8 @@ import com.bpa4j.core.EditableGroup;
  * Manages SQL tables with editables as utility class.
  */
 public final class EditableORM{
+	private static final String SELECT_FROM_SQL="SELECT * FROM %s";
+	private EditableORM(){}
 	public static final String GROUP_TABLE_NAME="groups";
 	private static enum SQLType{
 		VARCHAR("VARCHAR(255)"),INT("INT"),BIGINT("BIGINT"),REAL("REAL"),DOUBLE("DOUBLE PRECISION"),BOOLEAN("BOOLEAN"),DATE("DATE"),TIMESTAMP("TIMESTAMP"),BLOB("BLOB");
@@ -37,6 +39,9 @@ public final class EditableORM{
 	 * Any table also has ID column.
 	 */
 	private static record Table(String name,List<Column> columns){
+		Table{
+			//FIXME validate name (assert)
+		}
 		public static record Column(Field f,String name,SQLType type){
 			public String toString(){
 				return name+" "+type;
@@ -76,6 +81,9 @@ public final class EditableORM{
 	public static void clearTable(Connection conn,Class<? extends Editable>e)throws SQLException{
 		clear(conn,buildTable(conn,e));
 	}
+	public static ArrayList<? extends Editable>readTable(Connection conn,Class<? extends Editable>e){
+		
+	}
 
 	/**
 	 * Creates table for storing groups metadata.
@@ -111,6 +119,10 @@ public final class EditableORM{
 	@SuppressWarnings("rawtypes")
 	public static void clearGroupTable(Connection conn,Class<EditableGroup>c)throws SQLException{
 		clear(conn,buildGroupTable(conn,c));
+	}
+	@SuppressWarnings("rawtypes")
+    public static EditableGroup readGroupTable(Connection conn,Class<EditableGroup>c)throws SQLException{
+
 	}
 
 	private static boolean doesTableExist(Connection conn,String tableName)throws SQLException{
@@ -149,7 +161,27 @@ public final class EditableORM{
 			}
 	}
 	private static void clear(Connection conn,Table table)throws SQLException{
-		//FIXME clear table
+		String clearSql=String.format("DELETE FROM %s",table.name);
+		conn.createStatement().execute(clearSql);
+	}
+	/**
+	 * Read the table.
+	 * Each row is represented by object array with every value stored in it.
+	 * Note, that numeration is displaced by one, compared to the data base numeration.
+	 */
+	private static ArrayList<Object[]>read(Connection conn,Table table)throws SQLException{
+		String readSql=String.format(SELECT_FROM_SQL,table.name);
+		ArrayList<Object[]>l=new ArrayList<>();
+		try(ResultSet res=conn.createStatement().executeQuery(readSql)){
+			int count=res.getMetaData().getColumnCount();
+			while(res.next()){
+				Object[]o=new Object[count];
+				for(int i=0;i<count;++i)
+					o[i]=res.getObject(i+1); //Numeration is displaced.
+				l.add(o);
+			}
+		}
+		return l;
 	}
 
 	@SuppressWarnings("rawtypes")    
