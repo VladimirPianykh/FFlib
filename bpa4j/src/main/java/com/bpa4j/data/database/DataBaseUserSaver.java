@@ -18,15 +18,12 @@ import com.bpa4j.data.database.DataBaseStorageManager.DataBaseBridge;
  * Service, which saves the users in a data base.
  */
 public class DataBaseUserSaver implements UserSaver{
-
 	private final DataBaseBridge bridge;
-
-	// Resource paths as constants to avoid magic strings
+	//Files
 	private static final String CLEAR_USERS_SQL_RESOURCE="resources/sql/clearusers.sql";
 	private static final String SAVE_USER_SQL_RESOURCE="resources/sql/saveuser.sql";
 	private static final String SELECT_USER_SQL_RESOURCE="resources/sql/selectuser.sql";
-
-	// Users table column indexes as constants
+	//Users table column indexes
 	private static final int COL_LOGIN=1;
 	private static final int COL_PASSWORD=2;
 	private static final int COL_ROLE=3;
@@ -37,7 +34,6 @@ public class DataBaseUserSaver implements UserSaver{
 	public DataBaseUserSaver(DataBaseBridge bridge){
 		this.bridge=bridge;
 	}
-
 	/**
 	 * Saves users, but first clears the data base.
 	 */
@@ -66,7 +62,6 @@ public class DataBaseUserSaver implements UserSaver{
 			throw new RuntimeException(ex);
 		}
 	}
-
 	public HashMap<String,User> loadUsers() throws UncheckedIOException{
 		HashMap<String,User> userMap=new HashMap<>();
 		try{
