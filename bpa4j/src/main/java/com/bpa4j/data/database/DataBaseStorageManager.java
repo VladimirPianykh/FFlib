@@ -18,7 +18,7 @@ import com.bpa4j.feature.FeatureSaver;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class DataBaseStorageManager implements StorageManager{
-	private static final class FunctionalRegistry{
+	private final class FunctionalRegistry{
 		private static HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureModel<?>>> models=new HashMap<>();
 		private static HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureSaver<?>>> savers=new HashMap<>();
 
@@ -60,7 +60,7 @@ public class DataBaseStorageManager implements StorageManager{
 			this.login=user;
 			this.password=password;
 			try{
-				dbWasCreated=new File(dbName.substring(dbName.indexOf("file:")+5)).exists(); //Note: possibly constrained to H2.
+				dbWasCreated=!new File(dbName.substring(dbName.indexOf("file:")+5)).exists(); //Note: possibly constrained to H2.
 				getConnection(); //Ensures this is fine.
 			}catch(SQLException ex){
 				throw new IllegalStateException("Could not establish connection with "+dbName+".",ex);
@@ -104,10 +104,12 @@ public class DataBaseStorageManager implements StorageManager{
 	 * @param resultHandler - consumer, which will get the result of this query
 	 */
 	public void execQuery(String sql,Consumer<ResultSet>resultHandler) throws SQLException{
-		resultHandler.accept(bridge.getConnection().createStatement().executeQuery(sql));
+		try(ResultSet res=bridge.getConnection().createStatement().executeQuery(sql)){
+			resultHandler.accept(res);
+		}
 	}
 	public DataBaseStorageManager(String dbName){
-		bridge=new DataBaseBridge("jdbc:h2:file:"+Root.folder+"","","");
+		bridge=new DataBaseBridge("jdbc:h2:file:"+Root.folder+dbName,"","");
 		try{
 			storage.load(bridge.getConnection());
 		}catch(SQLException ex){
@@ -135,7 +137,7 @@ public class DataBaseStorageManager implements StorageManager{
 		bridge.close();
 	}
 	public boolean isFirstLaunch(){
-		return bridge.dbWasCreated();
+		return !bridge.dbWasCreated();
 	}
 	public Data getStorage(){
 		return storage;
