@@ -43,18 +43,6 @@ public final class EditableORM{
 			}
 		}
 	}
-	public static String getTableName(Connection conn,Class<? extends Editable>c)throws SQLException{
-		TreeSet<String>names=new TreeSet<>();
-		try(ResultSet res=conn.getMetaData().getTables(null,null,null,null)){
-			while(res.next()){
-				String s=res.getString("TABLE_NAME");
-				names.add(s);
-			}
-		}
-		String name=c.getSimpleName();
-		while(names.contains(name))name+="_";
-		return name;
-	}
 
 	/**
 	 * Creates table.
@@ -75,17 +63,63 @@ public final class EditableORM{
 		Table table=buildTable(conn,editable.getClass());
 		write(conn,table,editable);
 	}
-	
+	/**
+	 * Checks whether the editable table is present.
+	 * @param c is reserved for possible future changes.
+	 */
+	public static boolean isTablePresent(Connection conn,Class<? extends Editable>e)throws SQLException{
+		return doesTableExist(conn,getTableName(conn,e));
+	}
+	/**
+	 * Removes all editables from the corresponding table.
+	 */
+	public static void clearTable(Connection conn,Class<? extends Editable>e)throws SQLException{
+		clear(conn,buildTable(conn,e));
+	}
+
+	/**
+	 * Creates table for storing groups metadata.
+	 * Does not commit changes.
+	 */
 	@SuppressWarnings("rawtypes")
 	public static void createGroupTable(Connection conn,Class<EditableGroup>c)throws SQLException{
 		Table t=buildGroupTable(conn,c);
 		create(conn,t);
 	}
+	/**
+	 * Saves {@code g}'s metadata.
+	 * Does not commit changes.
+	 */
 	public static void writeToGroupTable(Connection conn,EditableGroup<?>g)throws SQLException{
 		Table t=buildGroupTable(conn,EditableGroup.class);
 		write(conn,t,g);
 	}
-	
+	/**
+	 * Checks whether the metadata table is present.
+	 * @param c is reserved for possible future changes.
+	 */
+	@SuppressWarnings("rawtypes")
+    public static boolean isGroupTablePresent(Connection conn,Class<EditableGroup>c)throws SQLException{
+		return doesTableExist(conn,GROUP_TABLE_NAME);
+	}
+	/**
+	 * Removes all groups' metadata from the data base.
+	 * @param conn
+	 * @param c
+	 * @throws SQLException
+	 */
+	@SuppressWarnings("rawtypes")
+	public static void clearGroupTable(Connection conn,Class<EditableGroup>c)throws SQLException{
+		clear(conn,buildGroupTable(conn,c));
+	}
+
+	private static boolean doesTableExist(Connection conn,String tableName)throws SQLException{
+		try(ResultSet res=conn.getMetaData().getTables(null,null,null,null)){
+			while(res.next())
+				if(res.getString("TABLE_NAME").equals(tableName))return true;
+		}
+		return false;
+	}
 	private static void create(Connection conn,Table table)throws SQLException{
 		StringBuilder s=new StringBuilder();
 		s.append("CREATE TABLE "+table.name+"(");
@@ -114,6 +148,9 @@ public final class EditableORM{
 				throw new IllegalStateException(ex);
 			}
 	}
+	private static void clear(Connection conn,Table table)throws SQLException{
+		//FIXME clear table
+	}
 
 	@SuppressWarnings("rawtypes")    
 	private static Table buildGroupTable(Connection conn,Class<EditableGroup>c)throws SQLException{
@@ -132,6 +169,18 @@ public final class EditableORM{
 		return new Table(getTableName(conn,c),l);
 	}
 	
+	private static String getTableName(Connection conn,Class<? extends Editable>c)throws SQLException{
+		TreeSet<String>names=new TreeSet<>();
+		try(ResultSet res=conn.getMetaData().getTables(null,null,null,null)){
+			while(res.next()){
+				String s=res.getString("TABLE_NAME");
+				names.add(s);
+			}
+		}
+		String name=c.getSimpleName();
+		while(names.contains(name))name+="_";
+		return name;
+	}
 	private static void sendDBValue(PreparedStatement s,int index,Object o) throws SQLException{
 		// Set parameter on PreparedStatement in batches, handle SQLExceptions
 		if(o==null) s.setObject(index,null);

@@ -8,7 +8,7 @@ import com.bpa4j.feature.Feature;
 
 /**
  * Persistent storage for editable groups and globals and
- * non-persistent storage for roles, features and permission.
+ * non-persistent storage for roles, features and permissions.
  */
 public interface Data{
 	void register(Role...r);
@@ -26,9 +26,9 @@ public interface Data{
 		}
 	}
 
-	List<User.Role>getRegisteredRoles();
+	List<Role>getRegisteredRoles();
 	List<Feature<?>>getRegisteredFeatures();
-	List<User.Permission>getRegisteredPermissions();
+	List<Permission>getRegisteredPermissions();
 	List<EditableGroup<?>>getRegisteredEditableGroups();
 
 	@SuppressWarnings("unchecked")
@@ -39,4 +39,5 @@ public interface Data{
 	}
 	void putGlobal(String key,Serializable value);
 	Serializable getGlobal(String key);
+	
 }
