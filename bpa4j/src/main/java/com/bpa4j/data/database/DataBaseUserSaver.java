@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Optional;
 import com.bpa4j.core.Root;
 import com.bpa4j.core.User;
 import com.bpa4j.core.UserSaver;
@@ -15,7 +16,7 @@ import com.bpa4j.core.User.SerialUserFactory;
 import com.bpa4j.data.database.DataBaseStorageManager.DataBaseBridge;
 
 /**
- * Service, which saves the users in a data base.
+ * Service, which saves the users in a database.
  */
 public class DataBaseUserSaver implements UserSaver{
 	private final DataBaseBridge bridge;
@@ -35,7 +36,7 @@ public class DataBaseUserSaver implements UserSaver{
 		this.bridge=bridge;
 	}
 	/**
-	 * Saves users, but first clears the data base.
+	 * Saves users, but first clears the database.
 	 */
 	public void saveUsers(HashMap<String,User> userMap) throws RuntimeException,UncheckedIOException{
 		try{
@@ -74,7 +75,9 @@ public class DataBaseUserSaver implements UserSaver{
 				User.Role role=(User.Role)Class.forName(res.getString(COL_ROLE)).getDeclaredConstructor().newInstance(); // Fragile
 				int fail2banTries=res.getInt(COL_FAIL2BAN_TRIES);
 				int tries=res.getInt(COL_TRIES);
-				LocalDateTime lockTime=res.getTimestamp(COL_LOCK_TIME).toLocalDateTime();
+				LocalDateTime lockTime=Optional.ofNullable(res.getTimestamp(COL_LOCK_TIME))
+					.map(Timestamp::toLocalDateTime)
+					.orElse(null);
 				User u=SerialUserFactory.createUser(login,password,role,fail2banTries,tries,lockTime);
 				userMap.put(login,u);
 			}
@@ -85,7 +88,7 @@ public class DataBaseUserSaver implements UserSaver{
 		}catch(SQLException ex){
 			throw new RuntimeException(ex);
 		}catch(ReflectiveOperationException ex){
-			throw new IllegalStateException("Roles should have the default constructor to be loaded from data base.",ex);
+			throw new IllegalStateException("Roles should have the default constructor to be loaded from database.",ex);
 		}
 		return userMap;
 	}

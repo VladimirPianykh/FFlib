@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import com.bpa4j.core.Editable;
 import com.bpa4j.core.EditableGroup;
 
@@ -22,8 +23,9 @@ import com.bpa4j.core.EditableGroup;
  * Manages SQL tables with editables as utility class.
  */
 public final class EditableORM{
-	private static final String SELECT_FROM_SQL="SELECT * FROM %s";
 	private EditableORM(){}
+	private static final String SELECT_FROM_SQL="SELECT * FROM %s";
+	private static final String TABLE_NAME_PATTERN="[A-Za-z_]\\w*";
 	public static final String GROUP_TABLE_NAME="groups";
 	private static enum SQLType{
 		VARCHAR("VARCHAR(255)"),INT("INT"),BIGINT("BIGINT"),REAL("REAL"),DOUBLE("DOUBLE PRECISION"),BOOLEAN("BOOLEAN"),DATE("DATE"),TIMESTAMP("TIMESTAMP"),BLOB("BLOB");
@@ -40,7 +42,7 @@ public final class EditableORM{
 	 */
 	private static record Table(String name,List<Column> columns){
 		Table{
-			//FIXME validate name (assert)
+			if(!Pattern.matches(TABLE_NAME_PATTERN,name))throw new IllegalArgumentException("Invalid table name: "+name);
 		}
 		public static record Column(Field f,String name,SQLType type){
 			public String toString(){
@@ -81,8 +83,21 @@ public final class EditableORM{
 	public static void clearTable(Connection conn,Class<? extends Editable>e)throws SQLException{
 		clear(conn,buildTable(conn,e));
 	}
-	public static ArrayList<? extends Editable>readTable(Connection conn,Class<? extends Editable>e){
-		
+	public static List<? extends Editable>readTable(Connection conn,Class<? extends Editable>e)throws SQLException{
+		ArrayList<Editable>result=new ArrayList<>();
+		Table table=buildTable(conn,e);
+		ArrayList<Object[]>l=read(conn,table);
+		for(Object[]values:l)try{
+			Editable editable=e.getDeclaredConstructor().newInstance();
+			for(int i=0;i<table.columns().size();++i)
+				table.columns.get(i).f.set(editable,values[i]);
+			result.add(editable);
+		}catch(NoSuchMethodException|InstantiationException ex){
+			throw new IllegalStateException("Editables must have default constructor.",ex);
+		}catch(ReflectiveOperationException ex){
+			throw new AssertionError(ex);
+		}
+		return result;
 	}
 
 	/**
@@ -111,7 +126,7 @@ public final class EditableORM{
 		return doesTableExist(conn,GROUP_TABLE_NAME);
 	}
 	/**
-	 * Removes all groups' metadata from the data base.
+	 * Removes all groups' metadata from the database.
 	 * @param conn
 	 * @param c
 	 * @throws SQLException
@@ -121,8 +136,19 @@ public final class EditableORM{
 		clear(conn,buildGroupTable(conn,c));
 	}
 	@SuppressWarnings("rawtypes")
-    public static EditableGroup readGroupTable(Connection conn,Class<EditableGroup>c)throws SQLException{
-
+    public static List<EditableGroup<?>>readGroupTable(Connection conn,Class<EditableGroup>c)throws SQLException{
+		ArrayList<EditableGroup<?>>result=new ArrayList<>();
+		Table t=buildGroupTable(conn,c);
+		List<Object[]>l=read(conn,t);
+		for(Object[]values:l)try{
+			EditableGroup group=new EditableGroup<>(null);
+			for(int i=0;i<t.columns().size();++i)
+				t.columns.get(i).f.set(group,values[i]);
+			result.add(group);
+		}catch(ReflectiveOperationException ex){
+			throw new AssertionError(ex);
+		}
+		return result;
 	}
 
 	private static boolean doesTableExist(Connection conn,String tableName)throws SQLException{
@@ -136,25 +162,25 @@ public final class EditableORM{
 		StringBuilder s=new StringBuilder();
 		s.append("CREATE TABLE "+table.name+"(");
 		s.append("id BIGINT AUTO_INCREMENT PRIMARY KEY,");
-		String fieldColumns=String.join(",",table.columns.stream().map(Table.Column::toString).toList());
+		String fieldColumns=String.join(",",table.columns().stream().map(Table.Column::toString).toList());
 		s.append(fieldColumns);
 		s.append(")");
 		conn.createStatement().execute(s.toString());
 	}
 	private static void write(Connection conn,Table table,Object o)throws SQLException{
-		String fieldNames=String.join(",",table.columns.stream().map(e->e.name).toList());
+		String fieldNames=String.join(",",table.columns().stream().map(e->e.name).toList());
 		StringBuilder s=new StringBuilder();
 		s.append("INSERT INTO ");
 		s.append(table.name);
 		s.append("(");
 		s.append(fieldNames);
 		s.append(")VALUES(");
-		s.append("?,".repeat(table.columns.size()-1));
+		s.append("?,".repeat(table.columns().size()-1));
 		s.append("?)");
 		PreparedStatement statement=conn.prepareStatement(s.toString());
-		for(int i=0;i<table.columns.size();i++)
+		for(int i=0;i<table.columns().size();i++)
 			try{
-				Object value=table.columns.get(i).f.get(o);
+				Object value=table.columns().get(i).f.get(o);
 				sendDBValue(statement,i+1,value);
 			}catch(ReflectiveOperationException ex){
 				throw new IllegalStateException(ex);
@@ -167,7 +193,7 @@ public final class EditableORM{
 	/**
 	 * Read the table.
 	 * Each row is represented by object array with every value stored in it.
-	 * Note, that numeration is displaced by one, compared to the data base numeration.
+	 * Note, that numeration is displaced by one, compared to the database numeration.
 	 */
 	private static ArrayList<Object[]>read(Connection conn,Table table)throws SQLException{
 		String readSql=String.format(SELECT_FROM_SQL,table.name);

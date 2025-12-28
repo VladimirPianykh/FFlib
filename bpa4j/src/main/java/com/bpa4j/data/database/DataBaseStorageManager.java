@@ -9,12 +9,15 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import com.bpa4j.core.Data;
 import com.bpa4j.core.Root;
+import com.bpa4j.core.StorageManager;
+import com.bpa4j.core.UserSaver;
 import com.bpa4j.feature.FeatureModel;
 import com.bpa4j.feature.FeatureSaver;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
-public class DataBaseStorageManager{
+public class DataBaseStorageManager implements StorageManager{
 	private static final class FunctionalRegistry{
 		private static HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureModel<?>>> models=new HashMap<>();
 		private static HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureSaver<?>>> savers=new HashMap<>();
@@ -42,7 +45,7 @@ public class DataBaseStorageManager{
 		}
 	}
 	/**
-	 * Supports connection with the data base.
+	 * Supports connection with the database.
 	 * Provides {@link DataBaseBridge#getConnection()} operation.
 	 * This connection is managed automatically and will be closed with the DataBaseBridge itself.
 	 * Thus it is unsafe to use this in a multi-threaded environment.
@@ -93,6 +96,7 @@ public class DataBaseStorageManager{
 		}
 	}
 	private final DataBaseBridge bridge;
+	private final DataBaseData storage=new DataBaseData();
 	/**
 	 * Executes query.
 	 * Is not protected from SQL injection (altering commands are possible).
@@ -104,23 +108,39 @@ public class DataBaseStorageManager{
 	}
 	public DataBaseStorageManager(String dbName){
 		bridge=new DataBaseBridge("jdbc:h2:file:"+Root.folder+"","","");
+		try{
+			storage.load(bridge.getConnection());
+		}catch(SQLException ex){
+			throw new RuntimeException(ex);
+		}
 	}
-	<F extends FeatureTransmissionContract> FeatureModel<F> getFeatureModel(F f){
+	public <F extends FeatureTransmissionContract> FeatureModel<F> getFeatureModel(F f){
 		return FunctionalRegistry.getFeatureModel(f);
 	}
-	<F extends FeatureTransmissionContract> FeatureSaver<F> getFeatureSaver(F f){
+	public <F extends FeatureTransmissionContract> FeatureSaver<F> getFeatureSaver(F f){
 		return FunctionalRegistry.getFeatureSaver(f);
 	}
-	<F extends FeatureTransmissionContract> void putModel(Class<F> f,Function<F,FeatureModel<F>> model){
+	public <F extends FeatureTransmissionContract> void putModel(Class<F> f,Function<F,FeatureModel<F>> model){
 		FunctionalRegistry.putModel(f,model);
 	}
-	<F extends FeatureTransmissionContract> void putSaver(Class<F> f,Function<F,FeatureSaver<F>> saver){
+	public <F extends FeatureTransmissionContract> void putSaver(Class<F> f,Function<F,FeatureSaver<F>> saver){
 		FunctionalRegistry.putSaver(f,saver);
 	}
 	public void close(){
+		try{
+			storage.save(bridge.getConnection());
+		}catch(SQLException ex){
+			throw new RuntimeException(ex);
+		}
 		bridge.close();
 	}
 	public boolean isFirstLaunch(){
 		return bridge.dbWasCreated();
+	}
+	public Data getStorage(){
+		return storage;
+	}
+	public UserSaver getUserSaver(){
+		return new DataBaseUserSaver(bridge); //No need to keep it.
 	}
 }

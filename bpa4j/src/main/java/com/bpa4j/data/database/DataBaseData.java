@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.TreeMap;
 import com.bpa4j.core.Data;
@@ -73,10 +74,9 @@ public class DataBaseData implements Data{
         globals.put(key,value);
     }
 
+    @SuppressWarnings("rawtypes")
+    private Class<EditableGroup> groupClass=EditableGroup.class;
     void save(Connection conn)throws SQLException{
-        @SuppressWarnings("rawtypes")
-        Class<EditableGroup> groupClass=EditableGroup.class;
-
         if(!EditableORM.isGroupTablePresent(conn,groupClass))
             EditableORM.createGroupTable(conn,groupClass);
         else EditableORM.clearGroupTable(conn,groupClass);
@@ -89,12 +89,19 @@ public class DataBaseData implements Data{
             for(Editable e:g)EditableORM.writeToTable(conn,e);
         }
 
+        //Save globals
         RawDBSaver.save(conn,globals,"globals");
     }
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked","rawtypes"})
     void load(Connection conn)throws SQLException{
-        if(!EditableORM.isGroupTablePresent(conn,EditableGroup.class))return;
-        //FIXME: load groups
+        if(!EditableORM.isGroupTablePresent(conn,groupClass))return;
+        for(EditableGroup g:EditableORM.readGroupTable(conn,groupClass)){ //Read metadata
+            if(!EditableORM.isTablePresent(conn,g.type))continue;
+            List<? extends Editable>l=EditableORM.readTable(conn,g.type); //Then read contents
+            g.addAll(l);
+        }
+
+        //Load globals
         globals=(TreeMap<String,Serializable>)RawDBSaver.load(conn,"globals");
     }
 }
