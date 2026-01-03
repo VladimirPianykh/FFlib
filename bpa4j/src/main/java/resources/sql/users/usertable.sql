@@ -7,8 +7,3 @@ CREATE TABLE users(
     tries INT DEFAULT 0,
     lock_time TIMESTAMP
 );
-
-CREATE TABLE authorization_history(
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    TODO: continue
-)

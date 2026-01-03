@@ -17,6 +17,10 @@ import com.bpa4j.feature.FeatureModel;
 import com.bpa4j.feature.FeatureSaver;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
+/**
+ * Storage manager with H2 database.
+ * WARNING: Does not save users' authorization history.
+ */
 public class DataBaseStorageManager implements StorageManager{
 	private final class FunctionalRegistry{
 		private static HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureModel<?>>> models=new HashMap<>();
