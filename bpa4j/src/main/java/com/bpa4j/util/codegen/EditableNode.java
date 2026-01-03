@@ -12,6 +12,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +28,7 @@ import com.github.javaparser.ast.Modifier.Keyword;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.LineComment;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
@@ -40,28 +42,40 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
  */
 public class EditableNode extends ClassNode{
 	public static class Property{
-		public static enum PropertyType{
-			STRING("String"),INT("int"),DOUBLE("double"),BOOL("boolean"),DATE("LocalDate"),DATETIME("LocalDateTime");
+		/**
+		 * Property type value object.
+		 */
+		public static class PropertyType{
+			public static final PropertyType STRING=new PropertyType("String");
+			public static final PropertyType INT=new PropertyType("int");
+			public static final PropertyType DOUBLE=new PropertyType("double");
+			public static final PropertyType BOOL=new PropertyType("boolean");
+			public static final PropertyType DATE=new PropertyType("LocalDate");
+			public static final PropertyType DATETIME=new PropertyType("LocalDateTime");
 
-			private final String typeName;
-
-			private PropertyType(String typeName){
-				this.typeName=typeName;
+			private final String name;
+			public PropertyType(String typeName){
+				this.name=typeName;
 			}
-
 			public String toString(){
-				return typeName;
+				return name;
+			}
+			public String name(){
+				return name;
+			}
+			public static PropertyType[] values(){
+				return new PropertyType[]{STRING,INT,DOUBLE,BOOL,DATE,DATETIME};
+			}
+			public boolean equals(Object obj){
+				return (obj instanceof PropertyType t)&&t.name==name;
 			}
 		}
-
 		private PropertyType type;
 		private String name;
-
 		public Property(String name,PropertyType type){
 			this.name=name.trim();
 			this.type=type;
 		}
-
 		public String getCode(String prompt){
 			return type==null?"\t//FIXME: add property \""+name+"\"\n":String.format("""
 						@EditorEntry(translation="%s")
@@ -126,8 +140,7 @@ public class EditableNode extends ClassNode{
 					}).findFirst();
 
 					if(field.isPresent()){
-						// TODO: #4 Implement field type change with JavaParser
-						// field.get().setCommonType(StaticJavaParser.parseType(type.toString()));
+						field.get().setAllTypes(StaticJavaParser.parseType(type.toString()));
 					}
 				}
 
@@ -141,10 +154,8 @@ public class EditableNode extends ClassNode{
 			return name+" ("+(type==null?"???":type.toString())+")";
 		}
 	}
-
-	public String objectName;
-	public ArrayList<Property> properties=new ArrayList<>();
-
+	private String objectName;
+	private List<Property> properties=new ArrayList<>();
 	/**
 	 * Resolves an existing node from the file.
 	 */
@@ -215,7 +226,6 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	/**
 	 * Constructs a new node with the designated file.
 	 */
@@ -245,26 +255,20 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
-	protected static File findFile(String name,File parent){
-		try{
-			Wrapper<File> w=new Wrapper<File>(null);
-			Files.walkFileTree(parent.toPath(),new SimpleFileVisitor<Path>(){
-				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException{
-					if(file.toString().equals(name+".java")){
-						w.var=file.toFile();
-						return FileVisitResult.TERMINATE;
-					}
-					return FileVisitResult.CONTINUE;
+	protected static File findFile(String name,File parent) throws IOException{
+		Wrapper<File> w=new Wrapper<File>(null);
+		Files.walkFileTree(parent.toPath(),new SimpleFileVisitor<Path>(){
+			public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException{
+				if(file.toString().equals(name+".java")){
+					w.var=file.toFile();
+					return FileVisitResult.TERMINATE;
 				}
-			});
-			if(w.var==null) throw new FileNotFoundException();
-			return w.var;
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
-		}
+				return FileVisitResult.CONTINUE;
+			}
+		});
+		if(w.var==null) throw new FileNotFoundException();
+		return w.var;
 	}
-
 	public void addProperty(Property property,String varName){
 		try{
 			while(!Files.isWritable(location.toPath()))
@@ -289,7 +293,6 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	public void addProperties(Property...properties){
 		try{
 			while(!Files.isWritable(location.toPath()))
@@ -301,13 +304,13 @@ public class EditableNode extends ClassNode{
 			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
 			if(clazz.isPresent()){
-				// TODO: #3 Implement field creation with JavaParser
-				// for (Property prop : properties) {
-				//     FieldDeclaration newField = new FieldDeclaration();
-				//     newField.setCommonType(StaticJavaParser.parseType(prop.type.toString()));
-				//     newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(prop.type.toString()), "iVar" + (++index.var)));
-				//     clazz.get().addMember(newField);
-				// }
+				for(int i=0;i<properties.length;++i){
+					Property prop=properties[i];
+					FieldDeclaration newField=new FieldDeclaration();
+					newField.setAllTypes(StaticJavaParser.parseType(prop.type.toString()));
+					newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(prop.type.toString()),"iVar"+(i+1)));
+					clazz.get().addMember(newField);
+				}
 
 				Files.writeString(location.toPath(),cu.toString(),StandardOpenOption.CREATE,StandardOpenOption.WRITE);
 				this.properties.addAll(Arrays.asList(properties));
@@ -316,7 +319,6 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	public void removeProperty(Property property){
 		try{
 			while(!Files.isWritable(location.toPath()))
@@ -338,7 +340,6 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	public void changeObjectName(String objectName){
 		try{
 			while(!Files.isWritable(location.toPath()))
@@ -363,5 +364,11 @@ public class EditableNode extends ClassNode{
 		}catch(IOException ex){
 			throw new UncheckedIOException(ex);
 		}
+	}
+	public List<Property> getProperties(){
+		return properties;
+	}
+	public String getObjectName(){
+		return objectName;
 	}
 }
