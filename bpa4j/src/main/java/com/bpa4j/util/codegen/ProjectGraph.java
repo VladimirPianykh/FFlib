@@ -861,7 +861,7 @@ public class ProjectGraph{
 		}
 		class E extends JPanel{
 			public E(EditableNode n){
-				setBorder(BorderFactory.createTitledBorder(n.name+" ("+n.objectName+")"));
+				setBorder(BorderFactory.createTitledBorder(n.name+" ("+n.getObjectName()+")"));
 				setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
 				JPanel buttons=new JPanel();
 				buttons.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width*2/3,Root.SCREEN_SIZE.height/30));
@@ -884,7 +884,7 @@ public class ProjectGraph{
 				buttons.add(addPanel);
 				JButton remove=new JButton();
 				remove.addActionListener(e->{
-					if(n.properties.isEmpty()||JOptionPane.showConfirmDialog(tab,"Действительно удалить "+n.name+" (\""+n.objectName+")\"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)==JOptionPane.OK_OPTION){
+					if(n.getProperties().isEmpty()||JOptionPane.showConfirmDialog(tab,"Действительно удалить "+n.name+" (\""+n.getObjectName()+")\"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)==JOptionPane.OK_OPTION){
 						deleteNode(n);
 						Container parent=getParent();
 						parent.remove(this);
@@ -908,7 +908,7 @@ public class ProjectGraph{
 					s[1]=s[1].trim();
 					setBorder(BorderFactory.createTitledBorder(s[0]+" ("+s[1]+")"));
 					if(!n.name.equals(s[0])) n.changeNameIn(ProjectGraph.this,s[0]);
-					if(!n.objectName.equals(s[1])) n.changeObjectName(s[1]);
+					if(!n.getObjectName().equals(s[1])) n.changeObjectName(s[1]);
 				});
 				rename.setText("переименовать");
 				remove.setFont(new Font(Font.DIALOG,Font.PLAIN,Root.SCREEN_SIZE.height/50));
@@ -928,7 +928,7 @@ public class ProjectGraph{
 					buttons.add(addPermissions);
 				}
 				add(buttons);
-				for(Property p:n.properties)
+				for(Property p:n.getProperties())
 					add(new B(p,n));
 			}
 		}
