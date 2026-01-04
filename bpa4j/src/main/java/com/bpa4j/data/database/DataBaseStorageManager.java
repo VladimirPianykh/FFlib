@@ -19,11 +19,10 @@ import com.bpa4j.feature.FeatureTransmissionContract;
 
 public class DataBaseStorageManager implements StorageManager{
 	private final class FunctionalRegistry{
-		private static HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureModel<?>>> models=new HashMap<>();
-		private static HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureSaver<?>>> savers=new HashMap<>();
-
+		private HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureModel<?>>> models=new HashMap<>();
+		private HashMap<Class<? extends FeatureTransmissionContract>,Function<? extends FeatureTransmissionContract,? extends FeatureSaver<?>>> savers=new HashMap<>();
 		@SuppressWarnings("unchecked")
-		static <F extends FeatureTransmissionContract> FeatureModel<F> getFeatureModel(F f){
+		<F extends FeatureTransmissionContract> FeatureModel<F> getFeatureModel(F f){
 			Function<F,FeatureModel<F>> function=(Function<F,FeatureModel<F>>)models.get(f.getClass());
 			FeatureModel<?> m=function.apply(f);
 			Objects.requireNonNull(m);
@@ -31,16 +30,16 @@ public class DataBaseStorageManager implements StorageManager{
 			return (FeatureModel<F>)m;
 		}
 		@SuppressWarnings("unchecked")
-		static <F extends FeatureTransmissionContract> FeatureSaver<F> getFeatureSaver(F f){
+		<F extends FeatureTransmissionContract> FeatureSaver<F> getFeatureSaver(F f){
 			Function<F,FeatureSaver<F>> function=(Function<F,FeatureSaver<F>>)savers.get(f.getClass());
 			FeatureSaver<?> s=function.apply(f);
 			Objects.requireNonNull(s);
 			return (FeatureSaver<F>)s;
 		}
-		static <F extends FeatureTransmissionContract> void putModel(Class<F> f,Function<F,FeatureModel<F>> model){
+		<F extends FeatureTransmissionContract> void putModel(Class<F> f,Function<F,FeatureModel<F>> model){
 			models.put(f,model);
 		}
-		static <F extends FeatureTransmissionContract> void putSaver(Class<F> f,Function<F,FeatureSaver<F>> saver){
+		<F extends FeatureTransmissionContract> void putSaver(Class<F> f,Function<F,FeatureSaver<F>> saver){
 			savers.put(f,saver);
 		}
 	}
@@ -95,6 +94,7 @@ public class DataBaseStorageManager implements StorageManager{
 			}
 		}
 	}
+	private final FunctionalRegistry registry=new FunctionalRegistry();
 	private final DataBaseBridge bridge;
 	private final DataBaseData storage=new DataBaseData();
 	/**
@@ -117,16 +117,16 @@ public class DataBaseStorageManager implements StorageManager{
 		}
 	}
 	public <F extends FeatureTransmissionContract> FeatureModel<F> getFeatureModel(F f){
-		return FunctionalRegistry.getFeatureModel(f);
+		return registry.getFeatureModel(f);
 	}
 	public <F extends FeatureTransmissionContract> FeatureSaver<F> getFeatureSaver(F f){
-		return FunctionalRegistry.getFeatureSaver(f);
+		return registry.getFeatureSaver(f);
 	}
 	public <F extends FeatureTransmissionContract> void putModel(Class<F> f,Function<F,FeatureModel<F>> model){
-		FunctionalRegistry.putModel(f,model);
+		registry.putModel(f,model);
 	}
 	public <F extends FeatureTransmissionContract> void putSaver(Class<F> f,Function<F,FeatureSaver<F>> saver){
-		FunctionalRegistry.putSaver(f,saver);
+		registry.putSaver(f,saver);
 	}
 	public void close(){
 		try{

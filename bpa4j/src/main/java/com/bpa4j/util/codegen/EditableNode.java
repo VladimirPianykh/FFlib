@@ -42,26 +42,20 @@ public class EditableNode extends ClassNode{
 	public static class Property{
 		public static enum PropertyType{
 			STRING("String"),INT("int"),DOUBLE("double"),BOOL("boolean"),DATE("LocalDate"),DATETIME("LocalDateTime");
-
 			private final String typeName;
-
 			private PropertyType(String typeName){
 				this.typeName=typeName;
 			}
-
 			public String toString(){
 				return typeName;
 			}
 		}
-
 		private PropertyType type;
 		private String name;
-
 		public Property(String name,PropertyType type){
 			this.name=name.trim();
 			this.type=type;
 		}
-
 		public String getCode(String prompt){
 			return type==null?"\t//FIXME: add property \""+name+"\"\n":String.format("""
 						@EditorEntry(translation="%s")
@@ -141,19 +135,16 @@ public class EditableNode extends ClassNode{
 			return name+" ("+(type==null?"???":type.toString())+")";
 		}
 	}
-
 	public String objectName;
 	public ArrayList<Property> properties=new ArrayList<>();
-
 	/**
 	 * Resolves an existing node from the file.
 	 */
-	public EditableNode(File file){
+	public EditableNode(File file)throws IOException{
 		super(file);
 		try{
+			// Найти наследника Editable
 			CompilationUnit cu=StaticJavaParser.parse(file);
-
-			// Найти класс, который extends Editable
 			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
 			if(clazz.isPresent()){
@@ -215,37 +206,31 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	/**
 	 * Constructs a new node with the designated file.
 	 */
-	public EditableNode(File file,String objectName,String basePackage,Property...properties){
+	public EditableNode(File file,String objectName,String basePackage,Property...properties)throws IOException{
 		super(file);
 		this.objectName=objectName.replaceAll("[!@#$%&*]","").trim();
 		if(objectName.isEmpty()) objectName=null;
 		this.properties.addAll(Arrays.asList(properties));
-		try{
-			file.createNewFile();
-			Wrapper<Integer> index=new Wrapper<>(0);
-			String s=String.format("""
-					package %s.editables.registered;
+		file.createNewFile();
+		Wrapper<Integer> index=new Wrapper<>(0);
+		String s=String.format("""
+				package %s.editables.registered;
 
-					import %s;
-					import %s;
+				import %s;
+				import %s;
 
-					public class %s extends Editable{
-					"""+Stream.of(properties).map(p->p.getCode("var"+(++index.var))).collect(Collectors.joining("\n"))+"""
-						public %s(){
-							super("Нов %s");
-						}
+				public class %s extends Editable{
+				"""+Stream.of(properties).map(p->p.getCode("var"+(++index.var))).collect(Collectors.joining("\n"))+"""
+					public %s(){
+						super("Нов %s");
 					}
-					""",basePackage,Editable.class.getName(),EditorEntry.class.getName(),name,name,objectName==null?"":objectName);
-			Files.writeString(file.toPath(),s);
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
-		}
+				}
+				""",basePackage,Editable.class.getName(),EditorEntry.class.getName(),name,name,objectName==null?"":objectName);
+		Files.writeString(file.toPath(),s);
 	}
-
 	protected static File findFile(String name,File parent){
 		try{
 			Wrapper<File> w=new Wrapper<File>(null);
@@ -264,7 +249,6 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	public void addProperty(Property property,String varName){
 		try{
 			while(!Files.isWritable(location.toPath()))
@@ -289,7 +273,6 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	public void addProperties(Property...properties){
 		try{
 			while(!Files.isWritable(location.toPath()))
@@ -316,7 +299,6 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	public void removeProperty(Property property){
 		try{
 			while(!Files.isWritable(location.toPath()))
@@ -338,7 +320,6 @@ public class EditableNode extends ClassNode{
 			throw new UncheckedIOException(ex);
 		}
 	}
-
 	public void changeObjectName(String objectName){
 		try{
 			while(!Files.isWritable(location.toPath()))

@@ -1,6 +1,7 @@
 package com.bpa4j.util.codegen.server;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -92,7 +93,7 @@ public class GraphResource{
 
 	@POST
 	@Path("/editables")
-	public Map<String,Object>createEditable(Map<String,Object>body){
+	public Map<String,Object>createEditable(Map<String,Object>body)throws IOException{
 		String name=(String)body.get("name");
 		String objectName=(String)body.get("objectName");
 		if(name.contains(" ")||name.isBlank())return Map.of("status","error","error","Name mustn't be blank.");
@@ -388,5 +389,3 @@ public class GraphResource{
 		return m;
 	}
 }
-
-

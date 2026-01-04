@@ -797,7 +797,7 @@ public class ProjectGraph{
 		Package p=ProjectGraph.class.getPackage();
 		return p==null?"":p.getName();
 	}
-	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties){
+	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties)throws IOException{
 		if(name==null||name.isBlank()) throw new IllegalArgumentException("Name "+name+" is not a valid identifier.");
 		String basePackage=resolveProjectPackage();
 		if(basePackage.isBlank()) throw new IllegalStateException("Unable to resolve project package");
@@ -812,7 +812,6 @@ public class ProjectGraph{
 		n.location.delete();
 		nodes.remove(n);
 	}
-	
 	private void fillObjectsTab(JPanel tab){
 		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
 		tab.setLayout(new BorderLayout());
@@ -945,12 +944,14 @@ public class ProjectGraph{
 		addButton.setBackground(Color.GREEN);
 		addButton.addActionListener(e->{
 			String name,objectName;
-			while(true){
+			while(true)try{
 				name=JOptionPane.showInputDialog("Введите название класса.");
 				if(name==null||name.isBlank()) break;
 				objectName=JOptionPane.showInputDialog("Введите название объекта.");
 				if(objectName==null||objectName.isBlank()) break;
 				objList.add(new E(createEditableNode(name,objectName)));
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
 			}
 			sList.revalidate();
 		});
@@ -1184,3 +1185,7 @@ public class ProjectGraph{
 	}
 
 }
+
+interface GraphModel{}
+
+interface GraphUI{}
