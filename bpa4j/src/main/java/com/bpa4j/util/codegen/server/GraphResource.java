@@ -75,11 +75,11 @@ public class GraphResource{
 			EditableNode e=(EditableNode)n;
 			Map<String,Object>m=new HashMap<>();
 			m.put("name",e.name);
-			m.put("objectName",e.objectName==null?"<no-name>":e.objectName);
+			m.put("objectName",e.getObjectName()==null?"<no-name>":e.getObjectName());
 			m.put("location",e.location==null?null:e.location.getPath());
 			if(detailed){
 				List<Map<String,Object>>props=new ArrayList<>();
-				for(EditableNode.Property p:e.properties){
+				for(EditableNode.Property p:e.getProperties()){
 					Map<String,Object>pm=new HashMap<>();
 					pm.put("name",p.getName());
 					pm.put("type",p.getType()==null?null:p.getType().name());
@@ -108,7 +108,7 @@ public class GraphResource{
 		for(Map<String,String>p:props){
 			String pn=p.get("name");
 			String pt=p.get("type");
-			properties.add(new Property(pn,pt==null?null:PropertyType.valueOf(pt)));
+			properties.add(new Property(pn,pt==null?null:new PropertyType(pt)));
 		}
 		EditableNode en=graph.createEditableNode(name,objectName,properties.toArray(new Property[0]));
 		return Map.of("status","ok","location",en.location.getPath());
@@ -137,22 +137,22 @@ public class GraphResource{
 			String pn=String.valueOf(m.get("name"));
 			String pt=m.get("type")==null?null:String.valueOf(m.get("type"));
 			String var=m.containsKey("varName")?String.valueOf(m.get("varName")):("var"+(int)(Math.random()*1_000_000));
-			en.addProperty(new Property(pn,pt==null?null:PropertyType.valueOf(pt)),var);
+			en.addProperty(new Property(pn,pt==null?null:new PropertyType(pt)),var);
 		}
 		List<?>rmPropsRaw=(List<?>)body.getOrDefault("removeProperties",List.of());
 		for(Object o:rmPropsRaw){
 			String pn=String.valueOf(o);
-			en.properties.stream().filter(p->p.getName().equals(pn)).findAny().ifPresent(en::removeProperty);
+			en.getProperties().stream().filter(p->p.getName().equals(pn)).findAny().ifPresent(en::removeProperty);
 		}
 		List<?>chgPropsRaw=(List<?>)body.getOrDefault("changeProperties",List.of());
 		for(Object o:chgPropsRaw)if(o instanceof Map<?,?> m){
 			String pn=String.valueOf(m.get("name"));
-			EditableNode.Property prop=en.properties.stream().filter(p->p.getName().equals(pn)).findAny().orElse(null);
+			EditableNode.Property prop=en.getProperties().stream().filter(p->p.getName().equals(pn)).findAny().orElse(null);
 			if(prop==null)continue;
 			String nn=(String)m.get("newName");
 			String nt=(String)m.get("type");
 			if(nn!=null&&!nn.isBlank())prop.changeName(nn,en);
-			if(nt!=null&&!nt.isBlank())prop.changeType(PropertyType.valueOf(nt),en);
+			if(nt!=null&&!nt.isBlank())prop.changeType(new PropertyType(nt),en);
 		}
 		return Map.of("status","ok");
 	}

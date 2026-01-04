@@ -519,19 +519,28 @@ public class RestFormModuleRenderer implements ModuleRenderer<FormModule>{
 		else if(type.isEnum()){
 			Object value=f.get(o);
 			if(value==null) throw new NullPointerException("Enum value of field \""+f.getName()+"\" is null.");
-			TextField tf=new TextField(value.toString());
-			saver.var=()->{
-				String txt=tf.getText();
-				try{
-					// Parse enum from string
-					@SuppressWarnings("rawtypes")
-					Enum en=Enum.valueOf((Class<Enum>)type,txt);
-					return en;
-				}catch(IllegalArgumentException e){
-					return value; // Return original value if parsing fails
+
+			Object[] constants=type.getEnumConstants();
+			ArrayList<String> items=new ArrayList<>();
+			int selectedIndex=-1;
+
+			for(int i=0;i<constants.length;i++){
+				items.add(constants[i].toString());
+				if(constants[i].equals(value)){
+					selectedIndex=i;
 				}
+			}
+
+			ComboBox cb=new ComboBox();
+			cb.setItems(items);
+			if(selectedIndex!=-1) cb.setSelectedIndex(selectedIndex);
+
+			saver.var=()->{
+				int idx=cb.getSelectedIndex();
+				if(idx>=0&&idx<constants.length) return constants[idx];
+				return value;
 			};
-			return tf;
+			return cb;
 		}
 
 		// Unsupported type - throw exception
