@@ -62,6 +62,7 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
  * Designed to provide low-code access.
  */
 public class ProjectGraph{
+	//TODO: #13 make graph modular and extensible
 	/* 	public static class PermissionsNodeV2 extends ProjectNode {
 			public ArrayList<String> permissions;
 			
