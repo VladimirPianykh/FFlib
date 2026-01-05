@@ -13,43 +13,86 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.expr.SimpleName;
 
-public abstract class ClassNode extends ProjectNode{
-	public String name;
-	public ClassNode(File location){
-		super(location);
-		name=location.getName().substring(0,location.getName().lastIndexOf('.'));
-	}
-	public synchronized void changeNameIn(ProjectGraph project,String name){
-		try{
-			if(this.name.equals(name)) return;
-			File f=new File(location.getParent()+"/"+name+".java");
-			if(f.exists()) return;
-			location.renameTo(f);
-			location=f;
-			String prevName=this.name;
+import lombok.Getter;
+import lombok.Setter;
 
-			Files.walkFileTree(project.projectFolder.toPath(),new SimpleFileVisitor<Path>(){
-				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException{
-					if(file.toString().endsWith(".java")){
-						while(!Files.isWritable(file))
-							Thread.onSpinWait();
-						CompilationUnit cu=StaticJavaParser.parse(file);
-
-						// Найти все использования имени класса
-						cu.findAll(SimpleName.class).forEach(typeExpr->{
-							if(typeExpr.getIdentifier().replaceAll(".*\\.","").equals(prevName)){
-								typeExpr.setIdentifier(name);
-							}
-						});
-
-						Files.writeString(file,cu.toString());
-					}
-					return FileVisitResult.CONTINUE;
-				}
-			});
-			this.name=name;
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
+public abstract class ClassNode<T extends ClassNode<T>> implements ProjectNode<T>{
+	public static abstract class ClassPhysicalNode<V extends ClassNode<V>> implements PhysicalNode<V>{
+		protected File file;
+		public ClassPhysicalNode(File file){
+			this.file=file;
 		}
+		@Override
+		public void clear(){
+			file.delete();
+		}
+		@Override
+		public boolean exists(){
+			return file.exists();
+		}
+		public void rename(ProjectGraph project,String newName,String oldName){
+			try{
+				if(oldName.equals(newName)) return;
+				File f=new File(file.getParent()+"/"+newName+".java");
+				if(f.exists()) return;
+				file.renameTo(f);
+				file=f;
+
+				Files.walkFileTree(project.projectFolder.toPath(),new SimpleFileVisitor<Path>(){
+					public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException{
+						if(file.toString().endsWith(".java")){
+							while(!Files.isWritable(file))
+								Thread.onSpinWait();
+							CompilationUnit cu=StaticJavaParser.parse(file);
+
+							// Найти все использования имени класса
+							cu.findAll(SimpleName.class).forEach(typeExpr->{
+								if(typeExpr.getIdentifier().replaceAll(".*\\.","").equals(oldName)){
+									typeExpr.setIdentifier(newName);
+								}
+							});
+
+							Files.writeString(file,cu.toString());
+						}
+						return FileVisitResult.CONTINUE;
+					}
+				});
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
+		}
+	}
+
+	public static class ClassModel<V extends ClassNode<V>> implements NodeModel<V>{
+		@Getter
+		@Setter
+		protected String name;
+		public ClassModel(String name){
+			this.name=name;
+		}
+	}
+
+	protected final PhysicalNode<T> physicalNode;
+	protected final NodeModel<T> model;
+
+	public ClassNode(PhysicalNode<T> physicalNode){
+		this.physicalNode=physicalNode;
+		this.model=physicalNode.load();
+	}
+
+	@Override
+	public PhysicalNode<T> getPhysicalRepresentation(){
+		return physicalNode;
+	}
+
+	@Override
+	public NodeModel<T> getModel(){
+		return model;
+	}
+
+	public synchronized void changeNameIn(ProjectGraph project,String name){
+		String oldName=((ClassModel<T>)model).getName();
+		((ClassModel<T>)model).setName(name);
+		((ClassPhysicalNode<T>)physicalNode).rename(project,name,oldName);
 	}
 }

@@ -5,107 +5,121 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
-public class PermissionsNode extends ProjectNode {
-	public ArrayList<String> permissions;
-	
-	public PermissionsNode(File file) {
-		super(file);
-		try {
-			CompilationUnit cu = StaticJavaParser.parse(file);
-			
-			// Найти enum, который реализует интерфейс Permission
-			Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
-				.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-					.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-						((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
-				.findFirst();
-			
-			if (permissionEnum.isPresent()) {
-				EnumDeclaration enumDecl = permissionEnum.get();
-				permissions = new ArrayList<>();
-				
-				// Извлечь константы enum
-				for (EnumConstantDeclaration constant : enumDecl.getEntries()) {
-					permissions.add(constant.getNameAsString());
+/**
+ * @author AI-generated
+ */
+public class PermissionsNode implements ProjectNode<PermissionsNode>{
+	public static class PermissionsPhysicalNode implements PhysicalNode<PermissionsNode>{
+		private final File file;
+		public PermissionsPhysicalNode(File file){
+			this.file=file;
+		}
+		@Override
+		public void clear(){
+			file.delete();
+		}
+		@Override
+		public void persist(NodeModel<PermissionsNode> model){
+			PermissionsModel m=(PermissionsModel)model;
+			try{
+				while(!Files.isWritable(file.toPath()))
+					Thread.onSpinWait();
+				CompilationUnit cu=StaticJavaParser.parse(file);
+				Optional<EnumDeclaration> permissionEnum=findPermissionEnum(cu);
+				if(permissionEnum.isPresent()){
+					EnumDeclaration enumDecl=permissionEnum.get();
+					enumDecl.getEntries().clear();
+					for(String perm:m.getPermissions())
+						enumDecl.addEntry(new EnumConstantDeclaration(perm));
+					Files.writeString(file.toPath(),cu.toString());
 				}
-				
-				permissions.sort((a1, a2) -> -1); // Сохраняем оригинальную сортировку
-			} else {
-				permissions = new ArrayList<>();
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
 			}
-		} catch (IOException ex) {
-			throw new UncheckedIOException(ex);
+		}
+		@Override
+		public NodeModel<PermissionsNode> load(){
+			try{
+				CompilationUnit cu=StaticJavaParser.parse(file);
+				Optional<EnumDeclaration> permissionEnum=findPermissionEnum(cu);
+				if(permissionEnum.isPresent()){
+					List<String> permissions=permissionEnum.get().getEntries().stream().map(EnumConstantDeclaration::getNameAsString).toList();
+					return new PermissionsModel(permissions);
+				}
+				return new PermissionsModel(List.of());
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
+		}
+		@Override
+		public boolean exists(){
+			return file.exists();
+		}
+		private Optional<EnumDeclaration> findPermissionEnum(CompilationUnit cu){
+			return cu.findAll(EnumDeclaration.class).stream().filter(enumDecl->enumDecl.getImplementedTypes().stream().anyMatch(type->type instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)type).getNameAsString().contains("Permission"))).findFirst();
 		}
 	}
-	
-	public void addPermission(String permission) {
-		try {
-			if (permissions.contains(permission)) {
-				throw new IllegalStateException(permission + " already exists.");
-			}
-			
-			while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
-			
-			CompilationUnit cu = StaticJavaParser.parse(location);
-			
-			// Найти enum Permission
-			Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
-				.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-					.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-						((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
-				.findFirst();
-			
-			if (permissionEnum.isPresent()) {
-				EnumDeclaration enumDecl = permissionEnum.get();
-				
-				// Добавить новую константу
-				EnumConstantDeclaration newConstant = new EnumConstantDeclaration(permission);
-				enumDecl.addEntry(newConstant);
-				
-				Files.writeString(location.toPath(), cu.toString());
-				permissions.add(permission);
-			}
-		} catch (IOException ex) {
-			throw new UncheckedIOException(ex);
+
+	public static class PermissionsModel implements NodeModel<PermissionsNode>{
+		private final List<String> permissions;
+		public PermissionsModel(List<String> permissions){
+			this.permissions=new ArrayList<>(permissions);
+		}
+		public List<String> getPermissions(){
+			return Collections.unmodifiableList(permissions);
+		}
+		public void addPermission(String permission){
+			if(permissions.contains(permission))
+				throw new IllegalStateException(permission+" already exists.");
+			permissions.add(permission);
+		}
+		public void removePermission(String permission){
+			if(!permissions.contains(permission))
+				throw new IllegalStateException(permission+" does not exist.");
+			permissions.remove(permission);
+		}
+		public boolean hasPermission(String permission){
+			return permissions.contains(permission);
 		}
 	}
-	
-	public void removePermission(String permission) {
-		try {
-			if (!permissions.contains(permission)) {
-				throw new IllegalStateException(permission + " does not exist.");
-			}
-			
-			while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
-			
-			CompilationUnit cu = StaticJavaParser.parse(location);
-			
-			// Найти enum Permission
-			Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
-				.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-					.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-						((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
-				.findFirst();
-			
-			if (permissionEnum.isPresent()) {
-				EnumDeclaration enumDecl = permissionEnum.get();
-				
-				// Удалить константу
-				enumDecl.getEntries().removeIf(constant -> constant.getNameAsString().equals(permission));
-				
-				Files.writeString(location.toPath(), cu.toString());
-				permissions.remove(permission);
-			}
-		} catch (IOException ex) {
-			throw new UncheckedIOException(ex);
-		}
+
+	private final PhysicalNode<PermissionsNode> physicalNode;
+	private final NodeModel<PermissionsNode> model;
+	public PermissionsNode(PhysicalNode<PermissionsNode> physicalNode){
+		this.physicalNode=physicalNode;
+		this.model=physicalNode.load();
+	}
+	public PermissionsNode(File file){
+		this.physicalNode=new PermissionsPhysicalNode(file);
+		this.model=physicalNode.exists()?physicalNode.load():new PermissionsModel(List.of());
+	}
+	public PhysicalNode<PermissionsNode> getPhysicalRepresentation(){
+		return physicalNode;
+	}
+	public NodeModel<PermissionsNode> getModel(){
+		return model;
+	}
+	public void addPermission(String permission){
+		((PermissionsModel)model).addPermission(permission);
+		physicalNode.persist(model);
+	}
+	public void removePermission(String permission){
+		((PermissionsModel)model).removePermission(permission);
+		physicalNode.persist(model);
+	}
+	public List<String> getPermissions(){
+		return((PermissionsModel)model).getPermissions();
+	}
+	public boolean hasPermission(String permission){
+		return((PermissionsModel)model).hasPermission(permission);
 	}
 }
