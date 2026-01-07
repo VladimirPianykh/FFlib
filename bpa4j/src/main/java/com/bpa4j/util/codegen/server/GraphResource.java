@@ -8,16 +8,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.bpa4j.util.codegen.EditableNode;
+import com.bpa4j.util.codegen.EditableNode.FileEditablePhysicalNode;
 import com.bpa4j.util.codegen.EditableNode.Property;
 import com.bpa4j.util.codegen.EditableNode.Property.PropertyType;
+import com.bpa4j.util.codegen.FeatureNode.FileFeaturePhysicalNode;
 import com.bpa4j.util.codegen.FeatureConfigNode;
+import com.bpa4j.util.codegen.FeatureConfigNode.FileFeatureConfigPhysicalNode;
 import com.bpa4j.util.codegen.FeatureNode;
 import com.bpa4j.util.codegen.PermissionsNode;
+import com.bpa4j.util.codegen.Problem;
 import com.bpa4j.util.codegen.ProjectGraph;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.FileNavigatorPhysicalNode;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.HelpEntry;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.Instruction;
-import com.bpa4j.util.codegen.ProjectGraph.Problem;
 import com.bpa4j.util.codegen.ProjectNode;
 import com.bpa4j.util.codegen.RolesNode;
 import com.bpa4j.util.codegen.RolesNode.RoleRepresentation;
@@ -47,7 +51,7 @@ public class GraphResource{
 
 	@GET
 	public Map<String,Object>summary(){
-		Map<String,Long>counts=graph.nodes.stream().collect(Collectors.groupingBy(n->n.getClass().getSimpleName(),Collectors.counting()));
+		Map<String,Long>counts=graph.getAllNodes().stream().collect(Collectors.groupingBy(n->n.getClass().getSimpleName(),Collectors.counting()));
 		Map<String,Object>m=new HashMap<>();
 		m.put("projectFolder",new File(graph.projectFolder.getPath()).getPath());
 		m.put("counts",counts);
@@ -71,12 +75,12 @@ public class GraphResource{
 	@GET
 	@Path("/editables")
 	public List<Map<String,Object>>editables(@QueryParam("detailed") boolean detailed){
-		return graph.nodes.stream().filter(n->n instanceof EditableNode).map(n->{
+		return graph.getAllNodes().stream().filter(n->n instanceof EditableNode).map(n->{
 			EditableNode e=(EditableNode)n;
 			Map<String,Object>m=new HashMap<>();
-			m.put("name",e.name);
+			m.put("name",e.getName());
 			m.put("objectName",e.getObjectName()==null?"<no-name>":e.getObjectName());
-			m.put("location",e.location==null?null:e.location.getPath());
+			m.put("location",getLocationOrThrow(e));
 			if(detailed){
 				List<Map<String,Object>>props=new ArrayList<>();
 				for(EditableNode.Property p:e.getProperties()){
@@ -111,13 +115,29 @@ public class GraphResource{
 			properties.add(new Property(pn,pt==null?null:new PropertyType(pt)));
 		}
 		EditableNode en=graph.createEditableNode(name,objectName,properties.toArray(new Property[0]));
-		return Map.of("status","ok","location",en.location.getPath());
+		return Map.of("status","ok","location",getLocationOrThrow(en).getPath());
 	}
 
+	private File getLocationOrThrow(EditableNode en){
+		if(en.getPhysicalRepresentation()instanceof FileEditablePhysicalNode f)return f.getLocation();
+		else throw new UnsupportedOperationException(en.getPhysicalRepresentation()+" is not a file representation.");
+	}
+	private File getLocationOrThrow(NavigatorNode nn){
+		if(nn.getPhysicalRepresentation()instanceof FileNavigatorPhysicalNode f)return f.getLocation();
+		else throw new UnsupportedOperationException(nn.getPhysicalRepresentation()+" is not a file representation.");
+	}
+	private File getLocationOrThrow(FeatureNode fn){
+		if(fn.getPhysicalRepresentation()instanceof FileFeaturePhysicalNode f)return f.getLocation();
+		else throw new UnsupportedOperationException(fn.getPhysicalRepresentation()+" is not a file representation.");
+	}
+	private File getLocationOrThrow(FeatureConfigNode fcn){
+		if(fcn.getPhysicalRepresentation()instanceof FileFeatureConfigPhysicalNode f)return f.getLocation();
+		else throw new UnsupportedOperationException(fcn.getPhysicalRepresentation()+" is not a file representation.");
+	}
 	@DELETE
 	@Path("/editables/{name}")
 	public Map<String,Object>deleteEditable(@PathParam("name")String name){
-		EditableNode en=(EditableNode)graph.nodes.stream().filter(n->n instanceof EditableNode&&((EditableNode)n).name.equals(name)).findAny().orElse(null);
+		EditableNode en=(EditableNode)graph.getAllNodes().stream().filter(n->n instanceof EditableNode&&((EditableNode)n).getName().equals(name)).findAny().orElse(null);
 		if(en==null)throw new IllegalArgumentException("Editable not found: "+name);
 		graph.deleteNode(en);
 		return Map.of("status","ok");
@@ -126,7 +146,7 @@ public class GraphResource{
 	@PUT
 	@Path("/editables/{name}")
 	public Map<String,Object>updateEditable(@PathParam("name")String name,Map<String,Object>body){
-		EditableNode en=(EditableNode)graph.nodes.stream().filter(n->n instanceof EditableNode&&((EditableNode)n).name.equals(name)).findAny().orElse(null);
+		EditableNode en=(EditableNode)graph.getAllNodes().stream().filter(n->n instanceof EditableNode&&((EditableNode)n).getName().equals(name)).findAny().orElse(null);
 		if(en==null)throw new IllegalArgumentException("Editable not found: "+name);
 		String newName=(String)body.get("newName");
 		String newObjectName=(String)body.get("newObjectName");
@@ -151,8 +171,8 @@ public class GraphResource{
 			if(prop==null)continue;
 			String nn=(String)m.get("newName");
 			String nt=(String)m.get("type");
-			if(nn!=null&&!nn.isBlank())prop.changeName(nn,en);
-			if(nt!=null&&!nt.isBlank())prop.changeType(new PropertyType(nt),en);
+			if(nn!=null&&!nn.isBlank())en.changePropertyName(prop,nn);
+			if(nt!=null&&!nt.isBlank())en.changePropertyType(prop,new PropertyType(nt));
 		}
 		return Map.of("status","ok");
 	}
@@ -160,14 +180,12 @@ public class GraphResource{
 	@GET
 	@Path("/permissions")
 	public List<Map<String,Object>>permissions(@QueryParam("detailed") boolean detailed){
-		PermissionsNode pn=(PermissionsNode)graph.nodes.stream().filter(n->n instanceof PermissionsNode).findAny().orElse(null);
+		PermissionsNode pn=(PermissionsNode)graph.getAllNodes().stream().filter(n->n instanceof PermissionsNode).findAny().orElse(null);
 		if(pn==null)return List.of();
 		List<Map<String,Object>>out=new ArrayList<>();
-		File loc=pn.location==null?null:pn.location;
-		for(String perm:pn.permissions){
+		for(String perm:pn.getPermissions()){
 			Map<String,Object>m=new HashMap<>();
 			m.put("permission",perm);
-			m.put("location",loc==null?null:loc.getPath());
 			if(detailed){} // no extra data for now
 			out.add(m);
 		}
@@ -178,7 +196,7 @@ public class GraphResource{
 	@Path("/permissions")
 	public Map<String,Object>addPermission(Map<String,String>body){
 		String permission=body.get("permission");
-		PermissionsNode pn=(PermissionsNode)graph.nodes.stream().filter(n->n instanceof PermissionsNode).findAny().orElse(null);
+		PermissionsNode pn=(PermissionsNode)graph.getAllNodes().stream().filter(n->n instanceof PermissionsNode).findAny().orElse(null);
 		if(pn==null)throw new IllegalStateException("PermissionsNode not found");
 		pn.addPermission(permission);
 		return Map.of("status","ok");
@@ -187,7 +205,7 @@ public class GraphResource{
 	@DELETE
 	@Path("/permissions/{perm}")
 	public Map<String,Object>removePermission(@PathParam("perm")String perm){
-		PermissionsNode pn=(PermissionsNode)graph.nodes.stream().filter(n->n instanceof PermissionsNode).findAny().orElse(null);
+		PermissionsNode pn=(PermissionsNode)graph.getAllNodes().stream().filter(n->n instanceof PermissionsNode).findAny().orElse(null);
 		if(pn==null)throw new IllegalStateException("PermissionsNode not found");
 		pn.removePermission(perm);
 		return Map.of("status","ok");
@@ -196,15 +214,13 @@ public class GraphResource{
 	@GET
 	@Path("/roles")
 	public List<Map<String,Object>>roles(@QueryParam("detailed") boolean detailed){
-		RolesNode rn=(RolesNode)graph.nodes.stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
+		RolesNode rn=(RolesNode)graph.getAllNodes().stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
 		if(rn==null)return List.of();
-		File loc=rn.location==null?null:rn.location;
 		List<Map<String,Object>>out=new ArrayList<>();
-		for(RoleRepresentation r:rn.roles){
+		for(RoleRepresentation r:rn.getRoles()){
 			Map<String,Object>m=new HashMap<>();
-			m.put("name",r.name);
-			m.put("location",loc==null?null:loc.getPath());
-			if(detailed)m.put("permissions",r.permissions==null?List.of():new ArrayList<>(r.permissions));
+			m.put("name",r.getName());
+			if(detailed)m.put("permissions",r.getPermissions()==null?List.of():new ArrayList<>(r.getPermissions()));
 			out.add(m);
 		}
 		return out;
@@ -214,7 +230,7 @@ public class GraphResource{
 	@Path("/roles")
 	public Map<String,Object>addRole(Map<String,String>body){
 		String name=body.get("name");
-		RolesNode rn=(RolesNode)graph.nodes.stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
+		RolesNode rn=(RolesNode)graph.getAllNodes().stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
 		if(rn==null)throw new IllegalStateException("RolesNode not found");
 		rn.addRole(name);
 		return Map.of("status","ok");
@@ -223,7 +239,7 @@ public class GraphResource{
 	@DELETE
 	@Path("/roles/{role}")
 	public Map<String,Object>removeRole(@PathParam("role")String role){
-		RolesNode rn=(RolesNode)graph.nodes.stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
+		RolesNode rn=(RolesNode)graph.getAllNodes().stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
 		if(rn==null)throw new IllegalStateException("RolesNode not found");
 		rn.removeRole(role);
 		return Map.of("status","ok");
@@ -233,7 +249,7 @@ public class GraphResource{
 	@Path("/roles/{role}/permissions")
 	public Map<String,Object>grantPermission(@PathParam("role")String role,Map<String,String>body){
 		String permission=body.get("permission");
-		RolesNode rn=(RolesNode)graph.nodes.stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
+		RolesNode rn=(RolesNode)graph.getAllNodes().stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
 		if(rn==null)throw new IllegalStateException("RolesNode not found");
 		rn.addPermission(role,permission);
 		return Map.of("status","ok");
@@ -242,7 +258,7 @@ public class GraphResource{
 	@DELETE
 	@Path("/roles/{role}/permissions/{perm}")
 	public Map<String,Object>revokePermission(@PathParam("role")String role,@PathParam("perm")String perm){
-		RolesNode rn=(RolesNode)graph.nodes.stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
+		RolesNode rn=(RolesNode)graph.getAllNodes().stream().filter(n->n instanceof RolesNode).findAny().orElse(null);
 		if(rn==null)throw new IllegalStateException("RolesNode not found");
 		rn.removePermission(role,perm);
 		return Map.of("status","ok");
@@ -251,20 +267,20 @@ public class GraphResource{
 	@GET
 	@Path("/navigator")
 	public List<Map<String,Object>>navigator(@QueryParam("detailed") boolean detailed){
-		NavigatorNode nn=(NavigatorNode)graph.nodes.stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
+		NavigatorNode nn=(NavigatorNode)graph.getAllNodes().stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
 		if(nn==null)return List.of();
-		File loc=nn.location==null?null:nn.location;
+		File loc=getLocationOrThrow(nn);
 		List<Map<String,Object>>out=new ArrayList<>();
-		for(HelpEntry e:nn.entries){
+		for(HelpEntry e:nn.getEntries()){
 			Map<String,Object>m=new HashMap<>();
-			m.put("text",e.text);
+			m.put("text",e.getText());
 			m.put("location",loc==null?null:loc.getPath());
 			if(detailed){
 				List<Map<String,Object>>ins=new ArrayList<>();
-				for(Instruction i:e.instructions){
+				for(Instruction i:e.getInstructions()){
 					Map<String,Object>im=new HashMap<>();
-					im.put("type",i.type.name());
-					im.put("text",i.text);
+					im.put("type",i.getType().name());
+					im.put("text",i.getText());
 					ins.add(im);
 				}
 				m.put("instructions",ins);
@@ -277,70 +293,67 @@ public class GraphResource{
 	@POST
 	@Path("/navigator")
 	public Map<String,Object>ensureNavigator(){
-		NavigatorNode nn=(NavigatorNode)graph.nodes.stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
-		if(nn==null){
-			nn=new NavigatorNode(graph.projectFolder);
-			graph.nodes.add(nn);
-		}
+		NavigatorNode nn=(NavigatorNode)graph.getAllNodes().stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
+		if(nn==null)nn=graph.createNavigatorNode();
 		return Map.of("status","ok");
 	}
 
 	@PUT
 	@Path("/navigator/entries/{text}")
 	public Map<String,Object>navigatorChangeText(@PathParam("text")String text,Map<String,String>body){
-		NavigatorNode nn=(NavigatorNode)graph.nodes.stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
+		NavigatorNode nn=(NavigatorNode)graph.getAllNodes().stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
 		if(nn==null)throw new IllegalStateException("NavigatorNode not found");
 		String newText=body.get("text");
-		NavigatorNode.HelpEntry e=nn.entries.stream().filter(x->x.text.equals(text)).findAny().orElse(null);
+		NavigatorNode.HelpEntry e=nn.getEntries().stream().filter(x->x.getText().equals(text)).findAny().orElse(null);
 		if(e==null)throw new IllegalArgumentException("Entry not found: "+text);
-		e.changeText(newText,nn);
+		nn.changeEntryText(e,newText);
 		return Map.of("status","ok");
 	}
 
 	@POST
 	@Path("/navigator/entries/{text}/instructions")
 	public Map<String,Object>navigatorAppendInstruction(@PathParam("text")String text,Map<String,String>body){
-		NavigatorNode nn=(NavigatorNode)graph.nodes.stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
+		NavigatorNode nn=(NavigatorNode)graph.getAllNodes().stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
 		if(nn==null)throw new IllegalStateException("NavigatorNode not found");
-		NavigatorNode.HelpEntry e=nn.entries.stream().filter(x->x.text.equals(text)).findAny().orElse(null);
+		NavigatorNode.HelpEntry e=nn.getEntries().stream().filter(x->x.getText().equals(text)).findAny().orElse(null);
 		if(e==null)throw new IllegalArgumentException("Entry not found: "+text);
 		Instruction.Type type=Instruction.Type.valueOf(body.getOrDefault("type","TEXT"));
 		String iText=body.get("text");
-		e.appendInstruction(new Instruction(iText,type),nn);
+		nn.appendInstruction(e,new Instruction(iText,type));
 		return Map.of("status","ok");
 	}
 	
 	@PUT
 	@Path("/navigator/entries/{text}/instructions/{index}")
 	public Map<String,Object>navigatorReplaceInstruction(@PathParam("text")String text,@PathParam("index")int index,Map<String,String>body){
-		NavigatorNode nn=(NavigatorNode)graph.nodes.stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
+		NavigatorNode nn=(NavigatorNode)graph.getAllNodes().stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
 		if(nn==null)throw new IllegalStateException("NavigatorNode not found");
-		NavigatorNode.HelpEntry e=nn.entries.stream().filter(x->x.text.equals(text)).findAny().orElse(null);
+		NavigatorNode.HelpEntry e=nn.getEntries().stream().filter(x->x.getText().equals(text)).findAny().orElse(null);
 		if(e==null)throw new IllegalArgumentException("Entry not found: "+text);
 		Instruction.Type type=Instruction.Type.valueOf(body.getOrDefault("type","TEXT"));
 		String iText=body.get("text");
-		e.replaceInstruction(new Instruction(iText,type),index,nn);
+		nn.replaceInstruction(e,index,new Instruction(iText,type));
 		return Map.of("status","ok");
 	}
 	
 	@DELETE
 	@Path("/navigator/entries/{text}/instructions/last")
 	public Map<String,Object>navigatorDeleteLastInstruction(@PathParam("text")String text){
-		NavigatorNode nn=(NavigatorNode)graph.nodes.stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
+		NavigatorNode nn=(NavigatorNode)graph.getAllNodes().stream().filter(n->n instanceof NavigatorNode).findAny().orElse(null);
 		if(nn==null)throw new IllegalStateException("NavigatorNode not found");
-		NavigatorNode.HelpEntry e=nn.entries.stream().filter(x->x.text.equals(text)).findAny().orElse(null);
+		NavigatorNode.HelpEntry e=nn.getEntries().stream().filter(x->x.getText().equals(text)).findAny().orElse(null);
 		if(e==null)throw new IllegalArgumentException("Entry not found: "+text);
-		e.deleteLastInstruction(nn);
+		nn.deleteLastInstruction(e);
 		return Map.of("status","ok");
 	}
 	
 	@GET
 	@Path("/features")
 	public List<Map<String,Object>>features(@QueryParam("detailed") boolean detailed){
-		return graph.nodes.stream().filter(n->n instanceof FeatureConfigNode).map(n->{
+		return graph.getNodes(FeatureConfigNode.class).stream().map(n->{
 			Map<String,Object>m=new HashMap<>();
-			m.put("name",((FeatureConfigNode)n).getFeatureName());
-			m.put("location",n.location==null?null:n.location.getPath());
+			m.put("name",n.getFeatureName());
+			m.put("location",getLocationOrThrow(n));
 			if(detailed)m.put("type",n.getClass().getSimpleName());
 			return m;
 		}).toList();
@@ -361,18 +374,17 @@ public class GraphResource{
 	@POST
 	@Path("/reload")
 	public Map<String,Object>reload(){
-		ProjectGraph ng=new ProjectGraph(graph.projectFolder);
-		graph.nodes=ng.nodes;
-		return Map.of("status","ok","counts",graph.nodes.stream().collect(Collectors.groupingBy(n->n.getClass().getSimpleName(),Collectors.counting())));
+		graph.reload();
+		return Map.of("status","ok","counts",graph.getAllNodes().stream().collect(Collectors.groupingBy(n->n.getClass().getSimpleName(),Collectors.counting())));
 	}
 	
 	@GET
 	@Path("/impl-features")
 	public List<Map<String,Object>>implFeatures(@QueryParam("detailed") boolean detailed){
-		return graph.nodes.stream().filter(n->n instanceof FeatureNode).map(n->{
+		return graph.getNodes(FeatureNode.class).stream().map(n->{
 			Map<String,Object>m=new HashMap<>();
-			m.put("name",((FeatureNode)n).name);
-			m.put("location",n.location==null?null:n.location.getPath());
+			m.put("name",n.getName());
+			m.put("location",getLocationOrThrow(n));
 			if(detailed)m.put("type",n.getClass().getSimpleName());
 			return m;
 		}).toList();
@@ -382,10 +394,11 @@ public class GraphResource{
 	@GET
 	@Path("/raw/node/{node-index}")
 	public Map<String,Object>nodeSummary(@PathParam("node-index") int index){
-		ProjectNode n=graph.nodes.get(index);
+		ProjectNode<?>n=graph.getAllNodes().get(index);
 		Map<String,Object>m=new HashMap<>();
 		m.put("type",n.getClass().getSimpleName());
-		m.put("path",n.location==null?null:n.location.getPath());
+		if(n instanceof NavigatorNode nn)m.put("path",getLocationOrThrow(nn));
+		else if(n instanceof EditableNode en)m.put("path",getLocationOrThrow(en));
 		return m;
 	}
 }

@@ -25,7 +25,14 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -47,626 +54,134 @@ import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import com.bpa4j.core.Root;
 import com.bpa4j.ui.swing.util.Message;
 import com.bpa4j.util.SprintUI;
+import com.bpa4j.util.codegen.ClassNode.ClassPhysicalNode;
 import com.bpa4j.util.codegen.EditableNode.Property;
+import com.bpa4j.util.codegen.PermissionsNode.FilePermissionsPhysicalNode;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.FileNavigatorPhysicalNode;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.HelpEntry;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.Instruction;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.NavigatorPhysicalNode;
+import com.bpa4j.util.codegen.RolesNode.FileRolesPhysicalNode;
 import com.bpa4j.util.codegen.RolesNode.RoleRepresentation;
 import com.bpa4j.util.codegen.server.ProjectServer;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import lombok.Getter;
 
-/**
- * A java BPA project representation using JavaParser.
- * Designed to provide low-code access.
- */
-public class ProjectGraph{
-	//TODO: #13 make graph modular and extensible
-	/* 	public static class PermissionsNodeV2 extends ProjectNode {
-			public ArrayList<String> permissions;
-			
-			public PermissionsNodeV2(File file) {
-				super(file);
-				try {
-					CompilationUnit cu = StaticJavaParser.parse(file);
-					
-					// Найти enum, который реализует интерфейс Permission
-					Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
-						.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-							.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-								((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
-						.findFirst();
-					
-					if (permissionEnum.isPresent()) {
-						EnumDeclaration enumDecl = permissionEnum.get();
-						permissions = new ArrayList<>();
-						
-						// Извлечь константы enum
-						enumDecl.getEntries().forEach(constant -> {
-							permissions.add(constant.getNameAsString());
-						});
-						
-						permissions.sort((a1, a2) -> -1); // Сохраняем оригинальную сортировку
-					} else {
-						permissions = new ArrayList<>();
-					}
-				} catch (IOException ex) {
-					throw new UncheckedIOException(ex);
-				}
-			}
-			
-			public void addPermission(String permission) {
-				try {
-					if (permissions.contains(permission)) {
-						throw new IllegalStateException(permission + " already exists.");
-					}
-					
-					while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
-					
-					CompilationUnit cu = StaticJavaParser.parse(location);
-					
-					// Найти enum Permission
-					Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
-						.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-							.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-								((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
-						.findFirst();
-					
-					if (permissionEnum.isPresent()) {
-						EnumDeclaration enumDecl = permissionEnum.get();
-						
-						// Добавить новую константу
-						EnumConstantDeclaration newConstant = new EnumConstantDeclaration(permission);
-						enumDecl.addEntry(newConstant);
-						
-						Files.writeString(location.toPath(), cu.toString());
-						permissions.add(permission);
-					}
-				} catch (IOException ex) {
-					throw new UncheckedIOException(ex);
-				}
-			}
-			
-			public void removePermission(String permission) {
-				try {
-					if (!permissions.contains(permission)) {
-						throw new IllegalStateException(permission + " does not exist.");
-					}
-					
-					while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
-					
-					CompilationUnit cu = StaticJavaParser.parse(location);
-					
-					// Найти enum Permission
-					Optional<EnumDeclaration> permissionEnum = cu.findAll(EnumDeclaration.class).stream()
-						.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-							.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-								((ClassOrInterfaceType) type).getNameAsString().contains("Permission")))
-						.findFirst();
-					
-					if (permissionEnum.isPresent()) {
-						EnumDeclaration enumDecl = permissionEnum.get();
-						
-						// Удалить константу
-						enumDecl.getEntries().removeIf(constant -> constant.getNameAsString().equals(permission));
-						
-						Files.writeString(location.toPath(), cu.toString());
-						permissions.remove(permission);
-					}
-				} catch (IOException ex) {
-					throw new UncheckedIOException(ex);
-				}
-			}
-		}
-		
-		public static class RolesNodeV2 extends ProjectNode {
-			public static class RoleRepresentation {
-				public String name;
-				public java.util.Set<String> permissions;
-				public java.util.Set<String> features;
-				
-				public RoleRepresentation(String name, java.util.Set<String> permissions, java.util.Set<String> features) {
-					this.name = name;
-					this.permissions = permissions;
-					this.features = features;
-				}
-			}
-			
-			public ArrayList<RoleRepresentation> roles = new ArrayList<>();
-			
-			public RolesNodeV2(File file, PermissionsNodeV2 p) {
-				super(file);
-				try {
-					CompilationUnit cu = StaticJavaParser.parse(file);
-					
-					// Найти enum, который реализует интерфейс Role
-					Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
-						.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-							.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-								((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
-						.findFirst();
-					
-					if (roleEnum.isPresent()) {
-						EnumDeclaration enumDecl = roleEnum.get();
-						
-						// Парсить каждую константу enum
-						enumDecl.getEntries().forEach(constant -> {
-							String name = constant.getNameAsString();
-							java.util.Set<String> permissions = new java.util.TreeSet<>();
-							java.util.Set<String> features = new java.util.TreeSet<>();
-							
-							// Парсить аргументы константы
-							if (constant.getArguments().size() >= 2) {
-								// Первый аргумент - лямбда для permissions
-								if (constant.getArguments().get(0) instanceof LambdaExpr) {
-									LambdaExpr permissionsLambda = (LambdaExpr) constant.getArguments().get(0);
-									permissions = parsePermissionsFromLambda(permissionsLambda, p);
-								}
-								
-								// Второй аргумент - лямбда для features (пока не обрабатываем)
-								// TO DO: parse features
-							}
-							
-							roles.add(new RoleRepresentation(name, permissions, features));
-						});
-					}
-				} catch (IOException ex) {
-					throw new UncheckedIOException(ex);
-				}
-			}
-			
-			private java.util.Set<String> parsePermissionsFromLambda(LambdaExpr lambda, PermissionsNodeV2 p) {
-				java.util.Set<String> permissions = new java.util.TreeSet<>();
-				
-				// Проверить, является ли это вызовом Permission.values()
-				if (lambda.getBody() instanceof ExpressionStmt) {
-					ExpressionStmt stmt = (ExpressionStmt) lambda.getBody();
-					if (stmt.getExpression() instanceof MethodCallExpr) {
-						MethodCallExpr methodCall = (MethodCallExpr) stmt.getExpression();
-						if (methodCall.getNameAsString().equals("values") && 
-							methodCall.getScope().isPresent() && 
-							methodCall.getScope().get() instanceof NameExpr) {
-							NameExpr scope = (NameExpr) methodCall.getScope().get();
-							if (scope.getNameAsString().contains("Permission")) {
-								// Это Permission.values() - все разрешения
-								return new java.util.TreeSet<>(p.permissions);
-							}
-						}
-					}
-				}
-				
-				// Иначе ищем массив разрешений
-				if (lambda.getBody() instanceof ExpressionStmt) {
-					ExpressionStmt stmt = (ExpressionStmt) lambda.getBody();
-					if (stmt.getExpression() instanceof ArrayCreationExpr) {
-						ArrayCreationExpr array = (ArrayCreationExpr) stmt.getExpression();
-						array.getInitializer().ifPresent(init -> {
-							init.getValues().forEach(element -> {
-								if (element instanceof NameExpr) {
-									NameExpr nameExpr = (NameExpr) element;
-									permissions.add(nameExpr.getNameAsString());
-								}
-							});
-						});
-					}
-				}
-				
-				return permissions;
-			}
-			
-			public void addPermission(String roleName, String permission) {
-				for (RoleRepresentation r : roles) {
-					if (r.name.equals(roleName)) {
-						try {
-							if (r.permissions.contains(permission)) {
-								throw new IllegalStateException(r.name + " already has permission " + permission + ".");
-							}
-							
-							while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
-							
-							CompilationUnit cu = StaticJavaParser.parse(location);
-							
-							// Найти enum Role
-							Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
-								.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-									.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-										((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
-								.findFirst();
-							
-							if (roleEnum.isPresent()) {
-								EnumDeclaration enumDecl = roleEnum.get();
-								
-								// Найти константу роли
-								Optional<EnumConstantDeclaration> roleConstant = enumDecl.getEntries().stream()
-									.filter(constant -> constant.getNameAsString().equals(roleName))
-									.findFirst();
-								
-								if (roleConstant.isPresent()) {
-									EnumConstantDeclaration constant = roleConstant.get();
-									
-									// Добавить разрешение в массив permissions
-									if (constant.getArguments().size() >= 1 && 
-										constant.getArguments().get(0) instanceof LambdaExpr) {
-										LambdaExpr permissionsLambda = (LambdaExpr) constant.getArguments().get(0);
-										
-										if (permissionsLambda.getBody() instanceof ExpressionStmt) {
-											ExpressionStmt stmt = (ExpressionStmt) permissionsLambda.getBody();
-											if (stmt.getExpression() instanceof ArrayCreationExpr) {
-												ArrayCreationExpr array = (ArrayCreationExpr) stmt.getExpression();
-												array.getInitializer().ifPresent(init -> {
-													init.getValues().add(new NameExpr(permission));
-												});
-											}
-										}
-									}
-									
-									Files.writeString(location.toPath(), cu.toString());
-									r.permissions.add(permission);
-									return;
-								}
-							}
-						} catch (IOException ex) {
-							throw new UncheckedIOException(ex);
-						}
-					}
-				}
-				throw new IllegalArgumentException("There is no role " + roleName + ".");
-			}
-			
-			public void removePermission(String roleName, String permission) {
-				for (RoleRepresentation r : roles) {
-					if (r.name.equals(roleName)) {
-						try {
-							if (r.permissions.contains(permission)) {
-								while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
-								
-								CompilationUnit cu = StaticJavaParser.parse(location);
-								
-								// Найти enum Role
-								Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
-									.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-										.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-											((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
-									.findFirst();
-								
-								if (roleEnum.isPresent()) {
-									EnumDeclaration enumDecl = roleEnum.get();
-									
-									// Найти константу роли
-									Optional<EnumConstantDeclaration> roleConstant = enumDecl.getEntries().stream()
-										.filter(constant -> constant.getNameAsString().equals(roleName))
-										.findFirst();
-									
-									if (roleConstant.isPresent()) {
-										EnumConstantDeclaration constant = roleConstant.get();
-										
-										// Удалить разрешение из массива permissions
-										if (constant.getArguments().size() >= 1 && 
-											constant.getArguments().get(0) instanceof LambdaExpr) {
-											LambdaExpr permissionsLambda = (LambdaExpr) constant.getArguments().get(0);
-											
-											if (permissionsLambda.getBody() instanceof ExpressionStmt) {
-												ExpressionStmt stmt = (ExpressionStmt) permissionsLambda.getBody();
-												if (stmt.getExpression() instanceof ArrayCreationExpr) {
-													ArrayCreationExpr array = (ArrayCreationExpr) stmt.getExpression();
-													array.getInitializer().ifPresent(init -> {
-														init.getValues().removeIf(element -> 
-															element instanceof NameExpr && 
-															((NameExpr) element).getNameAsString().equals(permission));
-													});
-												}
-											}
-										}
-										
-										Files.writeString(location.toPath(), cu.toString());
-										r.permissions.remove(permission);
-										return;
-									}
-								}
-							} else {
-								throw new IllegalStateException(r.name + " does not have permission " + permission);
-							}
-						} catch (IOException ex) {
-							throw new UncheckedIOException(ex);
-						}
-					}
-				}
-				throw new IllegalArgumentException("There is no role " + roleName);
-			}
-			
-			public RoleRepresentation addRole(String name, String... permissions) {
-				try {
-					RoleRepresentation r = new RoleRepresentation(name, new java.util.TreeSet<>(java.util.Arrays.asList(permissions)), null);
-					
-					while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
-					
-					CompilationUnit cu = StaticJavaParser.parse(location);
-					
-					// Найти enum Role
-					Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
-						.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-							.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-								((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
-						.findFirst();
-					
-					if (roleEnum.isPresent()) {
-						EnumDeclaration enumDecl = roleEnum.get();
-						
-						// Создать новую константу enum
-						EnumConstantDeclaration newConstant = new EnumConstantDeclaration(name);
-						
-						enumDecl.addEntry(newConstant);
-						
-						Files.writeString(location.toPath(), cu.toString());
-						roles.add(r);
-						return r;
-					}
-				} catch (IOException ex) {
-					throw new UncheckedIOException(ex);
-				}
-				return null;
-			}
-			
-			public void removeRole(String name) {
-				try {
-					while (!Files.isWritable(location.toPath())) Thread.onSpinWait();
-					
-					CompilationUnit cu = StaticJavaParser.parse(location);
-					
-					// Найти enum Role
-					Optional<EnumDeclaration> roleEnum = cu.findAll(EnumDeclaration.class).stream()
-						.filter(enumDecl -> enumDecl.getImplementedTypes().stream()
-							.anyMatch(type -> type instanceof ClassOrInterfaceType && 
-								((ClassOrInterfaceType) type).getNameAsString().contains("Role")))
-						.findFirst();
-					
-					if (roleEnum.isPresent()) {
-						EnumDeclaration enumDecl = roleEnum.get();
-						
-						// Удалить константу роли
-						enumDecl.getEntries().removeIf(constant -> constant.getNameAsString().equals(name));
-						
-						Files.writeString(location.toPath(), cu.toString());
-						roles.removeIf(r -> r.name.equals(name));
-					}
-				} catch (IOException ex) {
-					throw new UncheckedIOException(ex);
-				}
-			}
-		}
-	 */
-	public static class NavigatorNode extends ProjectNode{
-		public static class Instruction{
-			public static enum Type{
-				START,FEATURE,TEXT,COMMENT;
-				public char toChar(){
-					return switch(this){
-						case START -> 's';
-						case FEATURE -> 'f';
-						case TEXT -> 't';
-						case COMMENT -> 'c';
-						default -> throw new AssertionError("This method does not know other constants.");
-					};
-				}
-				public static Type toType(char c){
-					return switch(c){
-						case 's' -> Instruction.Type.START;
-						case 'f' -> Instruction.Type.FEATURE;
-						case 't' -> Instruction.Type.TEXT;
-						case 'c' -> Instruction.Type.COMMENT;
-						default -> throw new IllegalArgumentException("Char '"+c+"' does not correspond to any constant.");
-					};
-				}
-			}
-			public String text;
-			public Type type;
-			public Instruction(String text,Type type){
-				this.text=text;
-				this.type=type;
-			}
-		}
-		public static class HelpEntry{
-			public String text;
-			public ArrayList<Instruction> instructions=new ArrayList<>();
-			public HelpEntry(String text){
-				this.text=text;
-			}
-			public void changeText(String text,NavigatorNode n){
-				try{
-					StringBuilder b=new StringBuilder();
-					for(String l:Files.readString(n.location.toPath()).split("\n")){
-						String[] s=l.split(" ",2);
-						if(s[1].equals(this.text)) s[1]=text;
-						b.append(s[0]).append(' ').append(s[1]).append('\n');
-					}
-					Files.writeString(n.location.toPath(),b);
-					this.text=text;
-				}catch(IOException ex){
-					throw new UncheckedIOException(ex);
-				}
-			}
-			public void replaceInstruction(Instruction c,int index,NavigatorNode n){
-				try{
-					StringBuilder b=new StringBuilder();
-					for(String l:Files.readString(n.location.toPath()).split("\n")){
-						String[] s=l.split(" ",2);
-						if(text.equals(s[1])){
-							String[] t=s[0].split("\\.");
-							int i=0;
-							for(;i<index;++i)
-								b.append(t[i]).append('.');
-							b.append(c.type.toChar()).append(c.text).append('.');
-							++i;
-							for(;i<t.length;++i)
-								b.append(t[i]).append('.');
-							b.deleteCharAt(b.length()-1);
-						}else b.append(s[0]);
-						b.append(' ').append(s[1]).append('\n');
-					}
-					Files.writeString(n.location.toPath(),b);
-					instructions.set(index,c);
-				}catch(IOException ex){
-					throw new UncheckedIOException(ex);
-				}
-			}
-			public void appendInstruction(Instruction c,NavigatorNode n){
-				try{
-					StringBuilder b=new StringBuilder();
-					for(String l:Files.readString(n.location.toPath()).split("\n")){
-						String[] s=l.split(" ",2);
-						b.append(s[0]);
-						if(s[1].equals(text)) b.append('.').append(c.type.toChar()).append(c.text);
-						b.append(' ').append(s[1]).append('\n');
-					}
-					Files.writeString(n.location.toPath(),b);
-					instructions.add(c);
-				}catch(IOException ex){
-					throw new UncheckedIOException(ex);
-				}
-			}
-			public void deleteLastInstruction(NavigatorNode n){
-				try{
-					StringBuilder b=new StringBuilder();
-					for(String l:Files.readString(n.location.toPath()).split("\n")){
-						String[] s=l.split(" ",2);
-						if(text.equals(s[1])){
-							String[] t=s[0].split("\\.");
-							for(int j=0;j<t.length-1;++j)
-								b.append(t[j]);
-						}else b.append(s[0]);
-						if(!(b.isEmpty()||Character.isWhitespace(b.charAt(b.length()-1)))) b.append(' ').append(s[1]).append('\n');
-					}
-					Files.writeString(n.location.toPath(),b);
-					instructions.removeLast();
-				}catch(IOException ex){
-					throw new UncheckedIOException(ex);
-				}
-			}
-		}
-		public ArrayList<HelpEntry> entries=new ArrayList<>();
-		public NavigatorNode(File file){
-			super(file);
-			try{
-				String str=Files.readString(file.toPath());
-				if(str.isBlank()) return;
-				for(String l:str.split("\n")){
-					String[] s=l.split(" ",2);
-					HelpEntry e=new HelpEntry(s[1]);
-					e.instructions.addAll(Stream.of(s[0].split("\\.")).map(t->new Instruction(t.substring(1),Instruction.Type.toType(t.charAt(0)))).toList());
-					entries.add(e);
-				}
-			}catch(IOException ex){
-				throw new UncheckedIOException(ex);
-			}
-		}
-		/**
-		 * Creates a new NavigatorNode.
-		 */
-		public NavigatorNode(ProjectGraph project){
-			super(new File(project.projectFolder,"resources/helppath.cfg"));
-			try{
-				location.createNewFile();
-			}catch(IOException ex){
-				throw new UncheckedIOException(ex);
-			}
-		}
-		public void deleteEntry(String text){
-			HelpEntry e=entries.stream().filter(entry->entry.text.equals(text)).findAny().get();
-			try{
-				StringBuilder b=new StringBuilder();
-				for(String l:Files.readString(location.toPath()).split("\n")){
-					String[] s=l.split(" ",2);
-					if(!s[1].equals(e.text)) b.append(s[0]).append(' ').append(s[1]).append('\n');
-				}
-				Files.writeString(location.toPath(),b);
-				entries.remove(e);
-			}catch(IOException ex){
-				throw new UncheckedIOException(ex);
-			}
-		}
-	}
-	public static class Problem{
-		public static enum ProblemType{
-			ERROR,WARNING,INFO;
-		}
-
-		public final String message;
-		public final ProblemType type;
-		public final Runnable solver;
-
-		public Problem(String message,ProblemType type){
-			this.message=message;
-			this.type=type;
-			solver=null;
-		}
-
-		public Problem(String message,ProblemType type,Runnable solver){
-			this.message=message;
-			this.type=type;
-			this.solver=solver;
-		}
-	}
-	public static interface DiagnosticService{
-		ArrayList<Problem> findProblems(ProjectGraph graph);
-	}
-	private static ArrayList<DiagnosticService> diagnosticServices=new ArrayList<>();
-	static{
-		// diagnosticServices.add();
-		//TODO: #2 add diagnostic services
-	}
-	private JavaParser parser=new JavaParser();
-	private ArrayList<Problem> problemsCache;
-	public ArrayList<ProjectNode> nodes=new ArrayList<>();
-	public File projectFolder;
+class GraphModel{
+	private final Map<Class<? extends ProjectNode<?>>,List<ProjectNode<?>>> nodesByType=new HashMap<>();
 	/**
-	 * @param projectFolder - the project folder. It is recommended to pass <b>src/main/java</b> path:
+	 * Gets all nodes with the given type.
+	 * Matchs the <b>exact</b> types.
 	 */
-	public ProjectGraph(File projectFolder){
-		this.projectFolder=projectFolder;
-		projectFolder.mkdirs();
+	public <T extends ProjectNode<T>> List<T> getNodes(Class<T> type){
+		return nodesByType.getOrDefault(type,List.of()).stream().map(type::cast).toList();
+	}
+	public <T extends ProjectNode<T>> Optional<T> findNode(Class<T> type,Predicate<T> filter){
+		return getNodes(type).stream().filter(filter).findFirst();
+	}
+	@SuppressWarnings("unchecked")
+	public void addNode(ProjectNode<?> node){
+		nodesByType.computeIfAbsent((Class<? extends ProjectNode<?>>)node.getClass(),k->new ArrayList<>()).add(node);
+	}
+	public void removeNode(ProjectNode<?> node){
+		var l=nodesByType.get(node.getClass());
+		if(l==null||!l.contains(node))throw new IllegalStateException("There is no node "+node+".");
+		nodesByType.get(node.getClass()).remove(node);
+	}
+	public List<ProjectNode<?>> getAllNodes(){
+		return nodesByType.values().stream().flatMap(List::stream).toList();
+	}
+	public EditableNode createEditableNode(ClassPhysicalNode<EditableNode>physicalNode,String name,String objectName,String basePackage,EditableNode.Property...properties) throws IOException{
+		validateEditableNodeName(name);
+		EditableNode node=new EditableNode(physicalNode,name,objectName,basePackage+".editables.registered",properties);
+		addNode(node);
+		return node;
+	}
+	public NavigatorNode createNavigatorNode(NavigatorPhysicalNode physicalNode){
+		if(!nodesByType.computeIfAbsent(NavigatorNode.class,e->new ArrayList<>()).isEmpty())
+			throw new IllegalStateException("There cannot be two or more navigator nodes.");
+		NavigatorNode node=new NavigatorNode(physicalNode);
+		nodesByType.computeIfAbsent(NavigatorNode.class,e->new ArrayList<>()).add(node);
+		return node;
+	}
+	/**
+	 * Validates that the name is a valid Java identifier and unique among EditableNodes.
+	 */
+	private void validateEditableNodeName(String name){
+		if(name==null||name.isBlank()) throw new IllegalArgumentException("Name '"+name+"' is not a valid identifier.");
+		if(!isValidJavaIdentifier(name)) throw new IllegalArgumentException("Name '"+name+"' is not a valid Java identifier.");
+		// Check for uniqueness
+		for(ProjectNode<?> node:getAllNodes()){
+			if(node instanceof EditableNode editableNode&&editableNode.getName().equals(name)){ throw new IllegalArgumentException("EditableNode with name '"+name+"' already exists."); }
+		}
+	}
+	/**
+	 * Checks if a string is a valid Java identifier.
+	 */
+	private static boolean isValidJavaIdentifier(String s){
+		if(s.isEmpty()||!Character.isJavaIdentifierStart(s.charAt(0))) return false;
+		for(int i=1;i<s.length();++i){
+			if(!Character.isJavaIdentifierPart(s.charAt(i))) return false;
+		}
+		return true;
+	}
+}
+
+class GraphParser{
+	private final JavaParser javaParser=new JavaParser();
+	public GraphModel load(Path projectFolder){
+		GraphModel model=new GraphModel();
 		try{
-			Files.walkFileTree(projectFolder.toPath(),new SimpleFileVisitor<Path>(){
+			Files.walkFileTree(projectFolder,new SimpleFileVisitor<Path>(){
+				@Override
 				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException{
-					if(file.toString().endsWith(".java")){
-						CompilationUnit cu=parser.parse(file).getResult().get();
-
-						// Найти класс Main
-						Optional<ClassOrInterfaceDeclaration> mainClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getNameAsString().equals("Main")).findFirst();
-
-						if(mainClass.isPresent()){
-							nodes.add(new PermissionsNode(file.toFile()));
-							nodes.add(new RolesNode(file.toFile(),(PermissionsNode)nodes.getLast()));
-						}else{
-							// Проверить, является ли класс Editable
-							Optional<ClassOrInterfaceDeclaration> editableClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getExtendedTypes().stream().anyMatch(type->type instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)type).getNameAsString().contains("Editable"))).findFirst();
-
-							if(editableClass.isPresent()){
-								nodes.add(new EditableNode(file.toFile()));
-							}
-						}
-
-						System.err.println("Parsed: "+cu.getPrimaryTypeName().orElse("Unknown"));
-					}else if(file.getFileName().toString().equals("helppath.cfg")){
-						nodes.add(new NavigatorNode(file.toFile()));
+					List<ProjectNode<?>> node=loadNode(file);
+					if(node!=null){
+						node.forEach(model::addNode);
 					}
 					return FileVisitResult.CONTINUE;
 				}
 			});
-			System.err.println("Parsing completed!");
 		}catch(IOException ex){
 			throw new UncheckedIOException(ex);
 		}
-	}	
-	public ArrayList<Problem> findProblems(){
-		ArrayList<Problem> a=new ArrayList<>();
-		for(DiagnosticService d:diagnosticServices)
-			a.addAll(d.findProblems(this));
-		return a;
+		return model;
 	}
-	/**
-	 * Shows low-code programming UI.
-	 */
+	private List<ProjectNode<?>> loadNode(Path file) throws IOException{
+		if(file.toString().endsWith(".java")){
+			return loadJavaNode(file);
+		}else if(file.getFileName().toString().equals("helppath.cfg")){
+			NavigatorPhysicalNode pn=new NavigatorNode.FileNavigatorPhysicalNode(file.toFile());
+			return List.of(new ProjectGraph.NavigatorNode(pn));
+		}
+		return null;
+	}
+	private List<ProjectNode<?>>loadJavaNode(Path file) throws IOException{
+		CompilationUnit cu=javaParser.parse(file).getResult().orElse(null);
+		if(cu==null) return null;
+		Optional<ClassOrInterfaceDeclaration> mainClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getNameAsString().equals("Main")).findFirst();
+		if(mainClass.isPresent()){
+			FilePermissionsPhysicalNode permPN=new FilePermissionsPhysicalNode(file.toFile());
+			PermissionsNode permNode=new PermissionsNode(permPN);
+			FileRolesPhysicalNode rolesPN=new FileRolesPhysicalNode(file.toFile(),permNode);
+			RolesNode rolesNode=new RolesNode(rolesPN);
+			return List.of(permNode,rolesNode);
+		}
+		Optional<ClassOrInterfaceDeclaration> editableClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getExtendedTypes().stream().anyMatch(type->type instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)type).getNameAsString().contains("Editable"))).findFirst();
+		if(editableClass.isPresent()) return List.of(new EditableNode(new EditableNode.FileEditablePhysicalNode(file.toFile())));
+		return null;
+	}
+}
+
+class GraphUI{
+	private final ProjectGraph graph;
+	public GraphUI(ProjectGraph graph){
+		this.graph=graph;
+	}
 	public void show(){
 		try{
 			UIManager.setLookAndFeel(new NimbusLookAndFeel());
@@ -680,20 +195,6 @@ public class ProjectGraph{
 		JPanel buttons=new JPanel();
 		buttons.setBounds(0,f.getHeight()*9/10,f.getWidth()/4,f.getHeight()/15);
 		buttons.setLayout(new BoxLayout(buttons,BoxLayout.Y_AXIS));
-		// JButton analyze=new JButton("Анализ");
-		// Wrapper<TaskAnalyzer>analyzer=new Wrapper<>(null);
-		// analyze.addActionListener(e->{
-		// 	if(analyzer.var==null){
-		// 		JFileChooser fc=new JFileChooser(new File(System.getProperty("user.home")+"/Downloads"));
-		// 		fc.showOpenDialog(f);
-		// 		analyzer.var=new TaskAnalyzer(this,fc.getSelectedFile());
-		// 		analyzer.var.analyze();
-		// 	}
-		// 	analyzer.var.show();
-		// });
-		// analyze.setBackground(Color.DARK_GRAY);
-		// analyze.setForeground(Color.WHITE);
-		// buttons.add(analyze);
 		JButton parse=new JButton("Создать из разметки");
 		parse.addActionListener(e->{
 			JFileChooser fc=new JFileChooser(new File(System.getProperty("user.home")+"/Downloads"));
@@ -702,12 +203,11 @@ public class ProjectGraph{
 			if(file!=null){
 				int answer=JOptionPane.showConfirmDialog(f,"Включить в проект "+file.getName()+"?","Применить файл разметки?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.QUESTION_MESSAGE);
 				if(answer==JOptionPane.OK_OPTION){
-					//Ask to think twice if the file is `.used` or if file has incorrect format
 					if(file.getName().endsWith(".bpamarkup.used")) answer=JOptionPane.showConfirmDialog(f,"Вы пытаетесь ПОВТОРНО включить в проект "+file.getName()+". Продолжить?","Файл уже использован!",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE);
 					else if(!file.getName().endsWith(".bpamarkup")) answer=JOptionPane.showConfirmDialog(f,"Действительно использовать НЕ помеченный как bpamarkup файл "+file.getName()+".","Файл имеет не то расширение!",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE);
 				}
 				if(answer==JOptionPane.OK_OPTION){
-					BPAMarkupParser.parse(file,this);
+					BPAMarkupParser.parse(file,graph);
 					if(file.getName().endsWith(".bpamarkup")) file.renameTo(new File(file+".used"));
 					else if(!file.getName().endsWith(".bpamarkup.used")) JOptionPane.showMessageDialog(f,"Файл не будет помечен как использованный.","Файл не отмечен",JOptionPane.INFORMATION_MESSAGE);
 				}
@@ -716,15 +216,6 @@ public class ProjectGraph{
 		parse.setBackground(Color.DARK_GRAY);
 		parse.setForeground(Color.WHITE);
 		buttons.add(parse);
-		// JButton saveState=new JButton("Сохранить состояние");
-		// saveState.addActionListener(e->{
-		// 	if(new File(Root.folder+"Data.ser"+ProgramStarter.version).exists())try{
-		// 		new File(projectFolder+"/resources/initial/").mkdirs();
-		// 		Files.copy(Path.of(Root.folder+"Data.ser"+ProgramStarter.version),Path.of(projectFolder+"/resources/initial/Data.ser"),StandardCopyOption.REPLACE_EXISTING);
-		// 		Files.copy(Path.of(Root.folder+"Users.ser"+ProgramStarter.version),Path.of(projectFolder+"/resources/initial/Users.ser"),StandardCopyOption.REPLACE_EXISTING);
-		// 	}catch(IOException ex){throw new UncheckedIOException(ex);}
-		// });
-		// buttons.add(saveState);
 		f.add(buttons);
 		JTabbedPane t=new JTabbedPane();
 		t.setSize(f.getWidth(),f.getHeight()*4/5);
@@ -768,7 +259,7 @@ public class ProjectGraph{
 				problems.add(this);
 			}
 		}
-		problemsCache=findProblems();
+		ArrayList<Problem> problemsCache=graph.findProblems();
 		for(Problem p:problemsCache)
 			new P(p);
 		f.add(sProblems);
@@ -778,43 +269,10 @@ public class ProjectGraph{
 			Thread.onSpinWait();
 		System.exit(0);
 	}
-	public void runServer(){
-		new ProjectServer(this);
-	}
-	public void runServer(long port){
-		new ProjectServer(this,port);
-	}
-	private String resolveProjectPackage(){
-		try{
-			Optional<Path> graphFile=Files.walk(projectFolder.toPath()).filter(p->p.getFileName().toString().equals("ProjectGraph.java")).findFirst();
-			if(graphFile.isPresent()){
-				Path rel=projectFolder.toPath().relativize(graphFile.get().getParent());
-				String pkg=rel.toString().replace(File.separatorChar,'.');
-				if(!pkg.isBlank()) return pkg;
-			}
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
-		}
-		Package p=ProjectGraph.class.getPackage();
-		return p==null?"":p.getName();
-	}
-	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties)throws IOException{
-		if(name==null||name.isBlank()) throw new IllegalArgumentException("Name "+name+" is not a valid identifier.");
-		String basePackage=resolveProjectPackage();
-		if(basePackage.isBlank()) throw new IllegalStateException("Unable to resolve project package");
-		Path editableDir=projectFolder.toPath().resolve(basePackage.replace('.','/')).resolve("editables/registered");
-		File file=editableDir.resolve(name+".java").toFile();
-		file.getParentFile().mkdirs();
-		EditableNode n=new EditableNode(file,objectName,basePackage,properties);
-		nodes.add(n);
-		return n;
-	}
-	public void deleteNode(ProjectNode n){
-		n.location.delete();
-		nodes.remove(n);
-	}
 	private void fillObjectsTab(JPanel tab){
-		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
+		List<PermissionsNode>permissionsNodes=graph.getNodes(PermissionsNode.class);
+		assert permissionsNodes.size()==1;
+		PermissionsNode pn=permissionsNodes.getFirst();
 		tab.setLayout(new BorderLayout());
 		class B extends JPanel{
 			public B(Property p,EditableNode n){
@@ -824,10 +282,10 @@ public class ProjectGraph{
 				c.weighty=1;
 				c.gridheight=1;
 				JTextField name=new JTextField(p.getName());
-				name.addActionListener(e->p.changeName(name.getText(),n));
+				name.addActionListener(e->n.changePropertyName(p,name.getText()));
 				name.addFocusListener(new FocusAdapter(){
 					public void focusLost(FocusEvent e){
-						p.changeName(name.getText(),n);
+						n.changePropertyName(p,name.getText());
 					}
 				});
 				c.gridwidth=2;
@@ -836,7 +294,7 @@ public class ProjectGraph{
 				JComboBox<Property.PropertyType> type=new JComboBox<Property.PropertyType>(Property.PropertyType.values());
 				type.setSelectedItem(p.getType());
 				type.addItemListener(e->{
-					if(e.getStateChange()==ItemEvent.SELECTED) p.changeType((Property.PropertyType)e.getItem(),n);
+					if(e.getStateChange()==ItemEvent.SELECTED) n.changePropertyType(p,(Property.PropertyType)e.getItem());
 				});
 				c.gridx=2;
 				c.gridwidth=1;
@@ -862,7 +320,7 @@ public class ProjectGraph{
 		}
 		class E extends JPanel{
 			public E(EditableNode n){
-				setBorder(BorderFactory.createTitledBorder(n.name+" ("+n.getObjectName()+")"));
+				setBorder(BorderFactory.createTitledBorder(n.getName()+" ("+n.getObjectName()+")"));
 				setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
 				JPanel buttons=new JPanel();
 				buttons.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width*2/3,Root.SCREEN_SIZE.height/30));
@@ -885,8 +343,8 @@ public class ProjectGraph{
 				buttons.add(addPanel);
 				JButton remove=new JButton();
 				remove.addActionListener(e->{
-					if(n.getProperties().isEmpty()||JOptionPane.showConfirmDialog(tab,"Действительно удалить "+n.name+" (\""+n.getObjectName()+")\"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)==JOptionPane.OK_OPTION){
-						deleteNode(n);
+					if(n.getProperties().isEmpty()||JOptionPane.showConfirmDialog(tab,"Действительно удалить "+n.getName()+" (\""+n.getObjectName()+")\"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)==JOptionPane.OK_OPTION){
+						graph.deleteNode(n);
 						Container parent=getParent();
 						parent.remove(this);
 						((JComponent)parent).getTopLevelAncestor().revalidate();
@@ -908,7 +366,7 @@ public class ProjectGraph{
 					s[0]=s[0].trim();
 					s[1]=s[1].trim();
 					setBorder(BorderFactory.createTitledBorder(s[0]+" ("+s[1]+")"));
-					if(!n.name.equals(s[0])) n.changeNameIn(ProjectGraph.this,s[0]);
+					if(!n.getName().equals(s[0])) n.changeNameIn(graph,s[0]);
 					if(!n.getObjectName().equals(s[1])) n.changeObjectName(s[1]);
 				});
 				rename.setText("переименовать");
@@ -916,8 +374,8 @@ public class ProjectGraph{
 				rename.setBackground(Color.CYAN);
 				rename.setForeground(Color.BLACK);
 				buttons.add(rename);
-				String readPermission="READ_"+n.name.toUpperCase(),createPermission="CREATE_"+n.name.toUpperCase();
-				if(!(pn.permissions.contains(readPermission)&&pn.permissions.contains(createPermission))){
+				String readPermission="READ_"+n.getName().toUpperCase(),createPermission="CREATE_"+n.getName().toUpperCase();
+				if(!(pn.hasPermission(readPermission)&&pn.hasPermission(createPermission))){
 					JButton addPermissions=new JButton("добавить разрешения");
 					addPermissions.addActionListener(e->{
 						pn.addPermission(createPermission);
@@ -945,27 +403,31 @@ public class ProjectGraph{
 		addButton.setBackground(Color.GREEN);
 		addButton.addActionListener(e->{
 			String name,objectName;
-			while(true)try{
-				name=JOptionPane.showInputDialog("Введите название класса.");
-				if(name==null||name.isBlank()) break;
-				objectName=JOptionPane.showInputDialog("Введите название объекта.");
-				if(objectName==null||objectName.isBlank()) break;
-				objList.add(new E(createEditableNode(name,objectName)));
-			}catch(IOException ex){
-				throw new UncheckedIOException(ex);
-			}
+			while(true)
+				try{
+					name=JOptionPane.showInputDialog("Введите название класса.");
+					if(name==null||name.isBlank()) break;
+					objectName=JOptionPane.showInputDialog("Введите название объекта.");
+					if(objectName==null||objectName.isBlank()) break;
+					objList.add(new E(graph.createEditableNode(name,objectName)));
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
 			sList.revalidate();
 		});
 		buttons.add(addButton);
 		tab.add(buttons,BorderLayout.SOUTH);
 		tab.add(sList,BorderLayout.NORTH);
-		for(ProjectNode node:nodes)
-			if(node instanceof EditableNode) objList.add(new E((EditableNode)node));
+		for(EditableNode node:graph.getNodes(EditableNode.class))objList.add(new E(node));
 	}
 	private void fillAccessTab(JPanel tab){
 		tab.setLayout(new GridLayout(1,2));
-		PermissionsNode pn=(PermissionsNode)nodes.parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
-		RolesNode rn=(RolesNode)nodes.parallelStream().filter(n->n instanceof RolesNode).findAny().get();
+		List<PermissionsNode> permissionsNodes=graph.getNodes(PermissionsNode.class);
+		List<RolesNode> rolesNodes=graph.getNodes(RolesNode.class);
+		assert permissionsNodes.size()==1;
+		assert rolesNodes.size()==1;
+		PermissionsNode pn=permissionsNodes.getFirst();
+		RolesNode rn=rolesNodes.getFirst();
 		class P extends JPanel{
 			public P(String permission){
 				setLayout(new GridBagLayout());
@@ -1014,7 +476,7 @@ public class ProjectGraph{
 				add(new JLabel(permission),c);
 				JButton delete=new JButton();
 				delete.addActionListener(e->{
-					rn.removePermission(role.name,permission);
+					rn.removePermission(role.getName(),permission);
 					Container parent=getParent();
 					parent.remove(this);
 					((JComponent)parent).getTopLevelAncestor().revalidate();
@@ -1029,13 +491,13 @@ public class ProjectGraph{
 		}
 		class R extends JPanel{
 			public R(RoleRepresentation role){
-				setBorder(BorderFactory.createTitledBorder(role.name));
+				setBorder(BorderFactory.createTitledBorder(role.getName()));
 				setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
 				JPanel buttons=new JPanel();
 				JButton delete=new JButton();
 				delete.addActionListener(e->{
-					if(JOptionPane.showConfirmDialog(tab,"Удалить "+role.name+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
-					rn.removeRole(role.name);
+					if(JOptionPane.showConfirmDialog(tab,"Удалить "+role.getName()+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
+					rn.removeRole(role.getName());
 					Container parent=getParent();
 					parent.remove(this);
 					((JComponent)parent).getTopLevelAncestor().revalidate();
@@ -1043,7 +505,7 @@ public class ProjectGraph{
 				delete.setBackground(Color.RED);
 				buttons.add(delete);
 				add(buttons);
-				if(role.permissions!=null) for(String p:role.permissions)
+				if(role.getPermissions()!=null) for(String p:role.getPermissions())
 					add(new RP(role,p));
 				setTransferHandler(new TransferHandler(){
 					public boolean canImport(TransferSupport support){
@@ -1052,7 +514,7 @@ public class ProjectGraph{
 					public boolean importData(TransferSupport support){
 						try{
 							String p="AppPermission."+support.getTransferable().getTransferData(support.getDataFlavors()[0]);
-							rn.addPermission(role.name,p);
+							rn.addPermission(role.getName(),p);
 							add(new RP(role,p));
 							revalidate();
 							return true;
@@ -1064,7 +526,7 @@ public class ProjectGraph{
 			}
 		}
 		JPanel pPanel=new JPanel();
-		for(String p:pn.permissions)
+		for(String p:pn.getPermissions())
 			pPanel.add(new P(p));
 		tab.add(SprintUI.createList(15,pPanel));
 		JPanel rPanel=new JPanel(new BorderLayout());
@@ -1081,7 +543,7 @@ public class ProjectGraph{
 		addRole.setText("добавить роль");
 		addRole.setBackground(Color.GREEN);
 		rButtons.add(addRole);
-		for(RoleRepresentation r:rn.roles)
+		for(RoleRepresentation r:rn.getRoles())
 			rList.add(new R(r));
 		JScrollPane sRPanel=new JScrollPane(rList);
 		sRPanel.getVerticalScrollBar().setUnitIncrement(Root.SCREEN_SIZE.height/60);
@@ -1091,35 +553,35 @@ public class ProjectGraph{
 	}
 	private void fillNavigatorTab(JPanel tab){
 		tab.setLayout(new GridLayout());
-		Optional<ProjectNode> nodeOptional=nodes.stream().filter(n->n instanceof NavigatorNode).findAny();
+		List<NavigatorNode> navigatorNodes=graph.getNodes(NavigatorNode.class);
+		assert navigatorNodes.size()<=1;
+		Optional<ProjectNode<?>> nodeOptional=navigatorNodes.isEmpty()?Optional.empty():Optional.of(navigatorNodes.getFirst());
 		if(nodeOptional.isEmpty()){
 			tab.setLayout(new GridLayout(2,1));
 			tab.add(new JLabel("helppath.cfg отсутствует в проекте."));
 			JButton add=new JButton();
 			add.addActionListener(e->{
 				tab.removeAll();
-				nodes.add(new NavigatorNode(projectFolder));
+				graph.createNavigatorNode();
 				fillNavigatorTab(tab);
 				tab.revalidate();
 			});
 			tab.add(add);
 			return;
 		}
-		NavigatorNode n=(NavigatorNode)nodeOptional.get();
+		ProjectGraph.NavigatorNode n=(ProjectGraph.NavigatorNode)nodeOptional.get();
 		class I extends JPanel{
 			public I(int ind,HelpEntry entry){
 				setLayout(new GridLayout());
-				JTextField text=new JTextField(entry.instructions.get(ind).text);
+				JTextField text=new JTextField(entry.getInstructions().get(ind).getText());
 				text.addFocusListener(new FocusAdapter(){
 					public void focusLost(FocusEvent e){
-						Instruction c=entry.instructions.get(ind);
-						c.text=text.getText();
-						entry.replaceInstruction(c,ind,n);
+						Instruction c=entry.getInstructions().get(ind);
+						Instruction clone=new Instruction(text.getText(),c.getType());
+						n.replaceInstruction(entry,ind,clone);
 					}
 				});
 				add(text);
-				// JPanel buttons=new JPanel();
-				// add(buttons);
 			}
 		}
 		class E extends JPanel{
@@ -1129,8 +591,8 @@ public class ProjectGraph{
 				JPanel buttons=new JPanel();
 				JButton delete=new JButton();
 				delete.addActionListener(e->{
-					if(JOptionPane.showConfirmDialog(tab,"Удалить запись "+entry.text+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
-					n.deleteEntry(entry.text);
+					if(JOptionPane.showConfirmDialog(tab,"Удалить запись "+entry.getText()+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
+					n.deleteEntry(entry.getText());
 					Container parent=getParent();
 					parent.remove(parent.getComponent(0));
 					((JComponent)parent).getTopLevelAncestor().revalidate();
@@ -1141,8 +603,8 @@ public class ProjectGraph{
 				buttons.add(delete);
 				JButton delLast=new JButton();
 				delLast.addActionListener(e->{
-					if(JOptionPane.showConfirmDialog(tab,"Удалить последнюю инструкцию записи "+entry.text+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
-					entry.deleteLastInstruction(n);
+					if(JOptionPane.showConfirmDialog(tab,"Удалить последнюю инструкцию записи "+entry.getText()+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
+					n.deleteLastInstruction(entry);
 					remove(getComponentCount()-1);
 					revalidate();
 				});
@@ -1158,35 +620,384 @@ public class ProjectGraph{
 					if(s==null||type==JOptionPane.CLOSED_OPTION) return;
 					s=s.replace(' ','_').replace('.',';');
 					Instruction c=new Instruction(s,Instruction.Type.values()[type]);
-					entry.appendInstruction(c,n);
-					add(new I(entry.instructions.size()-1,entry),2);
+					n.appendInstruction(entry,c);
+					add(new I(entry.getInstructions().size()-1,entry),2);
 				});
 				add.setText("добавить инструкцию");
 				add.setBackground(Color.GREEN);
 				buttons.add(add);
 				add(buttons);
-				JTextField textArea=new JTextField(entry.text);
+				JTextField textArea=new JTextField(entry.getText());
 				textArea.addFocusListener(new FocusAdapter(){
 					public void focusLost(FocusEvent e){
-						if(!textArea.getText().trim().equals(entry.text)) entry.changeText(textArea.getText().trim(),n);
+						if(!textArea.getText().trim().equals(entry.getText())) n.changeEntryText(entry,textArea.getText().trim());
 					}
 				});
 				add(textArea);
 				JPanel instructions=new JPanel();
 				instructions.setLayout(new BoxLayout(instructions,BoxLayout.Y_AXIS));
-				for(int i=0;i<entry.instructions.size();++i)
+				for(int i=0;i<entry.getInstructions().size();++i)
 					instructions.add(new I(i,entry));
 				add(new JScrollPane(instructions));
 			}
 		}
 		JPanel panel=new JPanel();
-		for(HelpEntry e:n.entries)
+		for(HelpEntry e:n.getEntries())
 			panel.add(new E(e));
 		tab.add(SprintUI.createList(15,panel));
 	}
-
 }
 
-interface GraphModel{}
-
-interface GraphUI{}
+public class ProjectGraph{
+	public static class NavigatorNode implements ProjectNode<NavigatorNode>{
+		public static class NavigatorModel implements NodeModel<NavigatorNode>{
+			private final ArrayList<HelpEntry> entries=new ArrayList<>();
+			public ArrayList<HelpEntry> getEntries(){
+				return entries;
+			}
+			public NavigatorModel(Collection<HelpEntry>entries){
+				this.entries.addAll(entries);
+			}
+			public HelpEntry deleteEntry(String text){
+				HelpEntry e=entries.stream().filter(entry->entry.text.equals(text)).findAny().get();
+				entries.remove(e);
+				return e;
+			}
+		}
+		public static interface NavigatorPhysicalNode extends PhysicalNode<NavigatorNode>{
+			void deleteEntry(String text);
+			void changeText(String oldText,String text);
+			void appendInstruction(String entryText,Instruction instruction);
+			void replaceInstruction(String entryText,int index,Instruction instruction);
+			void deleteLastInstruction(String entryText);
+			NavigatorModel load();
+		}
+		public static class FileNavigatorPhysicalNode implements NavigatorPhysicalNode{
+			public File file;
+			public FileNavigatorPhysicalNode(File file){
+				this.file=file;
+			}
+			public void changeText(String oldText,String text){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(file.toPath()).split("\n")){
+						String[] s=l.split(" ",2);
+						if(s[1].equals(oldText)) s[1]=text;
+						b.append(s[0]).append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void deleteEntry(String text){
+				try{
+					List<String> lines=Files.readAllLines(file.toPath());
+					List<String> updated=new ArrayList<>();
+					for(String line:lines){
+						if(!line.substring(line.indexOf(' ')+1).trim().equals(text.trim())){
+							updated.add(line);
+						}
+					}
+					Files.write(file.toPath(),updated);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void appendInstruction(String entryText,Instruction instruction){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(file.toPath()).split("\n")){
+						String[] s=l.split(" ",2);
+						b.append(s[0]);
+						if(s[1].equals(entryText)) b.append('.').append(instruction.toString());
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void replaceInstruction(String entryText,int index,Instruction instruction){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(file.toPath()).split("\n")){
+						String[] s=l.split(" ",2);
+						if(entryText.equals(s[1])){
+							String[] t=s[0].split("\\.");
+							int i=0;
+							for(;i<index;++i)
+								b.append(t[i]).append('.');
+							b.append(instruction.toString()).append('.');
+							++i;
+							for(;i<t.length;++i)
+								b.append(t[i]).append('.');
+							b.deleteCharAt(b.length()-1);
+						}else b.append(s[0]);
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void deleteLastInstruction(String entryText){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(file.toPath()).split("\n")){
+						String[] s=l.split(" ",2);
+						if(entryText.equals(s[1])){
+							String[] t=s[0].split("\\.");
+							for(int j=0;j<t.length-1;++j)
+								b.append(t[j]).append('.');
+							if(b.length()>0 && b.charAt(b.length()-1)=='.')
+								b.deleteCharAt(b.length()-1);
+						}else b.append(s[0]);
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void clear(){
+				file.delete();
+			}
+			public void persist(NodeModel<NavigatorNode>node) throws IllegalStateException{
+				StringBuilder b=new StringBuilder();
+				NavigatorModel n=(NavigatorModel)node;
+				for(HelpEntry h:n.getEntries()){
+					String inst=h.getInstructions()
+						.stream()
+						.map(e->e.toString())
+						.collect(Collectors.joining(","));
+					b.append(inst);
+					b.append(' ');
+					b.append(h.text);
+					b.append('\n');
+				}
+				try{
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public NavigatorModel load(){
+				ArrayList<HelpEntry>entries=new ArrayList<>();
+				try{
+					String str=Files.readString(file.toPath());
+					if(str.isBlank()) return new NavigatorModel(entries);
+					for(String l:str.split("\n")){
+						String[] s=l.split(" ",2);
+						HelpEntry e=new HelpEntry(s[1]);
+						e.instructions.addAll(Stream.of(s[0].split("\\.")).map(t->new Instruction(t.substring(1),Instruction.Type.toType(t.charAt(0)))).toList());
+						entries.add(e);
+					}
+					return new NavigatorModel(entries);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public boolean exists(){
+				return file.exists();
+			}
+			public File getLocation(){
+				return file;
+			}
+		}
+		public static class Instruction{
+			public static enum Type{
+				START,FEATURE,TEXT,COMMENT;
+				public char toChar(){
+					return switch(this){
+						case START -> 's';
+						case FEATURE -> 'f';
+						case TEXT -> 't';
+						case COMMENT -> 'c';
+						default -> throw new AssertionError("This method does not know other constants.");
+					};
+				}
+				public static Type toType(char c){
+					return switch(c){
+						case 's' -> Instruction.Type.START;
+						case 'f' -> Instruction.Type.FEATURE;
+						case 't' -> Instruction.Type.TEXT;
+						case 'c' -> Instruction.Type.COMMENT;
+						default -> throw new IllegalArgumentException("Char '"+c+"' does not correspond to any constant.");
+					};
+				}
+			}
+			@Getter
+			private String text;
+			@Getter
+			private Type type;
+			public Instruction(String text,Type type){
+				this.text=text;
+				this.type=type;
+			}
+			public String toString(){
+				return type.toChar()+text;
+			}
+		}
+		public static class HelpEntry{
+			private String text;
+			private final ArrayList<Instruction> instructions=new ArrayList<>();
+			public HelpEntry(String text){
+				this.text=text;
+			}
+			protected void changeText(String text){
+				this.text=text;
+			}
+			public void replaceInstruction(Instruction instruction,int index){
+				instructions.set(index,instruction);
+			}
+			public void appendInstruction(Instruction instruction){
+				instructions.add(instruction);
+			}
+			public void deleteLastInstruction(){
+				instructions.removeLast();
+			}
+			/**
+			 * Returns unmodifiable list of instructions.
+			 */
+			public List<Instruction>getInstructions(){
+				return Collections.unmodifiableList(instructions);
+			}
+			public String getText(){
+				return text;
+			}
+		}
+		private final NavigatorPhysicalNode physicalNode;
+		private final NavigatorModel model;
+		public NavigatorNode(NavigatorPhysicalNode physicalNode){
+			model=physicalNode.load();
+			this.physicalNode=physicalNode;
+		}
+		public NavigatorNode(NavigatorPhysicalNode physicalNode,List<HelpEntry>entries){
+			model=new NavigatorModel(entries);
+			physicalNode.persist(model);
+			this.physicalNode=physicalNode;
+		}
+		public HelpEntry deleteEntry(String text){
+			HelpEntry deleted=model.deleteEntry(text);
+			physicalNode.deleteEntry(text);
+			return deleted;
+		}
+		public NavigatorPhysicalNode getPhysicalRepresentation(){
+			return physicalNode;
+		}
+		public NavigatorModel getModel(){
+			return model;
+		}
+		public void changeEntryText(HelpEntry h,String newText){
+			String oldText=h.getText();
+			h.changeText(newText);
+			physicalNode.changeText(oldText,newText);
+		}
+		public void appendInstruction(HelpEntry entry,Instruction instruction){
+			entry.appendInstruction(instruction);
+			physicalNode.appendInstruction(entry.getText(),instruction);
+		}
+		public void replaceInstruction(HelpEntry entry,int index,Instruction instruction){
+			entry.replaceInstruction(instruction,index);
+			physicalNode.replaceInstruction(entry.getText(),index,instruction);
+		}
+		public void deleteLastInstruction(HelpEntry entry){
+			entry.deleteLastInstruction();
+			physicalNode.deleteLastInstruction(entry.getText());
+		}
+		public List<HelpEntry>getEntries(){
+			return model.getEntries();
+		}
+	}
+	private static final ArrayList<DiagnosticService> diagnosticServices=new ArrayList<>();
+	private GraphModel model;
+	private GraphParser parser;
+	private GraphUI ui;
+	public final File projectFolder;
+	public ProjectGraph(File projectFolder){
+		projectFolder.mkdirs();
+		this.projectFolder=projectFolder;
+		load();
+	}
+	public GraphModel getModel(){
+		return model;
+	}
+	public ArrayList<Problem> findProblems(){
+		ArrayList<Problem> problems=new ArrayList<>();
+		for(DiagnosticService service:diagnosticServices){
+			problems.addAll(service.findProblems(this));
+		}
+		return problems;
+	}
+	public void show(){
+		ui.show();
+	}
+	public void runServer(){
+		new ProjectServer(this);
+	}
+	public void runServer(long port){
+		new ProjectServer(this,port);
+	}
+	/**
+	 * Creates a new Editable node in this project.
+	 * @param name - internal class name
+	 * @param objectName - object name (display name)
+	 * @param properties - properties
+	 * @return created node
+	 * @throws IOException
+	 */
+	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties) throws IOException{
+		String basePackage=resolveProjectPackage();
+		if(basePackage.isBlank()) throw new IllegalStateException("Unable to resolve project package");
+		EditableNode.FileEditablePhysicalNode physicalNode=new EditableNode.FileEditablePhysicalNode(name,objectName,basePackage,projectFolder,properties);
+		return model.createEditableNode(physicalNode,name,objectName,basePackage,properties);
+	}
+	public NavigatorNode createNavigatorNode(){
+		File file=new File(projectFolder,"resources/helppath.cfg");
+		FileNavigatorPhysicalNode pn=new FileNavigatorPhysicalNode(file);
+		return model.createNavigatorNode(pn);
+	}
+	public void deleteNode(ProjectNode<?> node){
+		node.getPhysicalRepresentation().clear();
+		model.removeNode(node);
+	}
+	private String resolveProjectPackage(){
+		try{
+			Optional<Path> graphFile=Files.walk(projectFolder.toPath()).filter(p->p.getFileName().toString().equals("ProjectGraph.java")).findFirst();
+			if(graphFile.isPresent()){
+				Path rel=projectFolder.toPath().relativize(graphFile.get().getParent());
+				String pkg=rel.toString().replace(File.separatorChar,'.');
+				if(!pkg.isBlank()) return pkg;
+			}
+		}catch(IOException ex){
+			throw new UncheckedIOException(ex);
+		}
+		Package p=ProjectGraph.class.getPackage();
+		return p==null?"":p.getName();
+	}
+	// Delegates for GraphModel
+	public <T extends ProjectNode<T>> List<T> getNodes(Class<T> type){
+		return model.getNodes(type);
+	}
+	public <T extends ProjectNode<T>> Optional<T> findNode(Class<T> type, Predicate<T> filter){
+		return model.findNode(type, filter);
+	}
+	public void addNode(ProjectNode<?> node){
+		model.addNode(node);
+	}
+	public void removeNode(ProjectNode<?> node){
+		model.removeNode(node);
+	}
+	public List<ProjectNode<?>> getAllNodes(){
+		return model.getAllNodes();
+	}
+	public void reload(){
+		
+	}
+	private void load(){
+		this.parser=new GraphParser();
+		this.model=parser.load(projectFolder.toPath());
+		this.ui=new GraphUI(this);
+	}
+}

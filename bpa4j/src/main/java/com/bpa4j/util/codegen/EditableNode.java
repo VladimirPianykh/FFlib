@@ -12,12 +12,12 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.bpa4j.core.Editable;
 import com.bpa4j.editor.EditorEntry;
@@ -36,11 +36,14 @@ import com.github.javaparser.ast.expr.StringLiteralExpr;
 import com.github.javaparser.ast.stmt.ExplicitConstructorInvocationStmt;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @SuppressWarnings("PMD.ExceptionAsFlowControl")
 /**
  * Most methods are AI-generated.
  */
-public class EditableNode extends ClassNode{
+public class EditableNode extends ClassNode<EditableNode>{
 	public static class Property{
 		/**
 		 * Property type value object.
@@ -70,7 +73,9 @@ public class EditableNode extends ClassNode{
 				return (obj instanceof PropertyType t)&&t.name==name;
 			}
 		}
+		@Getter
 		private PropertyType type;
+		@Getter
 		private String name;
 		public Property(String name,PropertyType type){
 			this.name=name.trim();
@@ -82,175 +87,284 @@ public class EditableNode extends ClassNode{
 						public %s %s;
 					""",name,type.toString(),prompt);
 		}
-		public String getName(){
-			return name;
+		public String toString(){
+			return name+" ("+(type==null?"???":type.toString())+")";
 		}
-		public void changeName(String name,EditableNode n){
+		protected void setType(PropertyType type){
+			this.type=type;
+		}
+		protected void setName(String name){
+			this.name=name;
+		}
+	}
+	public static class FileEditablePhysicalNode extends FileClassPhysicalNode<EditableNode>{
+		// For loading existing files
+		public FileEditablePhysicalNode(File file){
+			super(file);
+		}
+		// For creating new files - PhysicalNode determines location
+		public FileEditablePhysicalNode(String className,String objectName,String basePackage,File projectRoot,Property...properties){
+			super(computeFileLocation(className,basePackage,projectRoot));
+			// Throw if file already exists
+			if(file.exists()){ throw new IllegalStateException("File already exists: "+file.getAbsolutePath()); }
+		}
+		private static File computeFileLocation(String className,String basePackage,File projectRoot){
+			String packagePath=basePackage.replace('.','/');
+			return new File(projectRoot,"src/main/java/"+packagePath+"/editables/registered/"+className+".java");
+		}
+		@Override
+		public ClassModel<EditableNode> load(){
 			try{
-				while(!Files.isWritable(n.location.toPath()))
-					Thread.onSpinWait();
-
-				CompilationUnit cu=StaticJavaParser.parse(n.location);
-
-				// Найти поле с аннотацией @EditorEntry
-				Optional<FieldDeclaration> field=cu.findAll(FieldDeclaration.class).stream().filter(f->f.getAnnotationByName("EditorEntry").isPresent()).filter(f->{
-					Optional<StringLiteralExpr> translation=f.getAnnotationByName("EditorEntry").flatMap(ann->ann.asNormalAnnotationExpr().getPairs().stream().filter(pair->pair.getNameAsString().equals("translation")).findFirst().map(pair->pair.getValue().asStringLiteralExpr()));
-					return translation.isPresent()&&translation.get().asString().equals(this.name);
-				}).findFirst();
-
-				if(field.isPresent()){
-					FieldDeclaration fieldDecl=field.get();
-					fieldDecl.getAnnotationByName("EditorEntry").flatMap(ann->ann.asNormalAnnotationExpr().getPairs().stream().filter(pair->pair.getNameAsString().equals("translation")).findFirst()).ifPresent(pair->pair.setValue(new StringLiteralExpr(name)));
-
-					Files.writeString(n.location.toPath(),cu.toString());
-					this.name=name;
+				String objectName=null;
+				String packageName=null;
+				List<Property> properties=new ArrayList<>();
+				CompilationUnit cu=StaticJavaParser.parse(file);
+				if(cu.getPackageDeclaration().isPresent()){
+					packageName=cu.getPackageDeclaration().get().getNameAsString();
 				}
+				Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
+
+				if(clazz.isPresent()){
+					String className=clazz.get().getNameAsString();
+					// Извлечь objectName из конструктора
+					Optional<ConstructorDeclaration> constructor=cu.findAll(ConstructorDeclaration.class).stream().filter(c->c.getNameAsString().equals(className)).findFirst();
+
+					if(constructor.isPresent()){
+						ConstructorDeclaration constr=constructor.get();
+						Optional<ExplicitConstructorInvocationStmt> superCall=constr.getBody().getStatements().stream().filter(stmt->stmt.isExplicitConstructorInvocationStmt()).map(stmt->stmt.asExplicitConstructorInvocationStmt()).findFirst();
+
+						if(superCall.isPresent()&&superCall.get().getArguments().size()>0){
+							Expression argExpr=superCall.get().getArguments().get(0);
+							if(argExpr.isStringLiteralExpr()){
+								StringLiteralExpr arg=argExpr.asStringLiteralExpr();
+								String superArg=arg.asString();
+								if(superArg.toLowerCase().startsWith("нов")){
+									superArg=superArg.substring(superArg.indexOf(' '));
+								}
+								objectName=superArg.replaceAll("[!@#$%&*]","").trim();
+								if(objectName.isEmpty()) objectName=null;
+							}
+						}
+					}
+
+					// Извлечь поля с аннотацией @EditorEntry
+					cu.findAll(FieldDeclaration.class).stream().filter(field->field.getAnnotationByName("EditorEntry").isPresent()).forEach(field->{
+						Optional<StringLiteralExpr> translation=field.getAnnotationByName("EditorEntry").flatMap(ann->ann.asNormalAnnotationExpr().getPairs().stream().filter(pair->pair.getNameAsString().equals("translation")).findFirst().map(pair->pair.getValue().asStringLiteralExpr()));
+
+						if(translation.isPresent()){
+							String fieldName=translation.get().asString();
+							String fieldType=field.getElementType().toString();
+
+							Property.PropertyType propType=switch(fieldType){
+								case "LocalDate" -> Property.PropertyType.DATE;
+								case "LocalDateTime" -> Property.PropertyType.DATETIME;
+								case "String" -> Property.PropertyType.STRING;
+								case "int" -> Property.PropertyType.INT;
+								case "double" -> Property.PropertyType.DOUBLE;
+								case "boolean" -> Property.PropertyType.BOOL;
+								default -> null;
+							};
+
+							properties.add(new Property(fieldName,propType));
+						}
+					});
+
+					// Найти TO DO-комментарии для свойств
+					cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("FIXME: add property")).forEach(comment->{
+						Matcher m=Pattern.compile("FIXME:\\s*add property\\s*\"(.*?)\"").matcher(comment.getContent());
+						if(m.find()){
+							properties.add(new Property(m.group(1),null));
+						}
+					});
+					return new EditableModel(className,objectName,packageName,properties);
+				}else throw new IOException();
 			}catch(IOException ex){
 				throw new UncheckedIOException(ex);
 			}
 		}
-		public PropertyType getType(){
-			return type;
-		}
-		public void changeType(PropertyType type,EditableNode n){
+		@Override
+		public void persist(NodeModel<EditableNode> model){
+			// Per contract: throws IllegalStateException if already associated with physical representation
+			if(file.exists()) throw new IllegalStateException("Physical representation already exists: "+file.getAbsolutePath());
+			EditableModel m=(EditableModel)model;
 			try{
-				while(!Files.isWritable(n.location.toPath()))
+				if(file.getParentFile()!=null) file.getParentFile().mkdirs();
+				Wrapper<Integer> index=new Wrapper<>(0);
+				String s=String.format("""
+						package %s;
+
+						import %s;
+						import %s;
+
+						public class %s extends Editable{
+						"""+m.getProperties().stream().map(p->p.getCode("var"+(++index.var))).collect(Collectors.joining("\n"))+"""
+							public %s(){
+								super("Нов %s");
+							}
+						}
+						""",m.getPackageName(),Editable.class.getName(),EditorEntry.class.getName(),m.getName(),m.getName(),m.getObjectName()==null?"":m.getObjectName());
+				Files.writeString(file.toPath(),s);
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
+		}
+
+		// Specialized methods for fine-grained updates
+		public void changePropertyType(Property p,Property.PropertyType type){
+			try{
+				while(!Files.isWritable(file.toPath()))
 					Thread.onSpinWait();
+				CompilationUnit cu=StaticJavaParser.parse(file);
 
-				CompilationUnit cu=StaticJavaParser.parse(n.location);
-
-				if(this.type==null){
-					// Найти TO_DO-комментарий и заменить на поле
-					Optional<LineComment> todoComment=cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("FIXME: add property \""+name+"\"")).findFirst();
-
+				if(p.getType()==null){
+					// fixme case
+					Optional<LineComment> todoComment=cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("FIXME: add property \""+p.getName()+"\"")).findFirst();
 					if(todoComment.isPresent()){
-						// Удалить комментарий
 						todoComment.get().remove();
-
-						// Найти класс и добавить поле
 						Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
-
-						if(clazz.isPresent()) clazz.get().addField(type.toString(),name,Keyword.PUBLIC);
+						if(clazz.isPresent()) clazz.get().addField(type.toString(),p.getName(),Keyword.PUBLIC);
 					}
 				}else{
-					// Изменить тип существующего поля
-					Optional<FieldDeclaration> field=cu.findAll(FieldDeclaration.class).stream().filter(f->f.getAnnotationByName("EditorEntry").isPresent()).filter(f->{
-						Optional<StringLiteralExpr> translation=f.getAnnotationByName("EditorEntry").flatMap(ann->ann.asNormalAnnotationExpr().getPairs().stream().filter(pair->pair.getNameAsString().equals("translation")).findFirst().map(pair->pair.getValue().asStringLiteralExpr()));
-						return translation.isPresent()&&translation.get().asString().equals(name);
-					}).findFirst();
-
+					// Existing case
+					Optional<FieldDeclaration> field=findFieldByTranslation(cu,p.getName());
 					if(field.isPresent()){
 						field.get().setAllTypes(StaticJavaParser.parseType(type.toString()));
 					}
 				}
-
-				Files.writeString(n.location.toPath(),cu.toString());
-				this.type=type;
+				Files.writeString(file.toPath(),cu.toString());
 			}catch(IOException ex){
 				throw new UncheckedIOException(ex);
 			}
 		}
-		public String toString(){
-			return name+" ("+(type==null?"???":type.toString())+")";
+
+		public void changePropertyName(String oldName,String newName){
+			try{
+				while(!Files.isWritable(file.toPath()))
+					Thread.onSpinWait();
+				CompilationUnit cu=StaticJavaParser.parse(file);
+				Optional<FieldDeclaration> field=findFieldByTranslation(cu,oldName);
+				if(field.isPresent()){
+					field.get().getAnnotationByName("EditorEntry").flatMap(ann->ann.asNormalAnnotationExpr().getPairs().stream().filter(pair->pair.getNameAsString().equals("translation")).findFirst()).ifPresent(pair->pair.setValue(new StringLiteralExpr(newName)));
+					Files.writeString(file.toPath(),cu.toString());
+				}
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
 		}
-	}
-	private String objectName;
-	private List<Property> properties=new ArrayList<>();
-	/**
-	 * Resolves an existing node from the file.
-	 */
-	public EditableNode(File file)throws IOException{
-		super(file);
-		try{
-			// Найти наследника Editable
-			CompilationUnit cu=StaticJavaParser.parse(file);
-			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
 
-			if(clazz.isPresent()){
-				// Извлечь objectName из конструктора
-				Optional<ConstructorDeclaration> constructor=cu.findAll(ConstructorDeclaration.class).stream().filter(c->c.getNameAsString().equals(name)).findFirst();
+		public void addProperty(Property property,String varName){
+			try{
+				while(!Files.isWritable(file.toPath()))
+					Thread.onSpinWait();
+				CompilationUnit cu=StaticJavaParser.parse(file);
+				Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
+				if(clazz.isPresent()){
+					clazz.get().addField(property.getType().toString(),varName,Keyword.PUBLIC); // Simplified logic
+					Files.writeString(file.toPath(),cu.toString(),StandardOpenOption.CREATE);
+				}
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
+		}
 
+		public void addProperties(List<Property> properties){
+			try{
+				while(!Files.isWritable(file.toPath()))
+					Thread.onSpinWait();
+				CompilationUnit cu=StaticJavaParser.parse(file);
+				Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
+				if(clazz.isPresent()){
+					for(int i=0;i<properties.size();++i){
+						Property prop=properties.get(i);
+						FieldDeclaration newField=new FieldDeclaration();
+						newField.setAllTypes(StaticJavaParser.parseType(prop.getType().toString()));
+						newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(prop.getType().toString()),"iVar"+(i+1)));
+						clazz.get().addMember(newField);
+					}
+					Files.writeString(file.toPath(),cu.toString(),StandardOpenOption.CREATE,StandardOpenOption.WRITE);
+				}
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
+		}
+
+		public void removeProperty(String propertyName){
+			try{
+				while(!Files.isWritable(file.toPath()))
+					Thread.onSpinWait();
+				CompilationUnit cu=StaticJavaParser.parse(file);
+				Optional<FieldDeclaration> field=findFieldByTranslation(cu,propertyName);
+				if(field.isPresent()){
+					field.get().remove();
+					Files.writeString(file.toPath(),cu.toString());
+				}
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
+		}
+
+		public void changeObjectName(String objectName,String className){
+			try{
+				while(!Files.isWritable(file.toPath()))
+					Thread.onSpinWait();
+				CompilationUnit cu=StaticJavaParser.parse(file);
+				Optional<ConstructorDeclaration> constructor=cu.findAll(ConstructorDeclaration.class).stream().filter(c->c.getNameAsString().equals(className)).findFirst();
 				if(constructor.isPresent()){
 					ConstructorDeclaration constr=constructor.get();
-					Optional<ExplicitConstructorInvocationStmt> superCall=constr.getBody().getStatements().stream().filter(stmt->stmt.isExplicitConstructorInvocationStmt()).map(stmt->stmt.asExplicitConstructorInvocationStmt()).findFirst();
-
+					Optional<MethodCallExpr> superCall=constr.getBody().getStatements().stream().filter(stmt->stmt.isExpressionStmt()&&stmt.asExpressionStmt().getExpression() instanceof MethodCallExpr).map(stmt->stmt.asExpressionStmt().getExpression().asMethodCallExpr()).filter(call->call.getNameAsString().equals("super")).findFirst();
 					if(superCall.isPresent()&&superCall.get().getArguments().size()>0){
-						Expression argExpr=superCall.get().getArguments().get(0);
-						// Забираем имя, если есть
-						if(argExpr.isStringLiteralExpr()){
-							StringLiteralExpr arg=argExpr.asStringLiteralExpr();
-							String superArg=arg.asString();
-							// Удалить префикс "нов" если есть
-							if(superArg.toLowerCase().startsWith("нов")){
-								superArg=superArg.substring(superArg.indexOf(' '));
-							}else System.err.print(file+" "+superArg);
-							// Удалить специальные символы
-							objectName=superArg.replaceAll("[!@#$%&*]","").trim();
-							if(objectName.isEmpty()) objectName=null;
-						}
+						superCall.get().getArguments().set(0,new StringLiteralExpr(objectName==null?"":objectName));
 					}
 				}
-
-				// Извлечь поля с аннотацией @EditorEntry
-				cu.findAll(FieldDeclaration.class).stream().filter(field->field.getAnnotationByName("EditorEntry").isPresent()).forEach(field->{
-					Optional<StringLiteralExpr> translation=field.getAnnotationByName("EditorEntry").flatMap(ann->ann.asNormalAnnotationExpr().getPairs().stream().filter(pair->pair.getNameAsString().equals("translation")).findFirst().map(pair->pair.getValue().asStringLiteralExpr()));
-
-					if(translation.isPresent()){
-						String fieldName=translation.get().asString();
-						String fieldType=field.getElementType().toString();
-
-						Property.PropertyType propType=switch(fieldType){
-							case "LocalDate" -> Property.PropertyType.DATE;
-							case "LocalDateTime" -> Property.PropertyType.DATETIME;
-							case "String" -> Property.PropertyType.STRING;
-							case "int" -> Property.PropertyType.INT;
-							case "double" -> Property.PropertyType.DOUBLE;
-							case "boolean" -> Property.PropertyType.BOOL;
-							default -> null;
-						};
-
-						properties.add(new Property(fieldName,propType));
-					}
-				});
-
-				// Найти TO DO-комментарии для свойств
-				cu.findAll(LineComment.class).stream().filter(comment->comment.getContent().contains("FIXME: add property")).forEach(comment->{
-					Matcher m=Pattern.compile("FIXME:\\s*add property\\s*\"(.*?)\"").matcher(comment.getContent());
-					if(m.find()){
-						properties.add(new Property(m.group(1),null));
-					}
-				});
+				Files.writeString(file.toPath(),cu.toString());
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
 			}
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
+		}
+
+		private Optional<FieldDeclaration> findFieldByTranslation(CompilationUnit cu,String name){
+			return cu.findAll(FieldDeclaration.class).stream().filter(f->f.getAnnotationByName("EditorEntry").isPresent()).filter(f->{
+				Optional<StringLiteralExpr> translation=f.getAnnotationByName("EditorEntry").flatMap(ann->ann.asNormalAnnotationExpr().getPairs().stream().filter(pair->pair.getNameAsString().equals("translation")).findFirst().map(pair->pair.getValue().asStringLiteralExpr()));
+				return translation.isPresent()&&translation.get().asString().equals(name);
+			}).findFirst();
+		}
+	}
+	public static class EditableModel extends ClassModel<EditableNode>{
+		@Getter
+		@Setter
+		private String objectName;
+		@Getter
+		@Setter
+		private String packageName;
+		@Getter
+		private final List<Property> properties;
+
+		public EditableModel(String name,String objectName,String packageName,List<Property> properties){
+			super(name);
+			this.objectName=objectName;
+			this.packageName=packageName;
+			this.properties=properties==null?new ArrayList<>():new ArrayList<>(properties);
 		}
 	}
 	/**
-	 * Constructs a new node with the designated file.
+	 * Reading constructor.
+	 * @param physicalNode
 	 */
-	public EditableNode(File file,String objectName,String basePackage,Property...properties)throws IOException{
-		super(file);
-		this.objectName=objectName.replaceAll("[!@#$%&*]","").trim();
-		if(objectName.isEmpty()) objectName=null;
-		this.properties.addAll(Arrays.asList(properties));
-		file.createNewFile();
-		Wrapper<Integer> index=new Wrapper<>(0);
-		String s=String.format("""
-				package %s.editables.registered;
-
-				import %s;
-				import %s;
-
-				public class %s extends Editable{
-				"""+Stream.of(properties).map(p->p.getCode("var"+(++index.var))).collect(Collectors.joining("\n"))+"""
-					public %s(){
-						super("Нов %s");
-					}
-				}
-				""",basePackage,Editable.class.getName(),EditorEntry.class.getName(),name,name,objectName==null?"":objectName);
-		Files.writeString(file.toPath(),s);
+	public EditableNode(ClassPhysicalNode<EditableNode> physicalNode){
+		super(physicalNode);
+		if(!physicalNode.exists()) throw new IllegalArgumentException("The node "+physicalNode+" does not exist.");
 	}
-	protected static File findFile(String name,File parent) throws IOException{
+
+	/**
+	 * Writing constructor.
+	 */
+	public EditableNode(ClassPhysicalNode<EditableNode> physicalNode,String className,String objectName,String packageName,Property...properties){
+		super(physicalNode);
+		if(physicalNode.exists()) throw new IllegalArgumentException("Physical representation already exists");
+		this.model=new EditableModel(className,objectName,packageName,Arrays.asList(properties));
+		this.physicalNode.persist(model);
+	}
+	public static File findFile(String name,File parent) throws IOException{
 		Wrapper<File> w=new Wrapper<File>(null);
 		Files.walkFileTree(parent.toPath(),new SimpleFileVisitor<Path>(){
 			public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException{
@@ -264,106 +378,38 @@ public class EditableNode extends ClassNode{
 		if(w.var==null) throw new FileNotFoundException();
 		return w.var;
 	}
+
+	// Delegation Methods
 	public void addProperty(Property property,String varName){
-		try{
-			while(!Files.isWritable(location.toPath()))
-				Thread.onSpinWait();
-
-			CompilationUnit cu=StaticJavaParser.parse(location);
-
-			// Найти класс Editable
-			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
-
-			if(clazz.isPresent()){
-				if(clazz.isPresent()) clazz.get().addField(property.getType().toString(),name,Keyword.PUBLIC);
-				// FieldDeclaration newField = new FieldDeclaration();
-				// newField.setCommonType(StaticJavaParser.parseType(property.type.toString()));
-				// newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(property.type.toString()), varName));
-				// clazz.get().addMember(newField);
-
-				Files.writeString(location.toPath(),cu.toString(),StandardOpenOption.CREATE);
-				properties.add(property);
-			}
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
-		}
+		((EditableModel)model).getProperties().add(property);
+		((FileEditablePhysicalNode)physicalNode).addProperty(property,varName);
 	}
 	public void addProperties(Property...properties){
-		try{
-			while(!Files.isWritable(location.toPath()))
-				Thread.onSpinWait();
-
-			CompilationUnit cu=StaticJavaParser.parse(location);
-
-			// Найти класс Editable
-			Optional<ClassOrInterfaceDeclaration> clazz=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(c->c.getExtendedTypes().stream().anyMatch(extType->extType instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)extType).getNameAsString().equals("Editable"))).findFirst();
-
-			if(clazz.isPresent()){
-				for(int i=0;i<properties.length;++i){
-					Property prop=properties[i];
-					FieldDeclaration newField=new FieldDeclaration();
-					newField.setAllTypes(StaticJavaParser.parseType(prop.type.toString()));
-					newField.addVariable(new VariableDeclarator(StaticJavaParser.parseType(prop.type.toString()),"iVar"+(i+1)));
-					clazz.get().addMember(newField);
-				}
-
-				Files.writeString(location.toPath(),cu.toString(),StandardOpenOption.CREATE,StandardOpenOption.WRITE);
-				this.properties.addAll(Arrays.asList(properties));
-			}
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
-		}
+		((EditableModel)model).getProperties().addAll(Arrays.asList(properties));
+		((FileEditablePhysicalNode)physicalNode).addProperties(Arrays.asList(properties));
 	}
 	public void removeProperty(Property property){
-		try{
-			while(!Files.isWritable(location.toPath()))
-				Thread.onSpinWait();
-
-			CompilationUnit cu=StaticJavaParser.parse(location);
-
-			// Найти поле с нужной аннотацией
-			Optional<FieldDeclaration> field=cu.findAll(FieldDeclaration.class).stream().filter(f->f.getAnnotationByName("EditorEntry").isPresent()).filter(f->{
-				Optional<StringLiteralExpr> translation=f.getAnnotationByName("EditorEntry").flatMap(ann->ann.asNormalAnnotationExpr().getPairs().stream().filter(pair->pair.getNameAsString().equals("translation")).findFirst().map(pair->pair.getValue().asStringLiteralExpr()));
-				return translation.isPresent()&&translation.get().asString().equals(property.name);
-			}).findFirst();
-
-			if(field.isPresent()){
-				field.get().remove();
-				Files.writeString(location.toPath(),cu.toString());
-			}
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
-		}
+		((EditableModel)model).getProperties().remove(property);
+		((FileEditablePhysicalNode)physicalNode).removeProperty(property.getName());
+	}
+	public void changePropertyName(Property property,String newName){
+		String oldName=property.getName();
+		property.setName(newName); // Update model (property instance is in list)
+		((FileEditablePhysicalNode)physicalNode).changePropertyName(oldName,newName);
+	}
+	public void changePropertyType(Property property,Property.PropertyType newType){
+		property.setType(newType);
+		((FileEditablePhysicalNode)physicalNode).changePropertyType(property,newType);
 	}
 	public void changeObjectName(String objectName){
-		try{
-			while(!Files.isWritable(location.toPath()))
-				Thread.onSpinWait();
-
-			CompilationUnit cu=StaticJavaParser.parse(location);
-
-			// Найти конструктор и изменить аргумент super()
-			Optional<ConstructorDeclaration> constructor=cu.findAll(ConstructorDeclaration.class).stream().filter(c->c.getNameAsString().equals(name)).findFirst();
-
-			if(constructor.isPresent()){
-				ConstructorDeclaration constr=constructor.get();
-				Optional<MethodCallExpr> superCall=constr.getBody().getStatements().stream().filter(stmt->stmt.isExpressionStmt()&&stmt.asExpressionStmt().getExpression() instanceof MethodCallExpr).map(stmt->stmt.asExpressionStmt().getExpression().asMethodCallExpr()).filter(call->call.getNameAsString().equals("super")).findFirst();
-
-				if(superCall.isPresent()&&superCall.get().getArguments().size()>0){
-					superCall.get().getArguments().set(0,new StringLiteralExpr(objectName==null?"":objectName));
-				}
-			}
-
-			Files.writeString(location.toPath(),cu.toString());
-			this.objectName=objectName;
-		}catch(IOException ex){
-			throw new UncheckedIOException(ex);
-		}
+		((EditableModel)model).setObjectName(objectName);
+		((FileEditablePhysicalNode)physicalNode).changeObjectName(objectName,((EditableModel)model).getName());
 	}
+
 	public List<Property> getProperties(){
-		return properties;
+		return Collections.unmodifiableList(((EditableModel)model).getProperties());
 	}
 	public String getObjectName(){
-		return objectName;
+		return ((EditableModel)model).getObjectName();
 	}
 }

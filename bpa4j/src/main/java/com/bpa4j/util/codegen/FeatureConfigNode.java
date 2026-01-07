@@ -1,18 +1,81 @@
 package com.bpa4j.util.codegen;
 
 import java.io.File;
-
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import lombok.Getter;
 
 /**
  * A node representing {@code Feature} registration and/or configuration.
+ *
+ * @author AI-generated
  */
-public class FeatureConfigNode extends ProjectNode{
-	@Getter
-	private String featureName;
-	public FeatureConfigNode(File location,String featureName){
-		super(location);
-		this.featureName=featureName;
-		//TODO: #5 Parse FeatureConfigNode
+public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
+	public static interface FeatureConfigPhysicalNode extends PhysicalNode<FeatureConfigNode>{
+		@Override
+		FeatureConfigModel load();
+	}
+	public static class FileFeatureConfigPhysicalNode implements FeatureConfigPhysicalNode{
+		private final File file;
+		public FileFeatureConfigPhysicalNode(File file){
+			this.file=file;
+		}
+		@Override
+		public void clear(){
+			file.delete();
+		}
+		@Override
+		public boolean exists(){
+			return file.exists();
+		}
+		@Override
+		public void persist(NodeModel<FeatureConfigNode> model){
+			if(file.exists()){ throw new IllegalStateException("Physical representation already exists: "+file.getAbsolutePath()); }
+			try{
+				if(file.getParentFile()!=null) file.getParentFile().mkdirs();
+				String className=file.getName().replace(".java","");
+				String s="public class "+className+" {}";
+				Files.writeString(file.toPath(),s);
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
+		}
+		@Override
+		public FeatureConfigModel load(){
+			// TODO: #5 Parse FeatureConfigNode
+			return new FeatureConfigModel(null);
+		}
+		public File getLocation(){
+			return file;
+		}
+	}
+
+	public static class FeatureConfigModel implements NodeModel<FeatureConfigNode>{
+		@Getter
+		private final String featureName;
+		public FeatureConfigModel(String featureName){
+			this.featureName=featureName;
+		}
+	}
+
+	private final FeatureConfigPhysicalNode physicalNode;
+	private final FeatureConfigModel model;
+
+	public FeatureConfigNode(FeatureConfigPhysicalNode physicalNode){
+		this.physicalNode=physicalNode;
+		this.model=physicalNode.load();
+	}
+
+	@Override
+	public PhysicalNode<FeatureConfigNode> getPhysicalRepresentation(){
+		return physicalNode;
+	}
+	@Override
+	public FeatureConfigModel getModel(){
+		return model;
+	}
+	public String getFeatureName(){
+		return model.getFeatureName();
 	}
 }
