@@ -15,20 +15,23 @@ import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
 /**
+ * Does not have the writing constructor (which writes PhysicalNode to disk) right now.
  * @author AI-generated
  */
 public class PermissionsNode implements ProjectNode<PermissionsNode>{
-	public static class PermissionsPhysicalNode implements PhysicalNode<PermissionsNode>{
+	public static interface PermissionsPhysicalNode extends PhysicalNode<PermissionsNode>{
+		
+	}
+	public static class FilePermissionsPhysicalNode implements PermissionsPhysicalNode{
 		private final File file;
-		public PermissionsPhysicalNode(File file){
+		public FilePermissionsPhysicalNode(File file){
 			this.file=file;
 		}
 		@Override
 		public void clear(){
 			file.delete();
 		}
-		@Override
-		public void persist(NodeModel<PermissionsNode> model){
+		public void sync(NodeModel<PermissionsNode> model){
 			PermissionsModel m=(PermissionsModel)model;
 			try{
 				while(!Files.isWritable(file.toPath()))
@@ -42,6 +45,16 @@ public class PermissionsNode implements ProjectNode<PermissionsNode>{
 						enumDecl.addEntry(new EnumConstantDeclaration(perm));
 					Files.writeString(file.toPath(),cu.toString());
 				}
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
+		}
+		@Override
+		public void persist(NodeModel<PermissionsNode> model){
+			if(file.exists()){ throw new IllegalStateException("Physical representation already exists: "+file.getAbsolutePath()); }
+			try{
+				if(file.getParentFile()!=null) file.getParentFile().mkdirs();
+				Files.writeString(file.toPath(),"public enum "+file.getName().replace(".java","")+" implements Permission {}");
 			}catch(IOException ex){
 				throw new UncheckedIOException(ex);
 			}
@@ -98,10 +111,6 @@ public class PermissionsNode implements ProjectNode<PermissionsNode>{
 		this.physicalNode=physicalNode;
 		this.model=physicalNode.load();
 	}
-	public PermissionsNode(File file){
-		this.physicalNode=new PermissionsPhysicalNode(file);
-		this.model=physicalNode.exists()?physicalNode.load():new PermissionsModel(List.of());
-	}
 	public PhysicalNode<PermissionsNode> getPhysicalRepresentation(){
 		return physicalNode;
 	}
@@ -110,11 +119,11 @@ public class PermissionsNode implements ProjectNode<PermissionsNode>{
 	}
 	public void addPermission(String permission){
 		((PermissionsModel)model).addPermission(permission);
-		physicalNode.persist(model);
+		((FilePermissionsPhysicalNode)physicalNode).sync(model);
 	}
 	public void removePermission(String permission){
 		((PermissionsModel)model).removePermission(permission);
-		physicalNode.persist(model);
+		((FilePermissionsPhysicalNode)physicalNode).sync(model);
 	}
 	public List<String> getPermissions(){
 		return((PermissionsModel)model).getPermissions();

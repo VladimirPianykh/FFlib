@@ -16,10 +16,13 @@ import com.github.javaparser.ast.expr.SimpleName;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * @author AI-generated
+ */
 public abstract class ClassNode<T extends ClassNode<T>> implements ProjectNode<T>{
-	public static abstract class ClassPhysicalNode<V extends ClassNode<V>> implements PhysicalNode<V>{
+	public static abstract class FileClassPhysicalNode<V extends ClassNode<V>> implements ClassPhysicalNode<V>{
 		protected File file;
-		public ClassPhysicalNode(File file){
+		public FileClassPhysicalNode(File file){
 			this.file=file;
 		}
 		@Override
@@ -30,9 +33,9 @@ public abstract class ClassNode<T extends ClassNode<T>> implements ProjectNode<T
 		public boolean exists(){
 			return file.exists();
 		}
-		public void rename(ProjectGraph project,String newName,String oldName){
+		public void rename(ProjectGraph project,String newName){
 			try{
-				if(oldName.equals(newName)) return;
+				String oldName=file.getName().substring(0,file.getName().lastIndexOf('.'));
 				File f=new File(file.getParent()+"/"+newName+".java");
 				if(f.exists()) return;
 				file.renameTo(f);
@@ -62,7 +65,11 @@ public abstract class ClassNode<T extends ClassNode<T>> implements ProjectNode<T
 			}
 		}
 	}
-
+	public static interface ClassPhysicalNode<V extends ClassNode<V>>extends PhysicalNode<V>{
+		void rename(ProjectGraph project,String newName);
+		@Override
+		ClassModel<V> load();
+	}
 	public static class ClassModel<V extends ClassNode<V>> implements NodeModel<V>{
 		@Getter
 		@Setter
@@ -72,27 +79,37 @@ public abstract class ClassNode<T extends ClassNode<T>> implements ProjectNode<T
 		}
 	}
 
-	protected final PhysicalNode<T> physicalNode;
-	protected final NodeModel<T> model;
+	protected final ClassPhysicalNode<T> physicalNode;
+	protected ClassModel<T> model;
 
-	public ClassNode(PhysicalNode<T> physicalNode){
+	/**
+	 * Creates a new ClassNode from with the given physical node.
+	 * </p>
+	 * If PhysicalNode is associated with real node, then loads model from it.
+	 * Otherwise, it's caller's responsibility to call {@link PhysicalNode#persist(NodeModel)}.
+	 * Thus, this is both writing and reading constructor.
+	 */
+	public ClassNode(ClassPhysicalNode<T> physicalNode){
 		this.physicalNode=physicalNode;
-		this.model=physicalNode.load();
+		if(physicalNode.exists())this.model=physicalNode.load();
 	}
 
 	@Override
-	public PhysicalNode<T> getPhysicalRepresentation(){
+	public ClassPhysicalNode<T> getPhysicalRepresentation(){
 		return physicalNode;
 	}
 
 	@Override
-	public NodeModel<T> getModel(){
+	public ClassModel<T> getModel(){
 		return model;
 	}
 
 	public synchronized void changeNameIn(ProjectGraph project,String name){
-		String oldName=((ClassModel<T>)model).getName();
+		// String oldName=((ClassModel<T>)model).getName();
 		((ClassModel<T>)model).setName(name);
-		((ClassPhysicalNode<T>)physicalNode).rename(project,name,oldName);
+		((ClassPhysicalNode<T>)physicalNode).rename(project,name);
+	}
+	public String getName(){
+		return ((ClassModel<T>)model).getName();
 	}
 }

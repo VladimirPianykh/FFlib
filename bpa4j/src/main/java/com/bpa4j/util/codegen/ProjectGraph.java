@@ -25,11 +25,14 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -52,8 +55,13 @@ import com.bpa4j.core.Root;
 import com.bpa4j.ui.swing.util.Message;
 import com.bpa4j.util.SprintUI;
 import com.bpa4j.util.codegen.EditableNode.Property;
+import com.bpa4j.util.codegen.PermissionsNode.FilePermissionsPhysicalNode;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.HelpEntry;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.Instruction;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.NavigatorPhysicalNode;
+import com.bpa4j.util.codegen.ProjectNode.NodeModel;
+import com.bpa4j.util.codegen.ProjectNode.PhysicalNode;
 import com.bpa4j.util.codegen.RolesNode.RoleRepresentation;
 import com.bpa4j.util.codegen.server.ProjectServer;
 import com.github.javaparser.JavaParser;
@@ -82,7 +90,7 @@ class GraphModel{
 	/**
 	 * FIXME: split model from file system operations
 	 * Validates and creates an EditableNode, adding it to the model.
-	 * @param file the file where the node will be created
+	 * @param projectRoot the project root directory where the node will be created in src/main/java...
 	 * @param name the class name (must be a valid Java identifier and unique)
 	 * @param objectName the display name for the object
 	 * @param basePackage the base package for the node
@@ -91,9 +99,10 @@ class GraphModel{
 	 * @throws IllegalArgumentException if name is invalid or already exists
 	 * @throws IOException if node creation fails
 	 */
-	public EditableNode createEditableNode(File file,String name,String objectName,String basePackage,EditableNode.Property...properties) throws IOException{
+	public EditableNode createEditableNode(File projectRoot,String name,String objectName,String basePackage,EditableNode.Property...properties) throws IOException{
 		validateEditableNodeName(name);
-		EditableNode node=new EditableNode(file,objectName,basePackage,properties);
+		EditableNode.FileEditablePhysicalNode physicalNode=new EditableNode.FileEditablePhysicalNode(name,objectName,basePackage,projectRoot,properties);
+		EditableNode node=new EditableNode(physicalNode,name,objectName,basePackage+".editables.registered",properties);
 		addNode(node);
 		return node;
 	}
@@ -101,11 +110,11 @@ class GraphModel{
 	 * Validates that the name is a valid Java identifier and unique among EditableNodes.
 	 */
 	private void validateEditableNodeName(String name){
-		if(name==null||name.isBlank()) throw new IllegalArgumentException("Name '"+name+"' is not a valid identifier."); 
-		if(!isValidJavaIdentifier(name)) throw new IllegalArgumentException("Name '"+name+"' is not a valid Java identifier."); 
+		if(name==null||name.isBlank()) throw new IllegalArgumentException("Name '"+name+"' is not a valid identifier.");
+		if(!isValidJavaIdentifier(name)) throw new IllegalArgumentException("Name '"+name+"' is not a valid Java identifier.");
 		// Check for uniqueness
 		for(ProjectNode<?> node:getAllNodes()){
-			if(node instanceof EditableNode editableNode&&editableNode.name.equals(name)){ throw new IllegalArgumentException("EditableNode with name '"+name+"' already exists."); }
+			if(node instanceof EditableNode editableNode&&editableNode.getName().equals(name)){ throw new IllegalArgumentException("EditableNode with name '"+name+"' already exists."); }
 		}
 	}
 	/**
@@ -143,7 +152,10 @@ class GraphParser{
 	private ProjectNode<?> loadNode(Path file) throws IOException{
 		if(file.toString().endsWith(".java")){
 			return loadJavaNode(file);
-		}else if(file.getFileName().toString().equals("helppath.cfg")){ return new ProjectGraph.NavigatorNode(file.toFile()); }
+		}else if(file.getFileName().toString().equals("helppath.cfg")){
+			NavigatorPhysicalNode pn=new NavigatorNode.FileNavigatorPhysicalNode(file.toFile());
+			return new ProjectGraph.NavigatorNode(pn);
+		}
 		return null;
 	}
 	private ProjectNode<?> loadJavaNode(Path file) throws IOException{
@@ -151,13 +163,14 @@ class GraphParser{
 		if(cu==null) return null;
 		Optional<ClassOrInterfaceDeclaration> mainClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getNameAsString().equals("Main")).findFirst();
 		if(mainClass.isPresent()){
-			PermissionsNode permNode=new PermissionsNode(file.toFile());
+			FilePermissionsPhysicalNode permPN=new FilePermissionsPhysicalNode(file.toFile());
+			PermissionsNode permNode=new PermissionsNode(permPN);
 			return permNode;
 			//FIXME: also create roles node.
 			//FIXME: ensure consistency with the old ProjectGraph.
 		}
 		Optional<ClassOrInterfaceDeclaration> editableClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getExtendedTypes().stream().anyMatch(type->type instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)type).getNameAsString().contains("Editable"))).findFirst();
-		if(editableClass.isPresent()){ return new EditableNode(file.toFile()); }
+		if(editableClass.isPresent()) return new EditableNode(new EditableNode.FileEditablePhysicalNode(file.toFile()));
 		return null;
 	}
 	public void save(GraphModel model,Path projectFolder){
@@ -167,11 +180,11 @@ class GraphParser{
 	}
 	@SuppressWarnings("unchecked")
 	private <T extends ProjectNode<T>> void saveNode(ProjectNode<T> node){
-		node.getPhysicalRepresentation().persist((T)node);
+		node.getPhysicalRepresentation().persist((NodeModel<T>)node);
 	}
 }
 
-class GraphUI{
+/*class GraphUI{
 	private final GraphModel model;
 	private final ProjectGraph graph;
 	public GraphUI(GraphModel model,ProjectGraph graph){
@@ -276,10 +289,10 @@ class GraphUI{
 				c.weighty=1;
 				c.gridheight=1;
 				JTextField name=new JTextField(p.getName());
-				name.addActionListener(e->p.changeName(name.getText(),n));
+				name.addActionListener(e->n.changePropertyName(p,name.getText()));
 				name.addFocusListener(new FocusAdapter(){
 					public void focusLost(FocusEvent e){
-						p.changeName(name.getText(),n);
+						n.changePropertyName(p,name.getText());
 					}
 				});
 				c.gridwidth=2;
@@ -288,7 +301,7 @@ class GraphUI{
 				JComboBox<Property.PropertyType> type=new JComboBox<Property.PropertyType>(Property.PropertyType.values());
 				type.setSelectedItem(p.getType());
 				type.addItemListener(e->{
-					if(e.getStateChange()==ItemEvent.SELECTED) p.changeType((Property.PropertyType)e.getItem(),n);
+					if(e.getStateChange()==ItemEvent.SELECTED) n.changePropertyType(p,(Property.PropertyType)e.getItem());
 				});
 				c.gridx=2;
 				c.gridwidth=1;
@@ -314,7 +327,7 @@ class GraphUI{
 		}
 		class E extends JPanel{
 			public E(EditableNode n){
-				setBorder(BorderFactory.createTitledBorder(n.name+" ("+n.getObjectName()+")"));
+				setBorder(BorderFactory.createTitledBorder(n.getName()+" ("+n.getObjectName()+")"));
 				setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
 				JPanel buttons=new JPanel();
 				buttons.setPreferredSize(new Dimension(Root.SCREEN_SIZE.width*2/3,Root.SCREEN_SIZE.height/30));
@@ -517,7 +530,7 @@ class GraphUI{
 			}
 		}
 		JPanel pPanel=new JPanel();
-		for(String p:pn.permissions)
+		for(String p:pn.getPermissions())
 			pPanel.add(new P(p));
 		tab.add(SprintUI.createList(15,pPanel));
 		JPanel rPanel=new JPanel(new BorderLayout());
@@ -534,7 +547,7 @@ class GraphUI{
 		addRole.setText("добавить роль");
 		addRole.setBackground(Color.GREEN);
 		rButtons.add(addRole);
-		for(RoleRepresentation r:rn.roles)
+		for(RoleRepresentation r:rn.getRoles())
 			rList.add(new R(r));
 		JScrollPane sRPanel=new JScrollPane(rList);
 		sRPanel.getVerticalScrollBar().setUnitIncrement(Root.SCREEN_SIZE.height/60);
@@ -635,33 +648,162 @@ class GraphUI{
 			panel.add(new E(e));
 		tab.add(SprintUI.createList(15,panel));
 	}
-}
-
-class Problem{
-	public enum ProblemType{
-		ERROR,WARNING,INFO
-	}
-	public final String message;
-	public final ProblemType type;
-	public final Runnable solver;
-	public Problem(String message,ProblemType type){
-		this.message=message;
-		this.type=type;
-		this.solver=null;
-	}
-	public Problem(String message,ProblemType type,Runnable solver){
-		this.message=message;
-		this.type=type;
-		this.solver=solver;
-	}
-}
-
-interface DiagnosticService{
-	ArrayList<Problem> findProblems(ProjectGraph graph);
-}
+}*/
 
 public class ProjectGraph{
-	public static class NavigatorNode extends ProjectNode{
+	public static class NavigatorNode implements ProjectNode<NavigatorNode>{
+		public static class NavigatorModel implements NodeModel<NavigatorNode>{
+			private final ArrayList<HelpEntry> entries=new ArrayList<>();
+			public ArrayList<HelpEntry> getEntries(){
+				return entries;
+			}
+			public NavigatorModel(Collection<HelpEntry>entries){
+				this.entries.addAll(entries);
+			}
+			public HelpEntry deleteEntry(String text){
+				HelpEntry e=entries.stream().filter(entry->entry.text.equals(text)).findAny().get();
+				entries.remove(e);
+				return e;
+			}
+		}
+		public static interface NavigatorPhysicalNode extends PhysicalNode<NavigatorNode>{
+			void deleteEntry(String text);
+			void changeText(String oldText,String text);
+			void appendInstruction(String entryText,Instruction instruction);
+			void replaceInstruction(String entryText,int index,Instruction instruction);
+			void deleteLastInstruction(String entryText);
+			NavigatorModel load();
+		}
+		public static class FileNavigatorPhysicalNode implements NavigatorPhysicalNode{
+			public File file;
+			public FileNavigatorPhysicalNode(File file){
+				this.file=file;
+			}
+			public void changeText(String oldText,String text){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(file.toPath()).split("\n")){
+						String[] s=l.split(" ",2);
+						if(s[1].equals(oldText)) s[1]=text;
+						b.append(s[0]).append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void deleteEntry(String text){
+				try{
+					List<String> lines=Files.readAllLines(file.toPath());
+					List<String> updated=new ArrayList<>();
+					for(String line:lines){
+						if(!line.trim().equals(text.trim())){
+							updated.add(line);
+						}
+					}
+					Files.write(file.toPath(),updated);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void appendInstruction(String entryText,Instruction instruction){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(file.toPath()).split("\n")){
+						String[] s=l.split(" ",2);
+						b.append(s[0]);
+						if(s[1].equals(entryText)) b.append('.').append(instruction.toString());
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void replaceInstruction(String entryText,int index,Instruction instruction){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(file.toPath()).split("\n")){
+						String[] s=l.split(" ",2);
+						if(entryText.equals(s[1])){
+							String[] t=s[0].split("\\.");
+							int i=0;
+							for(;i<index;++i)
+								b.append(t[i]).append('.');
+							b.append(instruction.toString()).append('.');
+							++i;
+							for(;i<t.length;++i)
+								b.append(t[i]).append('.');
+							b.deleteCharAt(b.length()-1);
+						}else b.append(s[0]);
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void deleteLastInstruction(String entryText){
+				try{
+					StringBuilder b=new StringBuilder();
+					for(String l:Files.readString(file.toPath()).split("\n")){
+						String[] s=l.split(" ",2);
+						if(entryText.equals(s[1])){
+							String[] t=s[0].split("\\.");
+							for(int j=0;j<t.length-1;++j)
+								b.append(t[j]).append('.');
+							if(b.length()>0 && b.charAt(b.length()-1)=='.')
+								b.deleteCharAt(b.length()-1);
+						}else b.append(s[0]);
+						b.append(' ').append(s[1]).append('\n');
+					}
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public void clear(){
+				file.delete();
+			}
+			public void persist(NodeModel<NavigatorNode>node) throws IllegalStateException{
+				StringBuilder b=new StringBuilder();
+				NavigatorModel n=(NavigatorModel)node;
+				for(HelpEntry h:n.getEntries()){
+					String inst=h.getInstructions()
+						.stream()
+						.map(e->e.toString())
+						.collect(Collectors.joining(","));
+					b.append(inst);
+					b.append(' ');
+					b.append(h.text);
+				}
+				try{
+					Files.writeString(file.toPath(),b);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public NavigatorModel load(){
+				ArrayList<HelpEntry>entries=new ArrayList<>();
+				try{
+					String str=Files.readString(file.toPath());
+					if(str.isBlank()) return new NavigatorModel(entries);
+					for(String l:str.split("\n")){
+						String[] s=l.split(" ",2);
+						HelpEntry e=new HelpEntry(s[1]);
+						e.instructions.addAll(Stream.of(s[0].split("\\.")).map(t->new Instruction(t.substring(1),Instruction.Type.toType(t.charAt(0)))).toList());
+						entries.add(e);
+					}
+					return new NavigatorModel(entries);
+				}catch(IOException ex){
+					throw new UncheckedIOException(ex);
+				}
+			}
+			public boolean exists(){
+				return file.exists();
+			}
+			
+		}
 		public static class Instruction{
 			public static enum Type{
 				START,FEATURE,TEXT,COMMENT;
@@ -684,128 +826,81 @@ public class ProjectGraph{
 					};
 				}
 			}
-			public String text;
-			public Type type;
+			private String text;
+			private Type type;
 			public Instruction(String text,Type type){
 				this.text=text;
 				this.type=type;
 			}
+			public String toString(){
+				return type.toChar()+text;
+			}
 		}
 		public static class HelpEntry{
-			public String text;
-			public ArrayList<Instruction> instructions=new ArrayList<>();
+			private String text;
+			private final ArrayList<Instruction> instructions=new ArrayList<>();
 			public HelpEntry(String text){
 				this.text=text;
 			}
-			public void changeText(String text,NavigatorNode n){
-				try{
-					StringBuilder b=new StringBuilder();
-					for(String l:Files.readString(n.location.toPath()).split("\n")){
-						String[] s=l.split(" ",2);
-						if(s[1].equals(this.text)) s[1]=text;
-						b.append(s[0]).append(' ').append(s[1]).append('\n');
-					}
-					Files.writeString(n.location.toPath(),b);
-					this.text=text;
-				}catch(IOException ex){
-					throw new UncheckedIOException(ex);
-				}
+			protected void changeText(String text){
+				this.text=text;
 			}
-			public void replaceInstruction(Instruction c,int index,NavigatorNode n){
-				try{
-					StringBuilder b=new StringBuilder();
-					for(String l:Files.readString(n.location.toPath()).split("\n")){
-						String[] s=l.split(" ",2);
-						if(text.equals(s[1])){
-							String[] t=s[0].split("\\.");
-							int i=0;
-							for(;i<index;++i)
-								b.append(t[i]).append('.');
-							b.append(c.type.toChar()).append(c.text).append('.');
-							++i;
-							for(;i<t.length;++i)
-								b.append(t[i]).append('.');
-							b.deleteCharAt(b.length()-1);
-						}else b.append(s[0]);
-						b.append(' ').append(s[1]).append('\n');
-					}
-					Files.writeString(n.location.toPath(),b);
-					instructions.set(index,c);
-				}catch(IOException ex){
-					throw new UncheckedIOException(ex);
-				}
+			public void replaceInstruction(Instruction instruction,int index){
+				instructions.set(index,instruction);
 			}
-			public void appendInstruction(Instruction c,NavigatorNode n){
-				try{
-					StringBuilder b=new StringBuilder();
-					for(String l:Files.readString(n.location.toPath()).split("\n")){
-						String[] s=l.split(" ",2);
-						b.append(s[0]);
-						if(s[1].equals(text)) b.append('.').append(c.type.toChar()).append(c.text);
-						b.append(' ').append(s[1]).append('\n');
-					}
-					Files.writeString(n.location.toPath(),b);
-					instructions.add(c);
-				}catch(IOException ex){
-					throw new UncheckedIOException(ex);
-				}
+			public void appendInstruction(Instruction instruction){
+				instructions.add(instruction);
 			}
-			public void deleteLastInstruction(NavigatorNode n){
-				try{
-					StringBuilder b=new StringBuilder();
-					for(String l:Files.readString(n.location.toPath()).split("\n")){
-						String[] s=l.split(" ",2);
-						if(text.equals(s[1])){
-							String[] t=s[0].split("\\.");
-							for(int j=0;j<t.length-1;++j)
-								b.append(t[j]);
-						}else b.append(s[0]);
-						if(!(b.isEmpty()||Character.isWhitespace(b.charAt(b.length()-1)))) b.append(' ').append(s[1]).append('\n');
-					}
-					Files.writeString(n.location.toPath(),b);
-					instructions.removeLast();
-				}catch(IOException ex){
-					throw new UncheckedIOException(ex);
-				}
+			public void deleteLastInstruction(){
+				instructions.removeLast();
+			}
+			/**
+			 * Returns unmodifiable list of instructions.
+			 */
+			public List<Instruction>getInstructions(){
+				return Collections.unmodifiableList(instructions);
+			}
+			public String getText(){
+				return text;
 			}
 		}
-		public ArrayList<HelpEntry> entries=new ArrayList<>();
-		public NavigatorNode(File file){
-			super(file);
-			try{
-				String str=Files.readString(file.toPath());
-				if(str.isBlank()) return;
-				for(String l:str.split("\n")){
-					String[] s=l.split(" ",2);
-					HelpEntry e=new HelpEntry(s[1]);
-					e.instructions.addAll(Stream.of(s[0].split("\\.")).map(t->new Instruction(t.substring(1),Instruction.Type.toType(t.charAt(0)))).toList());
-					entries.add(e);
-				}
-			}catch(IOException ex){
-				throw new UncheckedIOException(ex);
-			}
+		private final NavigatorPhysicalNode physicalNode;
+		private final NavigatorModel model;
+		public NavigatorNode(NavigatorPhysicalNode physicalNode){
+			model=physicalNode.load();
+			this.physicalNode=physicalNode;
 		}
-		public NavigatorNode(File projectFolder){
-			super(new File(projectFolder,"resources/helppath.cfg"));
-			try{
-				location.createNewFile();
-			}catch(IOException ex){
-				throw new UncheckedIOException(ex);
-			}
+		public NavigatorNode(NavigatorPhysicalNode physicalNode,List<HelpEntry>entries){
+			model=new NavigatorModel(entries);
+			physicalNode.persist(model);
+			this.physicalNode=physicalNode;
 		}
 		public void deleteEntry(String text){
-			HelpEntry e=entries.stream().filter(entry->entry.text.equals(text)).findAny().get();
-			try{
-				StringBuilder b=new StringBuilder();
-				for(String l:Files.readString(location.toPath()).split("\n")){
-					String[] s=l.split(" ",2);
-					if(!s[1].equals(e.text)) b.append(s[0]).append(' ').append(s[1]).append('\n');
-				}
-				Files.writeString(location.toPath(),b);
-				entries.remove(e);
-			}catch(IOException ex){
-				throw new UncheckedIOException(ex);
-			}
+			HelpEntry deleted=model.deleteEntry(text);
+			physicalNode.deleteEntry(text);
+		}
+		public NavigatorPhysicalNode getPhysicalRepresentation(){
+			return physicalNode;
+		}
+		public NavigatorModel getModel(){
+			return model;
+		}
+		public void changeEntryText(HelpEntry h,String newText){
+			String oldText=h.getText();
+			h.changeText(newText);
+			physicalNode.changeText(oldText,newText);
+		}
+		public void appendInstruction(HelpEntry entry,Instruction instruction){
+			entry.appendInstruction(instruction);
+			physicalNode.appendInstruction(entry.getText(),instruction);
+		}
+		public void replaceInstruction(HelpEntry entry,int index,Instruction instruction){
+			entry.replaceInstruction(instruction,index);
+			physicalNode.replaceInstruction(entry.getText(),index,instruction);
+		}
+		public void deleteLastInstruction(HelpEntry entry){
+			entry.deleteLastInstruction();
+			physicalNode.deleteLastInstruction(entry.getText());
 		}
 	}
 	private static final ArrayList<DiagnosticService> diagnosticServices=new ArrayList<>();
@@ -845,10 +940,7 @@ public class ProjectGraph{
 	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties) throws IOException{
 		String basePackage=resolveProjectPackage();
 		if(basePackage.isBlank()) throw new IllegalStateException("Unable to resolve project package");
-		Path editableDir=projectFolder.toPath().resolve(basePackage.replace('.','/')).resolve("editables/registered");
-		File file=editableDir.resolve(name+".java").toFile();
-		file.getParentFile().mkdirs();
-		return model.createEditableNode(file,name,objectName,basePackage,properties);
+		return model.createEditableNode(projectFolder,name,objectName,basePackage,properties);
 	}
 	public void deleteNode(ProjectNode<?> node){
 		node.getPhysicalRepresentation().clear();

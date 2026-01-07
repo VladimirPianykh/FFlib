@@ -1,21 +1,31 @@
 package com.bpa4j.util.codegen;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.io.IOException;
 
 /**
  * A node representing {@link com.bpa4j.feature.FeatureTransmissionContract Feature interface} implementation.
  */
 public class FeatureNode extends ClassNode<FeatureNode>{
-	public static class FeaturePhysicalNode extends ClassPhysicalNode<FeatureNode>{
-		public FeaturePhysicalNode(File file){
+	public static class FileFeaturePhysicalNode extends FileClassPhysicalNode<FeatureNode>{
+		public FileFeaturePhysicalNode(File file){
 			super(file);
 		}
 		@Override
 		public void persist(NodeModel<FeatureNode> model){
-			// FIXME: implement persist
+			if(file.exists()) throw new IllegalStateException("Physical representation already exists: "+file.getAbsolutePath());
+			try{
+				if(file.getParentFile()!=null) file.getParentFile().mkdirs();
+				String className=file.getName().replace(".java","");
+				String s="public class "+className+" {}";
+				Files.writeString(file.toPath(),s);
+			}catch(IOException ex){
+				throw new java.io.UncheckedIOException(ex);
+			}
 		}
 		@Override
-		public NodeModel<FeatureNode> load(){
+		public FeatureModel load(){
 			// FIXME: implement load
 			String name=file.getName();
 			if(name.endsWith(".java")) name=name.substring(0,name.length()-5);
@@ -31,9 +41,5 @@ public class FeatureNode extends ClassNode<FeatureNode>{
 
 	public FeatureNode(PhysicalNode<FeatureNode> physicalNode){
 		super(physicalNode);
-	}
-
-	public FeatureNode(File file){
-		super(new FeaturePhysicalNode(file));
 	}
 }

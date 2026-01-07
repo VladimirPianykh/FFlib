@@ -1,10 +1,15 @@
 package com.bpa4j.util.codegen;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import lombok.Getter;
 
 /**
  * A node representing {@code Feature} registration and/or configuration.
+ *
+ * @author AI-generated
  */
 public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
 	public static class FeatureConfigPhysicalNode implements PhysicalNode<FeatureConfigNode>{
@@ -22,7 +27,15 @@ public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
 		}
 		@Override
 		public void persist(NodeModel<FeatureConfigNode> model){
-			// FIXME Parse FeatureConfigNode
+			if(file.exists()){ throw new IllegalStateException("Physical representation already exists: "+file.getAbsolutePath()); }
+			try{
+				if(file.getParentFile()!=null) file.getParentFile().mkdirs();
+				String className=file.getName().replace(".java","");
+				String s="public class "+className+" {}";
+				Files.writeString(file.toPath(),s);
+			}catch(IOException ex){
+				throw new UncheckedIOException(ex);
+			}
 		}
 		@Override
 		public NodeModel<FeatureConfigNode> load(){
@@ -45,13 +58,6 @@ public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
 	public FeatureConfigNode(PhysicalNode<FeatureConfigNode> physicalNode){
 		this.physicalNode=physicalNode;
 		this.model=physicalNode.load();
-	}
-
-	public FeatureConfigNode(File file,String featureName){
-		this(new FeatureConfigPhysicalNode(file));
-		// Override loaded model with passed featureName (creation time)
-		// But in original logic: "this.featureName = featureName; // TODO parse"
-		// The original logic saved featureName in field but didn't use it.
 	}
 
 	@Override

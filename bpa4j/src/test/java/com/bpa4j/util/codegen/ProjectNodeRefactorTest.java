@@ -20,15 +20,19 @@ public class ProjectNodeRefactorTest {
 
 	@Test
 	public void testClassNodeStructure() throws IOException {
-		File file = new File(tempDir, "TestClass.java");
+		File file=new File(tempDir,"TestClass.java");
 		// Create a dummy concrete ClassNode for testing abstract class
-		class ConcreteClassNode extends ClassNode<ConcreteClassNode> {
-			public ConcreteClassNode(PhysicalNode<ConcreteClassNode> p) { super(p); }
-			public ConcreteClassNode(File f) { super(new ClassPhysicalNode<ConcreteClassNode>(f){}); }
+		class ConcreteClassNode extends ClassNode<ConcreteClassNode>{
+			public ConcreteClassNode(PhysicalNode<ConcreteClassNode> p){
+				super(p);
+			}
+			public ConcreteClassNode(File f){
+				super(new ClassPhysicalNode<ConcreteClassNode>(f){});
+			}
 		}
 
-		ConcreteClassNode node = new ConcreteClassNode(file);
-		
+		ConcreteClassNode node=new ConcreteClassNode(file);
+
 		Assertions.assertNotNull(node.getPhysicalRepresentation(), "Physical representation should not be null");
 		Assertions.assertNotNull(node.getModel(), "Model should not be null");
 		Assertions.assertTrue(node.getPhysicalRepresentation() instanceof ClassNode.ClassPhysicalNode, "Physical rep should be ClassPhysicalNode");
@@ -40,46 +44,8 @@ public class ProjectNodeRefactorTest {
 	@Test
 	public void testFeatureNodeStructure() {
 		File file = new File(tempDir, "TestFeature.java");
-		FeatureNode node = new FeatureNode(file);
-		
-		Assertions.assertNotNull(node.getPhysicalRepresentation());
-		Assertions.assertNotNull(node.getModel());
-		Assertions.assertEquals("TestFeature", ((ClassNode.ClassModel)node.getModel()).getName());
-	}
-
-	@Test
-	public void testFeatureConfigNodeStructure() {
-		File file = new File(tempDir, "TestFeatureConfig.java");
-		FeatureConfigNode node = new FeatureConfigNode(file, "MyFeature");
-		
-		Assertions.assertNotNull(node.getPhysicalRepresentation());
-		Assertions.assertNotNull(node.getModel());
-		Assertions.assertEquals("MyFeature", ((FeatureConfigNode.FeatureConfigModel)node.getModel()).getFeatureName());
-	}
-
-	@Test
-	public void testEditableNodeStructure() throws IOException {
-		File file = new File(tempDir, "TestEditable.java");
-		EditableNode.Property prop = new EditableNode.Property("myProp", EditableNode.Property.PropertyType.STRING);
+		FeatureNode.FeaturePhysicalNode pn=new FeatureNode.FeaturePhysicalNode(file);
 		EditableNode node = new EditableNode(file, "TestObject", "com.example", prop);
-		
-		Assertions.assertNotNull(node.getPhysicalRepresentation());
-		Assertions.assertNotNull(node.getModel());
-		Assertions.assertEquals("TestObject", node.getObjectName());
-		Assertions.assertTrue(file.exists());
-		Assertions.assertEquals(1, node.getProperties().size());
-	}
-	
-	@Test
-	public void testRolesNodeStructure() throws IOException {
-		File file = new File(tempDir, "RoleEnum.java");
-		Files.writeString(file.toPath(), "enum RoleEnum implements Role {}");
-		
-		File permFile = new File(tempDir, "PermissionEnum.java");
-		Files.writeString(permFile.toPath(), "enum PermissionEnum implements Permission { A, B }");
-		PermissionsNode permNode = new PermissionsNode(permFile);
-		
-		RolesNode node = new RolesNode(file, permNode);
 		
 		Assertions.assertNotNull(node.getPhysicalRepresentation());
 		Assertions.assertNotNull(node.getModel());

@@ -4,9 +4,11 @@ package com.bpa4j.util.codegen;
  * A representation of element in the project.
  * A model, synchronized with the file system (or other persistency mechanism).
  * </p>
- * Must at least two constructors:
- * one accepting {@link PhysicalNode},
- * and one creating the physical representation itself.
+ * Must have reading and writing constructors:
+ * one (reading) accepting a {@link PhysicalNode} and reading model from it,
+ * and the other (writing) accepting {@link PhysicalNode} with additional arguments and writing model to it.
+ * Both should ensure the node exists (or not exists).
+ * </p>
  * {@code ProjectNode} is expected to have methods with pair delegations:
  * to model and to physical node.
  * 
@@ -29,8 +31,9 @@ public interface ProjectNode<T extends ProjectNode<T>>{
 		/**
 		 * Creates a new node physical representation.
 		 * It may be a file, or a database record or any other persistency mechanism.
+		 * @throws IllegalStateException if this object is already associated with physical representation.
 		 */
-		void persist(NodeModel<V>node);
+		void persist(NodeModel<V>node)throws IllegalStateException;
 		/**
 		 * Loads the node from this container.
 		 * @return

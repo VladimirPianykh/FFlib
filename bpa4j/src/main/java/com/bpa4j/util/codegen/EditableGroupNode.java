@@ -1,8 +1,12 @@
 package com.bpa4j.util.codegen;
 
 import java.io.File;
-import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import java.io.IOException;
+import java.nio.file.Files;
 
+/**
+ * @author AI-generated
+ */
 public class EditableGroupNode implements ProjectNode<EditableGroupNode>{
 	public static class EditableGroupPhysicalNode implements PhysicalNode<EditableGroupNode>{
 		private final File file;
@@ -19,6 +23,15 @@ public class EditableGroupNode implements ProjectNode<EditableGroupNode>{
 		}
 		@Override
 		public void persist(NodeModel<EditableGroupNode> model){
+			if(file.exists()){ throw new IllegalStateException("Physical representation already exists: "+file.getAbsolutePath()); }
+			try{
+				if(file.getParentFile()!=null) file.getParentFile().mkdirs();
+				String className=file.getName().replace(".java","");
+				String s="public class "+className+" {}";
+				Files.writeString(file.toPath(),s);
+			}catch(IOException ex){
+				throw new java.io.UncheckedIOException(ex);
+			}
 		}
 		@Override
 		public NodeModel<EditableGroupNode> load(){
@@ -36,11 +49,7 @@ public class EditableGroupNode implements ProjectNode<EditableGroupNode>{
 		this.physicalNode=physicalNode;
 		this.model=physicalNode.load();
 	}
-	
-	public EditableGroupNode(File location,ObjectCreationExpr constructor){
-		this(new EditableGroupPhysicalNode(location));
-	}
-	
+
 	@Override
 	public PhysicalNode<EditableGroupNode> getPhysicalRepresentation(){
 		return physicalNode;
