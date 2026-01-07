@@ -62,7 +62,6 @@ import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.FileNavigatorPhysicalNo
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.HelpEntry;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.Instruction;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.NavigatorPhysicalNode;
-import com.bpa4j.util.codegen.ProjectNode.NodeModel;
 import com.bpa4j.util.codegen.RolesNode.FileRolesPhysicalNode;
 import com.bpa4j.util.codegen.RolesNode.RoleRepresentation;
 import com.bpa4j.util.codegen.server.ProjectServer;
@@ -74,6 +73,10 @@ import lombok.Getter;
 
 class GraphModel{
 	private final Map<Class<? extends ProjectNode<?>>,List<ProjectNode<?>>> nodesByType=new HashMap<>();
+	/**
+	 * Gets all nodes with the given type.
+	 * Matchs the <b>exact</b> types.
+	 */
 	public <T extends ProjectNode<T>> List<T> getNodes(Class<T> type){
 		return nodesByType.getOrDefault(type,List.of()).stream().map(type::cast).toList();
 	}
@@ -166,7 +169,6 @@ class GraphParser{
 			PermissionsNode permNode=new PermissionsNode(permPN);
 			FileRolesPhysicalNode rolesPN=new FileRolesPhysicalNode(file.toFile(),permNode);
 			RolesNode rolesNode=new RolesNode(rolesPN);
-			//FIXME: ensure consistency with the old ProjectGraph.
 			return List.of(permNode,rolesNode);
 		}
 		Optional<ClassOrInterfaceDeclaration> editableClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getExtendedTypes().stream().anyMatch(type->type instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)type).getNameAsString().contains("Editable"))).findFirst();
@@ -474,7 +476,7 @@ class GraphUI{
 				add(new JLabel(permission),c);
 				JButton delete=new JButton();
 				delete.addActionListener(e->{
-					rn.removePermission(role.name,permission);
+					rn.removePermission(role.getName(),permission);
 					Container parent=getParent();
 					parent.remove(this);
 					((JComponent)parent).getTopLevelAncestor().revalidate();
@@ -489,13 +491,13 @@ class GraphUI{
 		}
 		class R extends JPanel{
 			public R(RoleRepresentation role){
-				setBorder(BorderFactory.createTitledBorder(role.name));
+				setBorder(BorderFactory.createTitledBorder(role.getName()));
 				setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
 				JPanel buttons=new JPanel();
 				JButton delete=new JButton();
 				delete.addActionListener(e->{
-					if(JOptionPane.showConfirmDialog(tab,"Удалить "+role.name+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
-					rn.removeRole(role.name);
+					if(JOptionPane.showConfirmDialog(tab,"Удалить "+role.getName()+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
+					rn.removeRole(role.getName());
 					Container parent=getParent();
 					parent.remove(this);
 					((JComponent)parent).getTopLevelAncestor().revalidate();
@@ -503,7 +505,7 @@ class GraphUI{
 				delete.setBackground(Color.RED);
 				buttons.add(delete);
 				add(buttons);
-				if(role.permissions!=null) for(String p:role.permissions)
+				if(role.getPermissions()!=null) for(String p:role.getPermissions())
 					add(new RP(role,p));
 				setTransferHandler(new TransferHandler(){
 					public boolean canImport(TransferSupport support){
@@ -512,7 +514,7 @@ class GraphUI{
 					public boolean importData(TransferSupport support){
 						try{
 							String p="AppPermission."+support.getTransferable().getTransferData(support.getDataFlavors()[0]);
-							rn.addPermission(role.name,p);
+							rn.addPermission(role.getName(),p);
 							add(new RP(role,p));
 							revalidate();
 							return true;
@@ -693,7 +695,7 @@ public class ProjectGraph{
 					List<String> lines=Files.readAllLines(file.toPath());
 					List<String> updated=new ArrayList<>();
 					for(String line:lines){
-						if(!line.trim().equals(text.trim())){
+						if(!line.substring(line.indexOf(' ')+1).trim().equals(text.trim())){
 							updated.add(line);
 						}
 					}
@@ -772,6 +774,7 @@ public class ProjectGraph{
 					b.append(inst);
 					b.append(' ');
 					b.append(h.text);
+					b.append('\n');
 				}
 				try{
 					Files.writeString(file.toPath(),b);

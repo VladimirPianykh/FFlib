@@ -219,8 +219,8 @@ public class GraphResource{
 		List<Map<String,Object>>out=new ArrayList<>();
 		for(RoleRepresentation r:rn.getRoles()){
 			Map<String,Object>m=new HashMap<>();
-			m.put("name",r.name);
-			if(detailed)m.put("permissions",r.permissions==null?List.of():new ArrayList<>(r.permissions));
+			m.put("name",r.getName());
+			if(detailed)m.put("permissions",r.getPermissions()==null?List.of():new ArrayList<>(r.getPermissions()));
 			out.add(m);
 		}
 		return out;

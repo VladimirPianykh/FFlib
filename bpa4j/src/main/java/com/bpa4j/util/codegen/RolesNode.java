@@ -6,7 +6,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -30,13 +29,22 @@ import lombok.Getter;
  */
 public class RolesNode implements ProjectNode<RolesNode>{
 	public static class RoleRepresentation{
-		public String name;
-		public Set<String> permissions;
-		public Set<String> features;
+		private String name;
+		private Set<String> permissions;
+		private Set<String> features;
 		public RoleRepresentation(String name,Set<String> permissions,Set<String> features){
 			this.name=name;
 			this.permissions=permissions;
 			this.features=features;
+		}
+		public Set<String> getFeatures(){
+			return features;
+		}
+		public Set<String> getPermissions(){
+			return permissions;
+		}
+		public String getName(){
+			return name;
 		}
 	}
 	public static interface RolesPhysicalNode extends PhysicalNode<RolesNode>{
@@ -74,15 +82,19 @@ public class RolesNode implements ProjectNode<RolesNode>{
 					EnumDeclaration enumDecl=roleEnum.get();
 					for(EnumConstantDeclaration constant:enumDecl.getEntries()){
 						String name=constant.getNameAsString();
-						Set<String> permissions=new TreeSet<>();
-						Set<String> features=new TreeSet<>();
+						Set<String> permissions;
+						Set<String> features;
 
 						if(constant.getArguments().size()>=2){
-							if(constant.getArguments().get(0) instanceof LambdaExpr){
-								LambdaExpr permissionsLambda=(LambdaExpr)constant.getArguments().get(0);
+							if(constant.getArgument(0) instanceof LambdaExpr permissionsLambda)
 								permissions=parsePermissionsFromLambda(permissionsLambda,permissionsNode);
-							}
-							// FIXME Parse features
+							else permissions=new TreeSet<>();
+							if(constant.getArgument(1) instanceof LambdaExpr featuresLambda)
+								features=parseFeaturesFromLambda(featuresLambda);
+							else features=new TreeSet<>();
+						}else{
+							permissions=new TreeSet<>();
+							features=new TreeSet<>();
 						}
 						roles.add(new RoleRepresentation(name,permissions,features));
 					}
@@ -256,6 +268,10 @@ public class RolesNode implements ProjectNode<RolesNode>{
 				}
 			}
 			return permissions;
+		}
+		private Set<String>parseFeaturesFromLambda(LambdaExpr lambda){
+			return new TreeSet<>();
+			// TODO: #6 parse features for RolesNode
 		}
 	}
 	public static class RolesModel implements NodeModel<RolesNode>{

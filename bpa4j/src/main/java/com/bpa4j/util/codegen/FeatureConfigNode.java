@@ -43,7 +43,7 @@ public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
 		}
 		@Override
 		public FeatureConfigModel load(){
-			// FIXME Parse FeatureConfigNode
+			// TODO: #5 Parse FeatureConfigNode
 			return new FeatureConfigModel(null);
 		}
 		public File getLocation(){

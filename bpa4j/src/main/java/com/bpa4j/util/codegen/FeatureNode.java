@@ -27,7 +27,7 @@ public class FeatureNode extends ClassNode<FeatureNode>{
 		}
 		@Override
 		public FeatureModel load(){
-			// FIXME: implement load
+			// TODO: #1 Parse FeatureNode
 			String name=file.getName();
 			if(name.endsWith(".java")) name=name.substring(0,name.length()-5);
 			return new FeatureModel(name);
