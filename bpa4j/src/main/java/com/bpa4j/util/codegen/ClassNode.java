@@ -64,6 +64,9 @@ public abstract class ClassNode<T extends ClassNode<T>> implements ProjectNode<T
 				throw new UncheckedIOException(ex);
 			}
 		}
+		public File getLocation(){
+			return file;
+		}
 	}
 	public static interface ClassPhysicalNode<V extends ClassNode<V>>extends PhysicalNode<V>{
 		void rename(ProjectGraph project,String newName);

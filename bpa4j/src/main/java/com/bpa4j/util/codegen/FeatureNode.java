@@ -8,7 +8,8 @@ import java.io.IOException;
  * A node representing {@link com.bpa4j.feature.FeatureTransmissionContract Feature interface} implementation.
  */
 public class FeatureNode extends ClassNode<FeatureNode>{
-	public static class FileFeaturePhysicalNode extends FileClassPhysicalNode<FeatureNode>{
+	public static interface FeaturePhysicalNode extends ClassPhysicalNode<FeatureNode>{}
+	public static class FileFeaturePhysicalNode extends FileClassPhysicalNode<FeatureNode> implements FeaturePhysicalNode{
 		public FileFeaturePhysicalNode(File file){
 			super(file);
 		}
@@ -39,7 +40,7 @@ public class FeatureNode extends ClassNode<FeatureNode>{
 		}
 	}
 
-	public FeatureNode(PhysicalNode<FeatureNode> physicalNode){
+	public FeatureNode(FeaturePhysicalNode physicalNode){
 		super(physicalNode);
 	}
 }

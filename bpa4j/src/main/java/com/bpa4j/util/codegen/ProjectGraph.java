@@ -54,20 +54,23 @@ import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import com.bpa4j.core.Root;
 import com.bpa4j.ui.swing.util.Message;
 import com.bpa4j.util.SprintUI;
+import com.bpa4j.util.codegen.ClassNode.ClassPhysicalNode;
 import com.bpa4j.util.codegen.EditableNode.Property;
 import com.bpa4j.util.codegen.PermissionsNode.FilePermissionsPhysicalNode;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode;
+import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.FileNavigatorPhysicalNode;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.HelpEntry;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.Instruction;
 import com.bpa4j.util.codegen.ProjectGraph.NavigatorNode.NavigatorPhysicalNode;
 import com.bpa4j.util.codegen.ProjectNode.NodeModel;
-import com.bpa4j.util.codegen.ProjectNode.PhysicalNode;
+import com.bpa4j.util.codegen.RolesNode.FileRolesPhysicalNode;
 import com.bpa4j.util.codegen.RolesNode.RoleRepresentation;
 import com.bpa4j.util.codegen.server.ProjectServer;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import lombok.Getter;
 
 class GraphModel{
 	private final Map<Class<? extends ProjectNode<?>>,List<ProjectNode<?>>> nodesByType=new HashMap<>();
@@ -82,28 +85,24 @@ class GraphModel{
 		nodesByType.computeIfAbsent((Class<? extends ProjectNode<?>>)node.getClass(),k->new ArrayList<>()).add(node);
 	}
 	public void removeNode(ProjectNode<?> node){
+		var l=nodesByType.get(node.getClass());
+		if(l==null||!l.contains(node))throw new IllegalStateException("There is no node "+node+".");
 		nodesByType.get(node.getClass()).remove(node);
 	}
 	public List<ProjectNode<?>> getAllNodes(){
 		return nodesByType.values().stream().flatMap(List::stream).toList();
 	}
-	/**
-	 * FIXME: split model from file system operations
-	 * Validates and creates an EditableNode, adding it to the model.
-	 * @param projectRoot the project root directory where the node will be created in src/main/java...
-	 * @param name the class name (must be a valid Java identifier and unique)
-	 * @param objectName the display name for the object
-	 * @param basePackage the base package for the node
-	 * @param properties the properties to initialize the node with
-	 * @return the created EditableNode
-	 * @throws IllegalArgumentException if name is invalid or already exists
-	 * @throws IOException if node creation fails
-	 */
-	public EditableNode createEditableNode(File projectRoot,String name,String objectName,String basePackage,EditableNode.Property...properties) throws IOException{
+	public EditableNode createEditableNode(ClassPhysicalNode<EditableNode>physicalNode,String name,String objectName,String basePackage,EditableNode.Property...properties) throws IOException{
 		validateEditableNodeName(name);
-		EditableNode.FileEditablePhysicalNode physicalNode=new EditableNode.FileEditablePhysicalNode(name,objectName,basePackage,projectRoot,properties);
 		EditableNode node=new EditableNode(physicalNode,name,objectName,basePackage+".editables.registered",properties);
 		addNode(node);
+		return node;
+	}
+	public NavigatorNode createNavigatorNode(NavigatorPhysicalNode physicalNode){
+		if(!nodesByType.computeIfAbsent(NavigatorNode.class,e->new ArrayList<>()).isEmpty())
+			throw new IllegalStateException("There cannot be two or more navigator nodes.");
+		NavigatorNode node=new NavigatorNode(physicalNode);
+		nodesByType.computeIfAbsent(NavigatorNode.class,e->new ArrayList<>()).add(node);
 		return node;
 	}
 	/**
@@ -137,9 +136,9 @@ class GraphParser{
 			Files.walkFileTree(projectFolder,new SimpleFileVisitor<Path>(){
 				@Override
 				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException{
-					ProjectNode<?> node=loadNode(file);
+					List<ProjectNode<?>> node=loadNode(file);
 					if(node!=null){
-						model.addNode(node);
+						node.forEach(model::addNode);
 					}
 					return FileVisitResult.CONTINUE;
 				}
@@ -149,46 +148,36 @@ class GraphParser{
 		}
 		return model;
 	}
-	private ProjectNode<?> loadNode(Path file) throws IOException{
+	private List<ProjectNode<?>> loadNode(Path file) throws IOException{
 		if(file.toString().endsWith(".java")){
 			return loadJavaNode(file);
 		}else if(file.getFileName().toString().equals("helppath.cfg")){
 			NavigatorPhysicalNode pn=new NavigatorNode.FileNavigatorPhysicalNode(file.toFile());
-			return new ProjectGraph.NavigatorNode(pn);
+			return List.of(new ProjectGraph.NavigatorNode(pn));
 		}
 		return null;
 	}
-	private ProjectNode<?> loadJavaNode(Path file) throws IOException{
+	private List<ProjectNode<?>>loadJavaNode(Path file) throws IOException{
 		CompilationUnit cu=javaParser.parse(file).getResult().orElse(null);
 		if(cu==null) return null;
 		Optional<ClassOrInterfaceDeclaration> mainClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getNameAsString().equals("Main")).findFirst();
 		if(mainClass.isPresent()){
 			FilePermissionsPhysicalNode permPN=new FilePermissionsPhysicalNode(file.toFile());
 			PermissionsNode permNode=new PermissionsNode(permPN);
-			return permNode;
-			//FIXME: also create roles node.
+			FileRolesPhysicalNode rolesPN=new FileRolesPhysicalNode(file.toFile(),permNode);
+			RolesNode rolesNode=new RolesNode(rolesPN);
 			//FIXME: ensure consistency with the old ProjectGraph.
+			return List.of(permNode,rolesNode);
 		}
 		Optional<ClassOrInterfaceDeclaration> editableClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getExtendedTypes().stream().anyMatch(type->type instanceof ClassOrInterfaceType&&((ClassOrInterfaceType)type).getNameAsString().contains("Editable"))).findFirst();
-		if(editableClass.isPresent()) return new EditableNode(new EditableNode.FileEditablePhysicalNode(file.toFile()));
+		if(editableClass.isPresent()) return List.of(new EditableNode(new EditableNode.FileEditablePhysicalNode(file.toFile())));
 		return null;
-	}
-	public void save(GraphModel model,Path projectFolder){
-		for(ProjectNode<?> node:model.getAllNodes()){
-			saveNode(node);
-		}
-	}
-	@SuppressWarnings("unchecked")
-	private <T extends ProjectNode<T>> void saveNode(ProjectNode<T> node){
-		node.getPhysicalRepresentation().persist((NodeModel<T>)node);
 	}
 }
 
-/*class GraphUI{
-	private final GraphModel model;
+class GraphUI{
 	private final ProjectGraph graph;
-	public GraphUI(GraphModel model,ProjectGraph graph){
-		this.model=model;
+	public GraphUI(ProjectGraph graph){
 		this.graph=graph;
 	}
 	public void show(){
@@ -279,7 +268,9 @@ class GraphParser{
 		System.exit(0);
 	}
 	private void fillObjectsTab(JPanel tab){
-		PermissionsNode pn=(PermissionsNode)model.getAllNodes().parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
+		List<PermissionsNode>permissionsNodes=graph.getNodes(PermissionsNode.class);
+		assert permissionsNodes.size()==1;
+		PermissionsNode pn=permissionsNodes.getFirst();
 		tab.setLayout(new BorderLayout());
 		class B extends JPanel{
 			public B(Property p,EditableNode n){
@@ -350,7 +341,7 @@ class GraphParser{
 				buttons.add(addPanel);
 				JButton remove=new JButton();
 				remove.addActionListener(e->{
-					if(n.getProperties().isEmpty()||JOptionPane.showConfirmDialog(tab,"Действительно удалить "+n.name+" (\""+n.getObjectName()+")\"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)==JOptionPane.OK_OPTION){
+					if(n.getProperties().isEmpty()||JOptionPane.showConfirmDialog(tab,"Действительно удалить "+n.getName()+" (\""+n.getObjectName()+")\"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)==JOptionPane.OK_OPTION){
 						graph.deleteNode(n);
 						Container parent=getParent();
 						parent.remove(this);
@@ -373,7 +364,7 @@ class GraphParser{
 					s[0]=s[0].trim();
 					s[1]=s[1].trim();
 					setBorder(BorderFactory.createTitledBorder(s[0]+" ("+s[1]+")"));
-					if(!n.name.equals(s[0])) n.changeNameIn(graph,s[0]);
+					if(!n.getName().equals(s[0])) n.changeNameIn(graph,s[0]);
 					if(!n.getObjectName().equals(s[1])) n.changeObjectName(s[1]);
 				});
 				rename.setText("переименовать");
@@ -381,8 +372,8 @@ class GraphParser{
 				rename.setBackground(Color.CYAN);
 				rename.setForeground(Color.BLACK);
 				buttons.add(rename);
-				String readPermission="READ_"+n.name.toUpperCase(),createPermission="CREATE_"+n.name.toUpperCase();
-				if(!(pn.permissions.contains(readPermission)&&pn.permissions.contains(createPermission))){
+				String readPermission="READ_"+n.getName().toUpperCase(),createPermission="CREATE_"+n.getName().toUpperCase();
+				if(!(pn.hasPermission(readPermission)&&pn.hasPermission(createPermission))){
 					JButton addPermissions=new JButton("добавить разрешения");
 					addPermissions.addActionListener(e->{
 						pn.addPermission(createPermission);
@@ -425,13 +416,16 @@ class GraphParser{
 		buttons.add(addButton);
 		tab.add(buttons,BorderLayout.SOUTH);
 		tab.add(sList,BorderLayout.NORTH);
-		for(ProjectNode<?> node:model.getAllNodes())
-			if(node instanceof EditableNode) objList.add(new E((EditableNode)node));
+		for(EditableNode node:graph.getNodes(EditableNode.class))objList.add(new E(node));
 	}
 	private void fillAccessTab(JPanel tab){
 		tab.setLayout(new GridLayout(1,2));
-		PermissionsNode pn=(PermissionsNode)model.getAllNodes().parallelStream().filter(n->n instanceof PermissionsNode).findAny().get();
-		RolesNode rn=(RolesNode)model.getAllNodes().parallelStream().filter(n->n instanceof RolesNode).findAny().get();
+		List<PermissionsNode> permissionsNodes=graph.getNodes(PermissionsNode.class);
+		List<RolesNode> rolesNodes=graph.getNodes(RolesNode.class);
+		assert permissionsNodes.size()==1;
+		assert rolesNodes.size()==1;
+		PermissionsNode pn=permissionsNodes.getFirst();
+		RolesNode rn=rolesNodes.getFirst();
 		class P extends JPanel{
 			public P(String permission){
 				setLayout(new GridBagLayout());
@@ -557,14 +551,16 @@ class GraphParser{
 	}
 	private void fillNavigatorTab(JPanel tab){
 		tab.setLayout(new GridLayout());
-		Optional<ProjectNode<?>> nodeOptional=model.getAllNodes().stream().filter(n->n instanceof ProjectGraph.NavigatorNode).findAny();
+		List<NavigatorNode> navigatorNodes=graph.getNodes(NavigatorNode.class);
+		assert navigatorNodes.size()<=1;
+		Optional<ProjectNode<?>> nodeOptional=navigatorNodes.isEmpty()?Optional.empty():Optional.of(navigatorNodes.getFirst());
 		if(nodeOptional.isEmpty()){
 			tab.setLayout(new GridLayout(2,1));
 			tab.add(new JLabel("helppath.cfg отсутствует в проекте."));
 			JButton add=new JButton();
 			add.addActionListener(e->{
 				tab.removeAll();
-				model.addNode(new ProjectGraph.NavigatorNode(graph.projectFolder));
+				graph.createNavigatorNode();
 				fillNavigatorTab(tab);
 				tab.revalidate();
 			});
@@ -575,12 +571,12 @@ class GraphParser{
 		class I extends JPanel{
 			public I(int ind,HelpEntry entry){
 				setLayout(new GridLayout());
-				JTextField text=new JTextField(entry.instructions.get(ind).text);
+				JTextField text=new JTextField(entry.getInstructions().get(ind).getText());
 				text.addFocusListener(new FocusAdapter(){
 					public void focusLost(FocusEvent e){
-						Instruction c=entry.instructions.get(ind);
-						c.text=text.getText();
-						entry.replaceInstruction(c,ind,n);
+						Instruction c=entry.getInstructions().get(ind);
+						Instruction clone=new Instruction(text.getText(),c.getType());
+						n.replaceInstruction(entry,ind,clone);
 					}
 				});
 				add(text);
@@ -593,8 +589,8 @@ class GraphParser{
 				JPanel buttons=new JPanel();
 				JButton delete=new JButton();
 				delete.addActionListener(e->{
-					if(JOptionPane.showConfirmDialog(tab,"Удалить запись "+entry.text+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
-					n.deleteEntry(entry.text);
+					if(JOptionPane.showConfirmDialog(tab,"Удалить запись "+entry.getText()+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
+					n.deleteEntry(entry.getText());
 					Container parent=getParent();
 					parent.remove(parent.getComponent(0));
 					((JComponent)parent).getTopLevelAncestor().revalidate();
@@ -605,8 +601,8 @@ class GraphParser{
 				buttons.add(delete);
 				JButton delLast=new JButton();
 				delLast.addActionListener(e->{
-					if(JOptionPane.showConfirmDialog(tab,"Удалить последнюю инструкцию записи "+entry.text+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
-					entry.deleteLastInstruction(n);
+					if(JOptionPane.showConfirmDialog(tab,"Удалить последнюю инструкцию записи "+entry.getText()+"?","Удалить?",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE)!=JOptionPane.OK_OPTION) return;
+					n.deleteLastInstruction(entry);
 					remove(getComponentCount()-1);
 					revalidate();
 				});
@@ -622,33 +618,33 @@ class GraphParser{
 					if(s==null||type==JOptionPane.CLOSED_OPTION) return;
 					s=s.replace(' ','_').replace('.',';');
 					Instruction c=new Instruction(s,Instruction.Type.values()[type]);
-					entry.appendInstruction(c,n);
-					add(new I(entry.instructions.size()-1,entry),2);
+					n.appendInstruction(entry,c);
+					add(new I(entry.getInstructions().size()-1,entry),2);
 				});
 				add.setText("добавить инструкцию");
 				add.setBackground(Color.GREEN);
 				buttons.add(add);
 				add(buttons);
-				JTextField textArea=new JTextField(entry.text);
+				JTextField textArea=new JTextField(entry.getText());
 				textArea.addFocusListener(new FocusAdapter(){
 					public void focusLost(FocusEvent e){
-						if(!textArea.getText().trim().equals(entry.text)) entry.changeText(textArea.getText().trim(),n);
+						if(!textArea.getText().trim().equals(entry.getText())) n.changeEntryText(entry,textArea.getText().trim());
 					}
 				});
 				add(textArea);
 				JPanel instructions=new JPanel();
 				instructions.setLayout(new BoxLayout(instructions,BoxLayout.Y_AXIS));
-				for(int i=0;i<entry.instructions.size();++i)
+				for(int i=0;i<entry.getInstructions().size();++i)
 					instructions.add(new I(i,entry));
 				add(new JScrollPane(instructions));
 			}
 		}
 		JPanel panel=new JPanel();
-		for(HelpEntry e:n.entries)
+		for(HelpEntry e:n.getEntries())
 			panel.add(new E(e));
 		tab.add(SprintUI.createList(15,panel));
 	}
-}*/
+}
 
 public class ProjectGraph{
 	public static class NavigatorNode implements ProjectNode<NavigatorNode>{
@@ -802,7 +798,9 @@ public class ProjectGraph{
 			public boolean exists(){
 				return file.exists();
 			}
-			
+			public File getLocation(){
+				return file;
+			}
 		}
 		public static class Instruction{
 			public static enum Type{
@@ -826,7 +824,9 @@ public class ProjectGraph{
 					};
 				}
 			}
+			@Getter
 			private String text;
+			@Getter
 			private Type type;
 			public Instruction(String text,Type type){
 				this.text=text;
@@ -875,9 +875,10 @@ public class ProjectGraph{
 			physicalNode.persist(model);
 			this.physicalNode=physicalNode;
 		}
-		public void deleteEntry(String text){
+		public HelpEntry deleteEntry(String text){
 			HelpEntry deleted=model.deleteEntry(text);
 			physicalNode.deleteEntry(text);
+			return deleted;
 		}
 		public NavigatorPhysicalNode getPhysicalRepresentation(){
 			return physicalNode;
@@ -902,18 +903,19 @@ public class ProjectGraph{
 			entry.deleteLastInstruction();
 			physicalNode.deleteLastInstruction(entry.getText());
 		}
+		public List<HelpEntry>getEntries(){
+			return model.getEntries();
+		}
 	}
 	private static final ArrayList<DiagnosticService> diagnosticServices=new ArrayList<>();
-	private final GraphModel model;
-	private final GraphParser parser;
-	private final GraphUI ui;
+	private GraphModel model;
+	private GraphParser parser;
+	private GraphUI ui;
 	public final File projectFolder;
 	public ProjectGraph(File projectFolder){
 		projectFolder.mkdirs();
 		this.projectFolder=projectFolder;
-		this.parser=new GraphParser();
-		this.model=parser.load(projectFolder.toPath());
-		this.ui=new GraphUI(model,this);
+		load();
 	}
 	public GraphModel getModel(){
 		return model;
@@ -934,13 +936,24 @@ public class ProjectGraph{
 	public void runServer(long port){
 		new ProjectServer(this,port);
 	}
-	public void save(){
-		parser.save(model,projectFolder.toPath());
-	}
+	/**
+	 * Creates a new Editable node in this project.
+	 * @param name - internal class name
+	 * @param objectName - object name (display name)
+	 * @param properties - properties
+	 * @return created node
+	 * @throws IOException
+	 */
 	public EditableNode createEditableNode(String name,String objectName,EditableNode.Property...properties) throws IOException{
 		String basePackage=resolveProjectPackage();
 		if(basePackage.isBlank()) throw new IllegalStateException("Unable to resolve project package");
-		return model.createEditableNode(projectFolder,name,objectName,basePackage,properties);
+		EditableNode.FileEditablePhysicalNode physicalNode=new EditableNode.FileEditablePhysicalNode(name,objectName,basePackage,projectFolder,properties);
+		return model.createEditableNode(physicalNode,name,objectName,basePackage,properties);
+	}
+	public NavigatorNode createNavigatorNode(){
+		File file=new File(projectFolder,"resources/helppath.cfg");
+		FileNavigatorPhysicalNode pn=new FileNavigatorPhysicalNode(file);
+		return model.createNavigatorNode(pn);
 	}
 	public void deleteNode(ProjectNode<?> node){
 		node.getPhysicalRepresentation().clear();
@@ -959,5 +972,29 @@ public class ProjectGraph{
 		}
 		Package p=ProjectGraph.class.getPackage();
 		return p==null?"":p.getName();
+	}
+	// Delegates for GraphModel
+	public <T extends ProjectNode<T>> List<T> getNodes(Class<T> type){
+		return model.getNodes(type);
+	}
+	public <T extends ProjectNode<T>> Optional<T> findNode(Class<T> type, Predicate<T> filter){
+		return model.findNode(type, filter);
+	}
+	public void addNode(ProjectNode<?> node){
+		model.addNode(node);
+	}
+	public void removeNode(ProjectNode<?> node){
+		model.removeNode(node);
+	}
+	public List<ProjectNode<?>> getAllNodes(){
+		return model.getAllNodes();
+	}
+	public void reload(){
+		
+	}
+	private void load(){
+		this.parser=new GraphParser();
+		this.model=parser.load(projectFolder.toPath());
+		this.ui=new GraphUI(this);
 	}
 }

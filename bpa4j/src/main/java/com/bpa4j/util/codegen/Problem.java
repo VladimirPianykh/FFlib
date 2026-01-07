@@ -1,6 +1,6 @@
 package com.bpa4j.util.codegen;
 
-class Problem{
+public class Problem{
 	public enum ProblemType{
 		ERROR,WARNING,INFO
 	}

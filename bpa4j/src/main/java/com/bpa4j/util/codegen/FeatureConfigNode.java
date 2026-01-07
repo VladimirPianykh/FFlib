@@ -12,9 +12,13 @@ import lombok.Getter;
  * @author AI-generated
  */
 public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
-	public static class FeatureConfigPhysicalNode implements PhysicalNode<FeatureConfigNode>{
+	public static interface FeatureConfigPhysicalNode extends PhysicalNode<FeatureConfigNode>{
+		@Override
+		FeatureConfigModel load();
+	}
+	public static class FileFeatureConfigPhysicalNode implements FeatureConfigPhysicalNode{
 		private final File file;
-		public FeatureConfigPhysicalNode(File file){
+		public FileFeatureConfigPhysicalNode(File file){
 			this.file=file;
 		}
 		@Override
@@ -38,9 +42,12 @@ public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
 			}
 		}
 		@Override
-		public NodeModel<FeatureConfigNode> load(){
+		public FeatureConfigModel load(){
 			// FIXME Parse FeatureConfigNode
 			return new FeatureConfigModel(null);
+		}
+		public File getLocation(){
+			return file;
 		}
 	}
 
@@ -52,10 +59,10 @@ public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
 		}
 	}
 
-	private final PhysicalNode<FeatureConfigNode> physicalNode;
-	private final NodeModel<FeatureConfigNode> model;
+	private final FeatureConfigPhysicalNode physicalNode;
+	private final FeatureConfigModel model;
 
-	public FeatureConfigNode(PhysicalNode<FeatureConfigNode> physicalNode){
+	public FeatureConfigNode(FeatureConfigPhysicalNode physicalNode){
 		this.physicalNode=physicalNode;
 		this.model=physicalNode.load();
 	}
@@ -65,7 +72,10 @@ public class FeatureConfigNode implements ProjectNode<FeatureConfigNode>{
 		return physicalNode;
 	}
 	@Override
-	public NodeModel<FeatureConfigNode> getModel(){
+	public FeatureConfigModel getModel(){
 		return model;
+	}
+	public String getFeatureName(){
+		return model.getFeatureName();
 	}
 }

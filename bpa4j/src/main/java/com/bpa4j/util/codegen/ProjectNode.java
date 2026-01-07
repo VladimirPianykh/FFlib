@@ -19,9 +19,14 @@ package com.bpa4j.util.codegen;
 public interface ProjectNode<T extends ProjectNode<T>>{
 	/**
 	 * Acts as a container for the node state.
+	 * </p>
 	 * Should not modify the or store the node itself:
 	 * instead, it writes to or reads the node from file,
 	 * and then makes any necessary changes independendly.
+	 * </p>
+	 * Does not make any persistent changes in constructor.
+	 * All operations must be performed in the methods,
+	 * while constructor determines location of future data.
 	 */
 	static interface PhysicalNode<V extends ProjectNode<V>>{
 		/**
