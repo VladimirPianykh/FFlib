@@ -33,13 +33,11 @@ public class FeatureNode extends ClassNode<FeatureNode>{
 			return new FeatureModel(name);
 		}
 	}
-
 	public static class FeatureModel extends ClassModel<FeatureNode>{
 		public FeatureModel(String name){
 			super(name);
 		}
 	}
-
 	public FeatureNode(FeaturePhysicalNode physicalNode){
 		super(physicalNode);
 	}

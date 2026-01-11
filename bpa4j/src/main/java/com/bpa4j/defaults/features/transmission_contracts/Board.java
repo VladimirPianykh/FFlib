@@ -16,6 +16,13 @@ import com.bpa4j.core.RenderingContext;
 import com.bpa4j.feature.Feature;
 import com.bpa4j.feature.FeatureTransmissionContract;
 
+/**
+ * A table representation of objects list.
+ * We call {@code Feature} <b>Board-like</b> (or <b>BL</b>),
+ * if it has {@code registerXXX()} and {@code getXXX()} static methods,
+ * where {@code XXX} is some word like "List", "Table", etc,
+ * and all instance methods are builder methods (except ones for operation registration).
+ */
 public class Board<T extends Serializable> implements FeatureTransmissionContract{
 	public static interface TableCustomizationRenderingContext extends RenderingContext{}
 	private static final Map<String,Feature<? extends Board<?>>> registeredBoards=new HashMap<>();

@@ -89,21 +89,33 @@ class GraphModel{
 	}
 	public void removeNode(ProjectNode<?> node){
 		var l=nodesByType.get(node.getClass());
-		if(l==null||!l.contains(node))throw new IllegalStateException("There is no node "+node+".");
+		if(l==null||!l.contains(node)) throw new IllegalStateException("There is no node "+node+".");
 		nodesByType.get(node.getClass()).remove(node);
 	}
+	/**
+	 * Returns all external nodes.
+	 */
 	public List<ProjectNode<?>> getAllNodes(){
-		return nodesByType.values().stream().flatMap(List::stream).toList();
+		return nodesByType.values().stream().flatMap(List::stream).filter(n->!(n instanceof InternalNode)).toList();
 	}
-	public EditableNode createEditableNode(ClassPhysicalNode<EditableNode>physicalNode,String name,String objectName,String basePackage,EditableNode.Property...properties) throws IOException{
+	/**
+	 * Returns all internal nodes.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<InternalNode<?>> getInternalNodes(){
+		return (List<InternalNode<?>>)(List<?>)nodesByType.values().stream().flatMap(List::stream).filter(n->n instanceof InternalNode).map(n->n).toList();
+	}
+	/**
+	 * Adds an internal node.
+	 */
+	public EditableNode createEditableNode(ClassPhysicalNode<EditableNode> physicalNode,String name,String objectName,String basePackage,EditableNode.Property...properties) throws IOException{
 		validateEditableNodeName(name);
 		EditableNode node=new EditableNode(physicalNode,name,objectName,basePackage+".editables.registered",properties);
 		addNode(node);
 		return node;
 	}
 	public NavigatorNode createNavigatorNode(NavigatorPhysicalNode physicalNode){
-		if(!nodesByType.computeIfAbsent(NavigatorNode.class,e->new ArrayList<>()).isEmpty())
-			throw new IllegalStateException("There cannot be two or more navigator nodes.");
+		if(!nodesByType.computeIfAbsent(NavigatorNode.class,e->new ArrayList<>()).isEmpty()) throw new IllegalStateException("There cannot be two or more navigator nodes.");
 		NavigatorNode node=new NavigatorNode(physicalNode);
 		nodesByType.computeIfAbsent(NavigatorNode.class,e->new ArrayList<>()).add(node);
 		return node;
@@ -139,7 +151,7 @@ class GraphParser{
 			Files.walkFileTree(projectFolder,new SimpleFileVisitor<Path>(){
 				@Override
 				public FileVisitResult visitFile(Path file,BasicFileAttributes attrs) throws IOException{
-					List<ProjectNode<?>> node=loadNode(file);
+					List<ProjectNode<?>> node=loadFile(file);
 					if(node!=null){
 						node.forEach(model::addNode);
 					}
@@ -151,16 +163,16 @@ class GraphParser{
 		}
 		return model;
 	}
-	private List<ProjectNode<?>> loadNode(Path file) throws IOException{
+	private List<ProjectNode<?>> loadFile(Path file) throws IOException{
 		if(file.toString().endsWith(".java")){
-			return loadJavaNode(file);
+			return loadJavaFile(file);
 		}else if(file.getFileName().toString().equals("helppath.cfg")){
 			NavigatorPhysicalNode pn=new NavigatorNode.FileNavigatorPhysicalNode(file.toFile());
 			return List.of(new ProjectGraph.NavigatorNode(pn));
 		}
 		return null;
 	}
-	private List<ProjectNode<?>>loadJavaNode(Path file) throws IOException{
+	private List<ProjectNode<?>> loadJavaFile(Path file) throws IOException{
 		CompilationUnit cu=javaParser.parse(file).getResult().orElse(null);
 		if(cu==null) return null;
 		Optional<ClassOrInterfaceDeclaration> mainClass=cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(clazz->clazz.getNameAsString().equals("Main")).findFirst();
@@ -270,7 +282,7 @@ class GraphUI{
 		System.exit(0);
 	}
 	private void fillObjectsTab(JPanel tab){
-		List<PermissionsNode>permissionsNodes=graph.getNodes(PermissionsNode.class);
+		List<PermissionsNode> permissionsNodes=graph.getNodes(PermissionsNode.class);
 		assert permissionsNodes.size()==1;
 		PermissionsNode pn=permissionsNodes.getFirst();
 		tab.setLayout(new BorderLayout());
@@ -418,7 +430,8 @@ class GraphUI{
 		buttons.add(addButton);
 		tab.add(buttons,BorderLayout.SOUTH);
 		tab.add(sList,BorderLayout.NORTH);
-		for(EditableNode node:graph.getNodes(EditableNode.class))objList.add(new E(node));
+		for(EditableNode node:graph.getNodes(EditableNode.class))
+			objList.add(new E(node));
 	}
 	private void fillAccessTab(JPanel tab){
 		tab.setLayout(new GridLayout(1,2));
@@ -655,7 +668,7 @@ public class ProjectGraph{
 			public ArrayList<HelpEntry> getEntries(){
 				return entries;
 			}
-			public NavigatorModel(Collection<HelpEntry>entries){
+			public NavigatorModel(Collection<HelpEntry> entries){
 				this.entries.addAll(entries);
 			}
 			public HelpEntry deleteEntry(String text){
@@ -750,8 +763,7 @@ public class ProjectGraph{
 							String[] t=s[0].split("\\.");
 							for(int j=0;j<t.length-1;++j)
 								b.append(t[j]).append('.');
-							if(b.length()>0 && b.charAt(b.length()-1)=='.')
-								b.deleteCharAt(b.length()-1);
+							if(b.length()>0&&b.charAt(b.length()-1)=='.') b.deleteCharAt(b.length()-1);
 						}else b.append(s[0]);
 						b.append(' ').append(s[1]).append('\n');
 					}
@@ -763,14 +775,11 @@ public class ProjectGraph{
 			public void clear(){
 				file.delete();
 			}
-			public void persist(NodeModel<NavigatorNode>node) throws IllegalStateException{
+			public void persist(NodeModel<NavigatorNode> node) throws IllegalStateException{
 				StringBuilder b=new StringBuilder();
 				NavigatorModel n=(NavigatorModel)node;
 				for(HelpEntry h:n.getEntries()){
-					String inst=h.getInstructions()
-						.stream()
-						.map(e->e.toString())
-						.collect(Collectors.joining(","));
+					String inst=h.getInstructions().stream().map(e->e.toString()).collect(Collectors.joining(","));
 					b.append(inst);
 					b.append(' ');
 					b.append(h.text);
@@ -783,7 +792,7 @@ public class ProjectGraph{
 				}
 			}
 			public NavigatorModel load(){
-				ArrayList<HelpEntry>entries=new ArrayList<>();
+				ArrayList<HelpEntry> entries=new ArrayList<>();
 				try{
 					String str=Files.readString(file.toPath());
 					if(str.isBlank()) return new NavigatorModel(entries);
@@ -860,7 +869,7 @@ public class ProjectGraph{
 			/**
 			 * Returns unmodifiable list of instructions.
 			 */
-			public List<Instruction>getInstructions(){
+			public List<Instruction> getInstructions(){
 				return Collections.unmodifiableList(instructions);
 			}
 			public String getText(){
@@ -873,7 +882,7 @@ public class ProjectGraph{
 			model=physicalNode.load();
 			this.physicalNode=physicalNode;
 		}
-		public NavigatorNode(NavigatorPhysicalNode physicalNode,List<HelpEntry>entries){
+		public NavigatorNode(NavigatorPhysicalNode physicalNode,List<HelpEntry> entries){
 			model=new NavigatorModel(entries);
 			physicalNode.persist(model);
 			this.physicalNode=physicalNode;
@@ -906,7 +915,7 @@ public class ProjectGraph{
 			entry.deleteLastInstruction();
 			physicalNode.deleteLastInstruction(entry.getText());
 		}
-		public List<HelpEntry>getEntries(){
+		public List<HelpEntry> getEntries(){
 			return model.getEntries();
 		}
 	}
@@ -976,12 +985,11 @@ public class ProjectGraph{
 		Package p=ProjectGraph.class.getPackage();
 		return p==null?"":p.getName();
 	}
-	// Delegates for GraphModel
 	public <T extends ProjectNode<T>> List<T> getNodes(Class<T> type){
 		return model.getNodes(type);
 	}
-	public <T extends ProjectNode<T>> Optional<T> findNode(Class<T> type, Predicate<T> filter){
-		return model.findNode(type, filter);
+	public <T extends ProjectNode<T>> Optional<T> findNode(Class<T> type,Predicate<T> filter){
+		return model.findNode(type,filter);
 	}
 	public void addNode(ProjectNode<?> node){
 		model.addNode(node);
@@ -993,7 +1001,7 @@ public class ProjectGraph{
 		return model.getAllNodes();
 	}
 	public void reload(){
-		
+
 	}
 	private void load(){
 		this.parser=new GraphParser();
